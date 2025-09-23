@@ -6,7 +6,12 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "books")
+@Table(
+        name = "books",
+        indexes = {
+                @Index(name = "idx_book_title", columnList = "title")
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,25 +26,25 @@ public class Book {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "file_path", nullable = false)
     private String filePath;
 
     // Связи
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookAuthor> bookAuthors;
 
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookGenre> bookGenres;
 
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings;
 
-    @OneToMany(mappedBy = "book")
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Bookmark> bookmarks;
 }

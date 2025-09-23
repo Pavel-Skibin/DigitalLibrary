@@ -7,7 +7,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_deleted_at", columnList = "deleted_at"),
+                @Index(name = "idx_user_role_id", columnList = "role_id")
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

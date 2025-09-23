@@ -6,7 +6,14 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "bookmarks")
+@Table(
+        name = "bookmarks",
+        indexes = {
+                @Index(name = "idx_bookmark_user_id", columnList = "user_id"),
+                @Index(name = "idx_bookmark_book_id", columnList = "book_id"),
+                @Index(name = "idx_bookmark_deleted_at", columnList = "deleted_at")
+        }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

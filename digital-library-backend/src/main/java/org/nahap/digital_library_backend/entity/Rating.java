@@ -4,9 +4,20 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.*;
+import org.hibernate.annotations.Check;
 
 @Entity
-@Table(name = "ratings")
+@Table(
+        name = "ratings",
+        indexes = {
+                @Index(name = "idx_rating_book_id", columnList = "book_id"),
+                @Index(name = "idx_rating_user_id", columnList = "user_id")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_rating_user_book", columnNames = {"user_id", "book_id"})
+        }
+)
+@Check(constraints = "value >= 1 AND value <= 5")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
