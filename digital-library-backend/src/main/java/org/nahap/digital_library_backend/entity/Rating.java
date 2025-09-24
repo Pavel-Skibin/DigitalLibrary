@@ -17,7 +17,7 @@ import org.hibernate.annotations.Check;
                 @UniqueConstraint(name = "uk_rating_user_book", columnNames = {"user_id", "book_id"})
         }
 )
-@Check(constraints = "value >= 1 AND value <= 5")
+@Check(constraints = "rating_value >= 1 AND rating_value <= 5")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,7 +37,7 @@ public class Rating {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(name = "value", nullable = false)
+    @Column(name = "rating_value", nullable = false)
     @Min(1)
     @Max(5)
     private Integer value;
