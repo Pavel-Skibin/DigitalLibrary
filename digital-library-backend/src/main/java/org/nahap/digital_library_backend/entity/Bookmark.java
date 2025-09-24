@@ -36,12 +36,22 @@ public class Bookmark {
     @Column(name = "position", nullable = false)
     private Double position;
 
-    @Column(name = "name")
+    @Column(name = "name", length = 255)
     private String name;
 
-    @Column(name = "notes")
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
