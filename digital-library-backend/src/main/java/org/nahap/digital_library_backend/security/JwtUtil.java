@@ -26,7 +26,6 @@ public class JwtUtil {
     private Long expiration;
 
     private Key getSignInKey() {
-        // ИСПРАВЛЕНО: используем сырые байты, а не Base64
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 

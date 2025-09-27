@@ -21,7 +21,7 @@ public class CustomUserDetails implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPasswordHash();
         this.email = user.getEmail();
-        this.role = user.getRole().getName(); // Предполагаем, что у UserRole есть getName()
+        this.role = user.getRole().getName();
     }
 
     public Integer getId() {
