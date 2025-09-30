@@ -26,4 +26,6 @@ public interface BookGenreRepository extends JpaRepository<BookGenre, Integer> {
     @Transactional
     @Query("DELETE FROM BookGenre bg WHERE bg.genre.id = :genreId")
     void deleteByGenreId(@Param("genreId") Integer genreId);
+
+    List<BookGenre> findByBookIdIn(List<Integer> bookIds);
 }

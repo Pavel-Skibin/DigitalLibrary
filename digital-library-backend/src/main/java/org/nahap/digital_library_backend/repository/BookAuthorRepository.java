@@ -26,4 +26,7 @@ public interface BookAuthorRepository extends JpaRepository<BookAuthor, Integer>
     @Transactional
     @Query("DELETE FROM BookAuthor ba WHERE ba.author.id = :authorId")
     void deleteByAuthorId(@Param("authorId") Integer authorId);
+
+    List<BookAuthor> findByBookIdIn(List<Integer> bookIds);
+
 }

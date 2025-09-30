@@ -3,6 +3,7 @@ package org.nahap.digital_library_backend.repository;
 import org.nahap.digital_library_backend.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +21,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
            "ORDER BY c.createdAt DESC")
     List<Comment> findActiveByBookId(@Param("bookId") Integer bookId);
 
+    @EntityGraph(attributePaths = {"user", "book"})
     @Query("SELECT c FROM Comment c " +
            "WHERE c.book.id = :bookId AND c.deletedAt IS NULL " +
            "ORDER BY c.createdAt DESC")
@@ -39,10 +41,38 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
            "WHERE c.id = :id AND c.deletedAt IS NULL")
     Optional<Comment> findActiveById(@Param("id") Integer id);
 
-    // Для модератора/админа — включая удалённые
+
+    @EntityGraph(attributePaths = {"user", "book"})
     @Query("SELECT c FROM Comment c WHERE c.book.id = :bookId ORDER BY c.createdAt DESC")
     List<Comment> findAllByBookId(@Param("bookId") Integer bookId);
 
     @Query("SELECT c FROM Comment c WHERE c.user.id = :userId")
     List<Comment> findAllByUserId(@Param("userId") Integer userId);
+
+
+    @EntityGraph(attributePaths = {"user", "book"})
+    @Query("SELECT c FROM Comment c WHERE c.id = :id")
+    Optional<Comment> findByIdWithRelations(@Param("id") Integer id);
+
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.deletedAt IS NULL")
+    Long countActiveComments();
+
+    @Query("SELECT COUNT(c) FROM Comment c")
+    Long countTotalComments();
+
+    @Query("SELECT " +
+           "CAST(COUNT(CASE WHEN c.deletedAt IS NOT NULL THEN 1 END) AS double) / COUNT(c) * 100 " +
+           "FROM Comment c")
+    Double getDeletedCommentsPercentage();
+
+    @EntityGraph(attributePaths = {"user", "book"})
+    @Query("SELECT c FROM Comment c " +
+           "WHERE c.deletedAt IS NULL " +
+           "ORDER BY c.createdAt DESC")
+    Page<Comment> findRecentComments(Pageable pageable);
+
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.book.id = :bookId AND c.deletedAt IS NULL")
+    Long countActiveCommentsByBookId(@Param("bookId") Integer bookId);
+
+
 }
