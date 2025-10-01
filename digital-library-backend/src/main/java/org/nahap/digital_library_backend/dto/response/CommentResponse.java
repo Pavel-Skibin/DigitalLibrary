@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 
 public record CommentResponse(
         Integer id,
+        Integer userId,
+        String userName,
+        Integer bookId,
         String text,
-        String authorUsername,
         LocalDateTime createdAt,
-        boolean isDeleted
+        LocalDateTime deletedAt
 ) {}

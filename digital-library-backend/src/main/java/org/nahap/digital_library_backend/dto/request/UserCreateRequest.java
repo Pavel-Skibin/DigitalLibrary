@@ -5,8 +5,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record UserCreateRequest(
-        @NotBlank String username,
-        @NotBlank String password, // plain text, хешируем в сервисе
-        @Email @NotBlank String email,
-        @NotNull Integer roleId
+        @NotBlank(message = "Логин не может быть пустым")
+        String username,
+
+        @NotBlank(message = "Пароль не может быть пустым")
+        String password,
+
+        @NotBlank(message = "Email не может быть пустым")
+        @Email(message = "Некорректный формат email")
+        String email,
+
+        @NotNull(message = "ID роли не может быть пустым")
+        Integer roleId
 ) {}

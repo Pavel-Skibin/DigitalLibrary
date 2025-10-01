@@ -4,5 +4,5 @@ public record AuthorResponse(
         Integer id,
         String firstName,
         String lastName,
-        String fullName // "Имя Фамилия"
+        String fullName
 ) {}

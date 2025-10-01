@@ -6,7 +6,7 @@ public record BookResponse(
         Integer id,
         String title,
         String description,
-        List<String> authors, // ["Лев Толстой", "Фёдор Достоевский"]
-        List<String> genres,  // ["Роман", "Классика"]
-        Double averageRating  // 4.5
+        List<String> authors,
+        List<String> genres,
+        Double averageRating
 ) {}

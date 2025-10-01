@@ -11,5 +11,5 @@ public record BookDetailResponse(
         List<String> genres,
         Double averageRating,
         Long totalRatings,
-        List<CommentResponse> comments // Только активные комментарии
+        List<CommentResponse> comments
 ) {}
