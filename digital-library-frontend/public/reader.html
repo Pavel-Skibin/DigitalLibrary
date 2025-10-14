@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foliate Reader</title>
+    <style>
+        /* Styles from index.html related to foliate-js */
+        :root {
+            /* Светлая бежевая тема */
+            --beige-50: #fdf8f0;
+            --beige-100: #f9f0e3;
+            --beige-200: #f0e4d3;
+            --beige-300: #e6d7c3;
+            --beige-400: #d2c1a8;
+            --beige-500: #bdae8f;
+            --beige-600: #9c8c6f;
+            --beige-700: #7a6d55;
+            --beige-800: #584e3b;
+            --beige-900: #362f22;
+
+            --text-primary: #3a3228;
+            --text-secondary: #6b5e51;
+            --text-tertiary: #9c8c7a;
+
+            --active-bg: rgba(156, 140, 111, 0.15);
+            --hover-bg: rgba(156, 140, 111, 0.08);
+            --border-color: rgba(156, 140, 111, 0.2);
+            --shadow-color: rgba(58, 50, 40, 0.15);
+
+            --canvas-bg: var(--beige-100);
+            --canvas-text: var(--text-primary);
+            --gray-text: var(--text-secondary);
+        }
+
+        /* Светлая молочно-кремовая тема */
+        .theme-light {
+            --beige-50: #fefcf8;
+            --beige-100: #f9f5f0;
+            --beige-200: #f0e8d8;
+            --beige-300: #e6d9c3;
+            --beige-400: #d2c1a8;
+            --beige-500: #bdae8f;
+            --beige-600: #9c8c6f;
+            --beige-700: #7a6d55;
+            --beige-800: #584e3b;
+            --beige-900: #362f22;
+
+            --text-primary: #2d2518;
+            --text-secondary: #5a4f3f;
+            --text-tertiary: #8a7d6a;
+
+            --active-bg: rgba(156, 140, 111, 0.12);
+            --hover-bg: rgba(156, 140, 111, 0.06);
+            --border-color: rgba(156, 140, 111, 0.15);
+            --shadow-color: rgba(45, 37, 24, 0.08);
+
+            --canvas-bg: var(--beige-50);
+            --canvas-text: var(--text-primary);
+            --gray-text: var(--text-secondary);
+        }
+
+        /* Темная тема */
+        .theme-dark {
+            --beige-50: #2a241d;
+            --beige-100: #362f27;
+            --beige-200: #4a4137;
+            --beige-300: #5e5347;
+            --beige-400: #7a6d5d;
+            --beige-500: #968773;
+            --beige-600: #b29f89;
+            --beige-700: #ceb79f;
+            --beige-800: #e5d1b9;
+            --beige-900: #f5eadc;
+
+            --text-primary: #f5eadc;
+            --text-secondary: #d9cbbd;
+            --text-tertiary: #bdae9f;
+
+            --active-bg: rgba(178, 159, 137, 0.2);
+            --hover-bg: rgba(178, 159, 137, 0.12);
+            --border-color: rgba(178, 159, 137, 0.25);
+            --shadow-color: rgba(0, 0, 0, 0.3);
+
+            --canvas-bg: var(--beige-100);
+            --canvas-text: var(--text-primary);
+            --gray-text: var(--text-secondary);
+        }
+
+        @supports (color-scheme: light dark) {
+            @media (prefers-color-scheme: dark) {
+                :root:not(.theme-light):not(.theme-dark) {
+                    --beige-50: #2a241d;
+                    --beige-100: #362f27;
+                    --beige-200: #4a4137;
+                    --beige-300: #5e5347;
+                    --beige-400: #7a6d5d;
+                    --beige-500: #968773;
+                    --beige-600: #b29f89;
+                    --beige-700: #ceb79f;
+                    --beige-800: #e5d1b9;
+                    --beige-900: #f5eadc;
+
+                    --text-primary: #f5eadc;
+                    --text-secondary: #d9cbbd;
+                    --text-tertiary: #bdae9f;
+
+                    --active-bg: rgba(178, 159, 137, 0.2);
+                    --hover-bg: rgba(178, 159, 137, 0.12);
+                    --border-color: rgba(178, 159, 137, 0.25);
+                    --shadow-color: rgba(0, 0, 0, 0.3);
+
+                    --canvas-bg: var(--beige-100);
+                    --canvas-text: var(--text-primary);
+                    --gray-text: var(--text-secondary);
+                }
+            }
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            margin: 0 auto;
+            height: 100%;
+            font: menu;
+            font-family: system-ui, sans-serif;
+            background-color: var(--canvas-bg);
+            color: var(--canvas-text);
+        }
+
+        .toolbar {
+            box-sizing: border-box;
+            position: absolute;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            height: 48px;
+            padding: 6px;
+            transition: opacity 250ms ease;
+            visibility: hidden;
+            background-color: var(--canvas-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+
+        .toolbar button {
+            padding: 3px;
+            border-radius: 6px;
+            background: none;
+            border: 0;
+            color: var(--gray-text);
+        }
+
+        .toolbar button:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        #header-bar {
+            top: 0;
+        }
+
+        #nav-bar {
+            bottom: 0;
+        }
+
+        #progress-slider {
+            flex-grow: 1;
+            margin: 0 12px;
+            visibility: visible;
+            accent-color: var(--beige-600);
+            z-index: 1;
+        }
+
+        #side-bar {
+            visibility: hidden;
+            box-sizing: border-box;
+            position: absolute;
+            z-index: 3;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 320px;
+            transform: translateX(-320px);
+            display: flex;
+            flex-direction: column;
+            background: var(--canvas-bg);
+            color: var(--canvas-text);
+            box-shadow: 0 0 0 1px var(--border-color), 0 0 40px var(--shadow-color);
+            transition: visibility 0s linear 300ms, transform 300ms ease;
+            border-right: 1px solid var(--border-color);
+        }
+
+        #side-bar.show {
+            visibility: visible;
+            transform: translateX(0);
+            transition-delay: 0s;
+        }
+
+        #dimming-overlay {
+            visibility: hidden;
+            position: fixed;
+            z-index: 2;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--shadow-color);
+            opacity: 0;
+            transition: visibility 0s linear 300ms, opacity 300ms ease;
+        }
+
+        #dimming-overlay.show {
+            visibility: visible;
+            opacity: 1;
+            transition-delay: 0s;
+        }
+
+        #side-bar-header {
+            padding: 1rem;
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            background-color: var(--beige-50);
+        }
+
+        #side-bar-cover {
+            height: 10vh;
+            min-height: 60px;
+            max-height: 180px;
+            border-radius: 3px;
+            border: 0;
+            background: var(--beige-200);
+            box-shadow: 0 0 1px var(--shadow-color), 0 0 16px var(--shadow-color);
+            margin-inline-end: 1rem;
+        }
+
+        #side-bar-cover:not([src]) {
+            display: none;
+        }
+
+        #side-bar-title {
+            margin: .5rem 0;
+            font-size: inherit;
+            color: var(--text-primary);
+        }
+
+        #side-bar-author {
+            margin: .5rem 0;
+            font-size: small;
+            color: var(--gray-text);
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            background-color: var(--beige-50);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .tab-button.active {
+            border-bottom-color: var(--beige-600);
+            color: var(--text-primary);
+            background: var(--active-bg);
+        }
+
+        .tab-content {
+            display: none;
+            padding: .5rem;
+            overflow-y: scroll;
+            flex: 1;
+            background-color: var(--canvas-bg);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+
+        .modal-btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background: #c82333;
+        }
+
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+
+        #toc-view li, #toc-view ol {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #toc-view a, #toc-view span {
+            display: block;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 2px 0;
+        }
+
+        #toc-view a {
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        #toc-view a:hover {
+            background: var(--hover-bg);
+        }
+
+        #toc-view span {
+            color: var(--gray-text);
+        }
+
+        #toc-view svg {
+            margin-inline-start: -24px;
+            padding-inline-start: 5px;
+            padding-inline-end: 6px;
+            fill: var(--text-primary);
+            cursor: default;
+            transition: transform .2s ease;
+            opacity: .6;
+        }
+
+        #toc-view svg:hover {
+            opacity: 1;
+        }
+
+        #toc-view [aria-current] {
+            font-weight: bold;
+            background: var(--active-bg);
+            color: var(--beige-700);
+        }
+
+        #toc-view [aria-expanded="false"] svg {
+            transform: rotate(-90deg);
+        }
+
+        #toc-view [aria-expanded="false"] + [role="group"] {
+            display: none;
+        }
+
+        /* Bookmarks Styles */
+        #bookmarks-view {
+            padding: 0.5rem;
+        }
+
+        .bookmark-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 4px 0;
+            border-radius: 6px;
+            background: var(--beige-50);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bookmark-item:hover {
+            background: var(--hover-bg);
+            border-color: var(--beige-600);
+        }
+
+        .bookmark-content {
+            flex: 1;
+        }
+
+        .bookmark-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .bookmark-position {
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+
+        .bookmark-notes {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .bookmark-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .bookmark-action-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            background: var(--beige-200);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .bookmark-action-btn:hover {
+            background: var(--beige-400);
+        }
+
+        .bookmark-action-btn.delete {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .bookmark-action-btn.delete:hover {
+            background: rgba(220, 53, 69, 0.2);
+        }
+
+        .bookmark-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-text);
+        }
+
+        #add-bookmark-button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--beige-600);
+            color: var(--beige-50);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        #add-bookmark-button:hover {
+            background: var(--beige-700);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .menu-container {
+            position: relative;
+        }
+
+        .menu, .menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu {
+            visibility: hidden;
+            position: absolute;
+            right: 0;
+            background: var(--canvas-bg);
+            color: var(--canvas-text);
+            border-radius: 6px;
+            box-shadow: 0 0 0 1px var(--border-color), 0 0 16px var(--shadow-color);
+            padding: 6px;
+            cursor: default;
+            border: 1px solid var(--border-color);
+        }
+
+        .menu.show {
+            visibility: visible;
+        }
+
+        .menu li {
+            padding: 6px 12px;
+            padding-left: 24px;
+            border-radius: 6px;
+            color: var(--text-primary);
+        }
+
+        .menu li:hover {
+            background: var(--hover-bg);
+        }
+
+        .menu li[aria-checked="true"] {
+            background-position: center left;
+            background-repeat: no-repeat;
+            background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223%22%20fill%3D%22%239c8c6f%22%2F%3E%3C%2Fsvg%3E');
+        }
+
+        .menu-control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: var(--text-primary);
+            margin: 2px 0;
+        }
+
+        .menu-control-group:hover {
+            background: var(--hover-bg);
+        }
+
+        .menu-control-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .menu-control-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .menu-control-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--canvas-bg);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .menu-control-btn:hover {
+            background: var(--hover-bg);
+            border-color: var(--beige-600);
+        }
+
+        .menu-control-btn:active {
+            background: var(--active-bg);
+            transform: scale(0.95);
+        }
+
+        #page-number-display {
+            color: var(--gray-text) !important;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            padding: 0 10px;
+            white-space: nowrap;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .back-button:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--canvas-bg);
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+
+        .modal-header {
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 18px;
+        }
+
+        .modal-body {
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--beige-50);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--beige-600);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-primary {
+            background: var(--beige-600);
+            color: var(--beige-50);
+        }
+
+        .modal-btn-primary:hover {
+            background: var(--beige-700);
+        }
+
+        .modal-btn-secondary {
+            background: var(--beige-200);
+            color: var(--text-primary);
+        }
+
+        .modal-btn-secondary:hover {
+            background: var(--beige-300);
+        }
+    </style>
+</head>
+<body>
+<div class="foliate-viewer-page">
+    <!-- Header Bar -->
+    <div id="header-bar" class="toolbar">
+        <button class="back-button" onclick="window.close()">← Назад</button>
+        <button id="side-bar-button" title="Table of Contents">☰</button>
+        <div class="book-info-display">
+            <h2 id="side-bar-title"></h2>
+            <p id="side-bar-author"></p>
+        </div>
+        <button id="add-bookmark-button" title="Добавить закладку">🔖 Закладка</button>
+        <div id="menu-button" class="menu-container">
+            <button title="Settings">⚙</button>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div id="nav-bar" class="toolbar">
+        <button id="left-button" title="Previous Page">◀</button>
+        <input type="range" id="progress-slider" min="0" max="1" step="0.0000001" value="0">
+        <span id="page-number-display"></span>
+        <button id="right-button" title="Next Page">▶</button>
+    </div>
+
+    <!-- Side Bar -->
+    <div id="side-bar">
+        <div id="side-bar-header">
+            <img id="side-bar-cover" alt="Book Cover">
+            <div>
+                <h2 id="side-bar-title-sidebar"></h2>
+                <p id="side-bar-author-sidebar"></p>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" data-tab="toc">Оглавление</button>
+            <button class="tab-button" data-tab="bookmarks">Закладки</button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="toc-view" class="tab-content active"></div>
+        <div id="bookmarks-view" class="tab-content">
+            <div class="bookmark-empty">Нет закладок</div>
+        </div>
+    </div>
+
+    <!-- Dimming Overlay -->
+    <div id="dimming-overlay"></div>
+
+    <!-- Edit Bookmark Modal -->
+    <div id="edit-bookmark-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Редактировать закладку</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="bookmark-name-input">Название</label>
+                    <input type="text" id="bookmark-name-input" class="form-input" placeholder="Название закладки">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bookmark-notes-input">Заметки</label>
+                    <textarea id="bookmark-notes-input" class="form-textarea" placeholder="Добавьте заметки..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-danger" id="delete-bookmark-btn">🗑️ Удалить</button>
+                <div style="flex: 1;"></div>
+                <button class="modal-btn modal-btn-secondary" id="cancel-edit-btn">Отмена</button>
+                <button class="modal-btn modal-btn-primary" id="save-edit-btn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { open } from '../libs/foliate-js/reader.js';
+
+    // Global variables
+    let currentBookId = null;
+    let currentBookmarks = [];
+    let currentEditingBookmark = null;
+    let bookmarkCounter = 1;
+    const API_BASE_URL = 'http://localhost:8080/api';
+    let jwtToken = null;
+    let currentPosition = 0; //
+
+    // Get token from URL or cookie
+    // Get token from URL or cookie
+    function getAuthToken() {
+        console.log('=== Getting Auth Token ===');
+
+        // Сначала проверяем URL параметр
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenFromUrl = urlParams.get('token');
+
+        console.log('Token from URL:', tokenFromUrl ? 'EXISTS (length: ' + tokenFromUrl.length + ')' : 'NOT FOUND');
+
+        if (tokenFromUrl) {
+            jwtToken = tokenFromUrl;
+            console.log('✓ Using token from URL');
+            console.log('Token preview:', tokenFromUrl.substring(0, 20) + '...');
+            return tokenFromUrl;
+        }
+
+        // Если нет в URL, пробуем из cookie
+        console.log('All cookies:', document.cookie);
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; jwt=`);
+
+        console.log('Cookie parts length:', parts.length);
+
+        if (parts.length === 2) {
+            jwtToken = parts.pop().split(';').shift();
+            console.log('✓ Token found in cookie');
+            console.log('Token preview:', jwtToken.substring(0, 20) + '...');
+            return jwtToken;
+        }
+
+        console.error('✗ NO TOKEN FOUND ANYWHERE!');
+        console.log('Current URL:', window.location.href);
+        console.log('Current cookies:', document.cookie);
+        return null;
+    }
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+        const token = getAuthToken();
+        console.log('JWT Token exists:', token ? 'Yes' : 'No');
+        return !!token;
+    }
+
+    // API call wrapper with authentication
+    async function apiCall(url, options = {}) {
+        const token = getAuthToken();
+
+        if (!token) {
+            console.error('No authentication token found!');
+            showNotification('Необходимо войти в систему', 'error');
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+            throw new Error('No authentication token');
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+
+        console.log('Making API call to:', url);
+        console.log('Method:', options.method || 'GET');
+
+        // Пробуем оба способа: и cookie и Bearer token
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                ...headers,
+                'Authorization': `Bearer ${token}` // Добавляем Bearer token
+            },
+            credentials: 'include' // И также отправляем cookies
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error:', response.status, errorText);
+
+            if (response.status === 403 || response.status === 401) {
+                console.error('Access forbidden. Token might be invalid or expired.');
+                showNotification('Сессия истекла. Войдите снова.', 'error');
+                setTimeout(() => {
+                    window.close();
+                }, 2000);
+            }
+
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        return await response.json();
+    }
+
+    // Create bookmark
+    async function createBookmark(position) {
+        try {
+            console.log('=== Creating Bookmark ===');
+            // 🔴 НЕ ОКРУГЛЯЕМ позицию!
+            console.log('Position (raw, no rounding):', position);
+            console.log('Position precision:', position.toString());
+
+            const token = getAuthToken();
+            if (!token) {
+                console.error('Cannot create bookmark: No authentication token');
+                showNotification('Необходимо войти в систему', 'error');
+                return;
+            }
+
+            const requestBody = {
+                bookId: parseInt(currentBookId),
+                position: position, // 🔴 Сохраняем с максимальной точностью
+                name: `Закладка ${bookmarkCounter}`,
+                notes: ""
+            };
+
+            console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
+            const response = await apiCall(`${API_BASE_URL}/bookmarks`, {
+                method: 'POST',
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('✓ Bookmark created successfully:', response);
+            bookmarkCounter++;
+            await loadBookmarks();
+            showNotification('Закладка добавлена');
+            return response;
+        } catch (error) {
+            console.error('✗ Error creating bookmark:', error);
+            if (error.message !== 'No authentication token') {
+                showNotification('Ошибка при добавлении закладки: ' + error.message, 'error');
+            }
+        }
+    }
+    // Load bookmarks
+    async function loadBookmarks() {
+        try {
+            const response = await apiCall(`${API_BASE_URL}/bookmarks/book/${currentBookId}?page=0&size=100`);
+            currentBookmarks = response.content || [];
+
+            // Update bookmark counter based on existing bookmarks
+            if (currentBookmarks.length > 0) {
+                const maxNumber = Math.max(...currentBookmarks.map(b => {
+                    const match = b.name.match(/Закладка (\d+)/);
+                    return match ? parseInt(match[1]) : 0;
+                }));
+                bookmarkCounter = maxNumber + 1;
+            }
+
+            renderBookmarks();
+        } catch (error) {
+            console.error('Ошибка при загрузке закладок:', error);
+            if (error.message !== 'No authentication token') {
+                currentBookmarks = [];
+                renderBookmarks();
+            }
+        }
+    }
+
+    // Update bookmark
+    async function updateBookmark(bookmarkId, data) {
+        try {
+            const response = await apiCall(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+
+            await loadBookmarks();
+            showNotification('Закладка обновлена');
+            return response;
+        } catch (error) {
+            console.error('Ошибка при обновлении закладки:', error);
+            if (error.message !== 'No authentication token') {
+                showNotification('Ошибка при обновлении закладки', 'error');
+            }
+        }
+    }
+
+    // Delete bookmark
+    async function deleteBookmark(bookmarkId) {
+        try {
+            await apiCall(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
+                method: 'DELETE'
+            });
+
+            await loadBookmarks();
+            showNotification('Закладка удалена');
+        } catch (error) {
+            console.error('Ошибка при удалении закладки:', error);
+            if (error.message !== 'No authentication token') {
+                showNotification('Ошибка при удалении закладки', 'error');
+            }
+        }
+    }
+
+    // Render bookmarks in sidebar
+    function renderBookmarks() {
+        const bookmarksView = document.getElementById('bookmarks-view');
+
+        if (currentBookmarks.length === 0) {
+            bookmarksView.innerHTML = '<div class="bookmark-empty">Нет закладок</div>';
+            return;
+        }
+
+        // Sort bookmarks by position
+        const sortedBookmarks = [...currentBookmarks].sort((a, b) => a.position - b.position);
+
+        const bookmarksList = document.createElement('div');
+        bookmarksList.className = 'bookmarks-list';
+
+        sortedBookmarks.forEach(bookmark => {
+            const bookmarkItem = document.createElement('div');
+            bookmarkItem.className = 'bookmark-item';
+            bookmarkItem.innerHTML = `
+            <div class="bookmark-info">
+                <div class="bookmark-name">🔖 ${bookmark.name || 'Закладка'}</div>
+                ${bookmark.notes ? `<div class="bookmark-notes">${bookmark.notes}</div>` : ''}
+                <div class="bookmark-position">Позиция: ${Math.round(bookmark.position * 100)}%</div>
+            </div>
+            <button class="bookmark-edit-btn" data-bookmark-id="${bookmark.id}">✏️</button>
+        `;
+
+            // Navigate to bookmark on click
+            bookmarkItem.addEventListener('click', (e) => {
+                // Не переходим если нажали на кнопку редактирования
+                if (e.target.classList.contains('bookmark-edit-btn')) {
+                    return;
+                }
+
+                console.log('=== Navigating to Bookmark ===');
+                console.log('Bookmark:', bookmark);
+                console.log('Position:', bookmark.position);
+
+                // Проверяем наличие reader
+                if (!globalThis.reader) {
+                    console.error('Reader not found');
+                    showNotification('Ошибка: ридер не инициализирован', 'error');
+                    return;
+                }
+
+                // Используем метод goToFraction для перехода к закладке
+                try {
+                    if (globalThis.reader.view && typeof globalThis.reader.view.goToFraction === 'function') {
+                        console.log('Using view.goToFraction()');
+                        globalThis.reader.view.goToFraction(bookmark.position);
+                    } else if (globalThis.reader.view && typeof globalThis.reader.view.goTo === 'function') {
+                        console.log('Using view.goTo()');
+                        globalThis.reader.view.goTo(bookmark.position);
+                    } else {
+                        console.error('No navigation method available');
+                        showNotification('Ошибка навигации', 'error');
+                        return;
+                    }
+
+                    console.log('✓ Navigation initiated');
+
+                    // Закрываем сайдбар на мобильных устройствах
+                    if (window.innerWidth < 768) {
+                        document.getElementById('side-bar').classList.remove('show');
+                        document.getElementById('dimming-overlay').classList.remove('show');
+                    }
+
+                    showNotification(`Переход к закладке: ${bookmark.name}`);
+
+                } catch (error) {
+                    console.error('Error navigating to bookmark:', error);
+                    showNotification('Ошибка при переходе к закладке', 'error');
+                }
+            });
+
+            // Edit bookmark button
+            const editBtn = bookmarkItem.querySelector('.bookmark-edit-btn');
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openEditModal(bookmark);
+            });
+
+            bookmarksList.appendChild(bookmarkItem);
+        });
+
+        bookmarksView.innerHTML = '';
+        bookmarksView.appendChild(bookmarksList);
+    }
+
+    // Open edit modal
+    function openEditModal(bookmark) {
+        currentEditingBookmark = bookmark;
+        const modal = document.getElementById('edit-bookmark-modal');
+        const nameInput = document.getElementById('bookmark-name-input');
+        const notesInput = document.getElementById('bookmark-notes-input');
+
+        nameInput.value = bookmark.name || '';
+        notesInput.value = bookmark.notes || '';
+
+        modal.style.display = 'flex';
+    }
+
+    // Close edit modal
+    function closeEditModal() {
+        const modal = document.getElementById('edit-bookmark-modal');
+        modal.style.display = 'none';
+        currentEditingBookmark = null;
+    }
+
+    // Show notification
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Initialize reader
+    async function initReader() {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentBookId = urlParams.get('bookId');
+
+        if (!currentBookId) {
+            console.error('Не удалось получить bookId из URL.');
+            alert('Не удалось открыть книгу: отсутствует ID.');
+            window.close();
+            return;
+        }
+
+        // Check if user is authenticated
+        const authenticated = isAuthenticated();
+        if (!authenticated) {
+            console.warn('User not authenticated. Bookmarks will not be available.');
+        }
+
+        try {
+            // Загрузка книги - публичный эндпоинт
+            const response = await fetch(`${API_BASE_URL}/books/${currentBookId}/fb2`);
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки FB2: ${response.statusText}`);
+            }
+            const fb2Blob = await response.blob();
+            const fb2File = new File([fb2Blob], `book-${currentBookId}.fb2`, {
+                type: 'application/x-fb2+xml'
+            });
+
+            await open(fb2File);
+
+            // Загружаем закладки только если пользователь авторизован
+            if (authenticated) {
+                await loadBookmarks();
+            }
+
+        } catch (error) {
+            console.error('Ошибка при открытии книги в Foliate Reader:', error);
+            alert(`Не удалось открыть книгу: ${error.message}.`);
+            window.close();
+        }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        initReader();
+
+        // Add bookmark button
+        document.getElementById('add-bookmark-button').addEventListener('click', async () => {
+            console.log('=== Add Bookmark Button Clicked ===');
+
+            if (!globalThis.reader?.view) {
+                console.error('Reader view not initialized');
+                showNotification('Вид ридера не инициализирован', 'error');
+                return;
+            }
+
+            // 🔴 Используем позицию начала страницы
+            let position = globalThis.currentPageStart || 0;
+
+            console.log('=== Position Detection ===');
+            console.log('Page start position:', position);
+
+            // Fallback к slider
+            if (position === 0) {
+                const slider = document.getElementById('progress-slider');
+                position = parseFloat(slider.value) || 0;
+                console.log('Fallback to slider:', position);
+            }
+
+            console.log('=== Final Position ===');
+            console.log('Value:', position);
+            console.log('Precision:', position.toString());
+
+            await createBookmark(position);
+
+            // Switch to bookmarks tab
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector('[data-tab="bookmarks"]').classList.add('active');
+            document.getElementById('bookmarks-view').classList.add('active');
+
+            // Open sidebar
+            document.getElementById('side-bar').classList.add('show');
+            document.getElementById('dimming-overlay').classList.add('show');
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                button.classList.add('active');
+                document.getElementById(`${tabName}-view`).classList.add('active');
+            });
+        });
+
+        // Modal controls
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
+
+        document.getElementById('save-edit-btn').addEventListener('click', async () => {
+            if (currentEditingBookmark) {
+                const name = document.getElementById('bookmark-name-input').value.trim();
+                const notes = document.getElementById('bookmark-notes-input').value.trim();
+
+                await updateBookmark(currentEditingBookmark.id, {
+                    position: currentEditingBookmark.position,
+                    name: name || currentEditingBookmark.name,
+                    notes: notes
+                });
+
+                closeEditModal();
+            }
+        });
+
+        document.getElementById('delete-bookmark-btn').addEventListener('click', async () => {
+            if (currentEditingBookmark) {
+                const confirmDelete = confirm(`Удалить закладку "${currentEditingBookmark.name}"?`);
+
+                if (confirmDelete) {
+                    console.log('=== Deleting Bookmark ===');
+                    console.log('Bookmark ID:', currentEditingBookmark.id);
+
+                    await deleteBookmark(currentEditingBookmark.id);
+                    closeEditModal();
+
+                    showNotification('Закладка удалена', 'success');
+                }
+            }
+        });
+
+// Close modal on outside click
+        document.getElementById('edit-bookmark-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'edit-bookmark-modal') {
+                closeEditModal();
+            }
+        });
+
+        // Close modal on outside click
+        document.getElementById('edit-bookmark-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'edit-bookmark-modal') {
+                closeEditModal();
+            }
+        });
+    });
+
+    window.addEventListener('beforeunload', () => {
+        if (globalThis.reader && typeof globalThis.reader.destroy === 'function') {
+            globalThis.reader.destroy();
+        }
+        delete globalThis.reader;
+        const foliateViewElement = document.querySelector('foliate-view');
+        if (foliateViewElement) {
+            foliateViewElement.remove();
+        }
+    });
+</script>
+
+</body>
+</html>
