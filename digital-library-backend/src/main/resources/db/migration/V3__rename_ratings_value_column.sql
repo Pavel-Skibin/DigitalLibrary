@@ -1,1 +1,0 @@
-ALTER TABLE ratings RENAME COLUMN value TO rating_value;
