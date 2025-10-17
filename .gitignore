@@ -34,3 +34,5 @@ build/
 *.log
 
 
+*.sql
+ digital-library-frontend/src/foliate-js/

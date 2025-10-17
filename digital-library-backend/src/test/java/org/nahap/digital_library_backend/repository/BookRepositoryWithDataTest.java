@@ -57,28 +57,4 @@ class BookRepositoryWithDataTest extends BaseRepositoryTest {
         assertThat(page.getTotalElements()).isEqualTo(10);
     }
 
-//    @Test
-//    @DisplayName("Should find detailed book by ID with all associations")
-//    void shouldFindDetailedBookById() {
-//        Optional<Book> bookOpt = bookRepository.findDetailedById(1);
-//        assertThat(bookOpt).isPresent();
-//        Book book = bookOpt.get();
-//
-//        assertThat(book.getBookAuthors()).isNotEmpty();
-//        assertThat(book.getBookAuthors().get(0).getAuthor().getFirstName()).isEqualTo("Наринэ");
-//
-//        assertThat(book.getBookGenres()).isNotEmpty();
-//        assertThat(book.getBookGenres()).extracting(bg -> bg.getGenre().getName())
-//                .contains("Современная проза", "Драма", "Юмор");
-//
-//        assertThat(book.getRatings()).hasSize(4); // из SQL
-//        assertThat(book.getComments()).hasSize(3); // активные комментарии (id 1,2,3; id 20 удалён)
-//    }
-//
-//    @Test
-//    @DisplayName("Should return empty for non-existing book ID")
-//    void shouldReturnEmptyForNonExistingBook() {
-//        Optional<Book> book = bookRepository.findDetailedById(999);
-//        assertThat(book).isEmpty();
-//    }
 }

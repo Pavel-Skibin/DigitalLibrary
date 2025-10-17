@@ -31,3 +31,30 @@ coverage
 node_modules/
 .vite/
 dist/
+
+
+pnpm-lock.yaml
+yarn.lock
+
+
+.vscode/
+.idea/
+
+
+.env.local
+.env.development.local
+.env.production.local
+
+
+build/
+
+src/foliate-js/
+
+#временно
+digital-library-backend/src/test/java/org/nahap/digital_library_backend/controller/
+        digital-library-backend/src/test/java/org/nahap/digital_library_backend/dto/
+        digital-library-backend/src/test/java/org/nahap/digital_library_backend/service/
+                modified:   digital-library-backend/src/test/java/org/nahap/digital_library_backend/repository/AuthorRepositoryWithDataTest.java
+                modified:   digital-library-backend/src/test/java/org/nahap/digital_library_backend/repository/BookRepositoryWithDataTest.java
+                modified:   digital-library-backend/src/test/resources/application-test.properties
+                modified:   digital-library-frontend/.gitignore
