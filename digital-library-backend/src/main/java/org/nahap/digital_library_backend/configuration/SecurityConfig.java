@@ -87,6 +87,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/books").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("MODERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/books/upload").hasAnyRole("MODERATOR", "ADMIN")
 
                         // Модерация комментариев
                         .requestMatchers(HttpMethod.GET, "/api/comments/books/*/all").hasAnyRole("MODERATOR", "ADMIN")
