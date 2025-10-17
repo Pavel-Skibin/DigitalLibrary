@@ -1,12 +1,8 @@
-
-
-
-
 <template>
   <div class="app-layout">
-    <Header />
+    <Header/>
     <div class="library-container">
-      <AppSidebar :show-admin-link="isModeratorOrAdmin" />
+      <AppSidebar :show-admin-link="isModeratorOrAdmin"/>
 
       <main class="content">
         <h1 class="page-title">📚 Книги</h1>
@@ -72,6 +68,7 @@
             :is-authenticated="isAuthenticated"
             @open-reader="openBookInReader"
             @open-rating="showRatingModal = true"
+            @go-to-login="goToLogin"
         />
 
         <CommentsSection
@@ -88,6 +85,7 @@
             @moderate-delete="handleModerateDeleteComment"
             @restore="handleRestoreComment"
             @load-more="handleLoadMoreComments"
+            @go-to-login="goToLogin"
         />
       </aside>
     </div>
@@ -112,12 +110,22 @@
         @search="handleExtendedSearch"
         @reset="handleResetExtendedSearch"
     />
+
+    <!--  Модальное окно для неавторизованных -->
+    <AuthPromptModal
+        v-if="showAuthPrompt"
+        :action-description="authPromptAction"
+        @close="showAuthPrompt = false"
+        @login="goToLogin"
+    />
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getCookie } from '@/utils/cookies'
+import {ref, onMounted} from 'vue'
+import {getCookie} from '@/utils/cookies'
+import { useRouter } from 'vue-router'
 
 import Header from '@/components/layout/Header.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
@@ -128,11 +136,12 @@ import BookDetailPanel from '@/components/books/BookDetailPanel.vue'
 import CommentsSection from '@/components/books/CommentsSection.vue'
 import RatingModal from '@/components/books/RatingModal.vue'
 import ExtendedSearchModal from '@/components/books/ExtendedSearchModal.vue'
+import AuthPromptModal from '@/components/ui/AuthPromptModal.vue'
 
-import { useBookComments } from '@/composables/useBookComments'
-import { useBookRating } from '@/composables/useBookRating'
-import { useAdminAuth } from '@/composables/useAdminAuth'
-import { useExtendedSearch } from '@/composables/useExtendedSearch'
+import {useBookComments} from '@/composables/useBookComments'
+import {useBookRating} from '@/composables/useBookRating'
+import {useAdminAuth} from '@/composables/useAdminAuth'
+import {useExtendedSearch} from '@/composables/useExtendedSearch'
 
 // Состояние книг
 const books = ref([])
@@ -146,6 +155,8 @@ const pageSize = 10
 const searchQuery = ref('')
 const isSearchMode = ref(false)
 let searchTimeout = null
+
+const router = useRouter()
 
 
 const {
@@ -169,7 +180,7 @@ const {
   submitRating
 } = useBookRating()
 
-const { isAdmin, isModerator } = useAdminAuth()
+const {isAdmin, isModerator} = useAdminAuth()
 const isModeratorOrAdmin = ref(false)
 
 const {
@@ -195,8 +206,51 @@ const currentUserId = ref(null)
 const showRatingModal = ref(false)
 const selectedRatingValue = ref(0)
 
+const showAuthPrompt = ref(false)
+const authPromptAction = ref('')
+
 function getCoverUrl(book) {
   return book.coverUrl || '/placeholder.jpg'
+}
+
+function requireAuth(action) {
+  if (!isAuthenticated.value) {
+    authPromptAction.value = action
+    showAuthPrompt.value = true
+    return false
+  }
+  return true
+}
+
+function goToLogin() {
+  router.push('/login')
+}
+
+
+async function handleSubmitRating() {
+  if (!requireAuth('оценить книгу')) return
+
+  if (!selectedRatingValue.value) return
+  const success = await submitRating(selectedBook.value.id, selectedRatingValue.value)
+  if (success) {
+    closeRatingModal()
+    await loadBookDetails(selectedBook.value.id)
+  }
+}
+
+async function handleSubmitComment(text) {
+  if (!requireAuth('оставить комментарий')) return
+  await submitComment(selectedBook.value.id, text)
+}
+
+async function handleUpdateComment({ id, text }) {
+  if (!requireAuth('редактировать комментарий')) return
+  await updateComment(id, text)
+}
+
+async function handleDeleteComment(id) {
+  if (!requireAuth('удалить комментарий')) return
+  await deleteComment(id)
 }
 
 // Загрузка книг
@@ -268,7 +322,7 @@ async function loadSimpleSearchResults(page = 0) {
 // Расширенный поиск
 function openExtendedSearch() {
   if (activeExtendedFilters.value) {
-    extendedFilters.value = { ...activeExtendedFilters.value }
+    extendedFilters.value = {...activeExtendedFilters.value}
   } else {
     extendedFilters.value.title = searchQuery.value
   }
@@ -319,7 +373,6 @@ function updateBookList(content, page, totalPagesCount) {
   totalPages.value = totalPagesCount
 
 
-
   if (books.value.length > 0) {
     selectBook(books.value[0])
   } else {
@@ -362,7 +415,7 @@ async function loadBookDetails(bookId) {
     const response = await fetch(`/api/books/${bookId}`)
     if (!response.ok) throw new Error('Ошибка загрузки деталей')
     const data = await response.json()
-    selectedBook.value = { ...selectedBook.value, ...data }
+    selectedBook.value = {...selectedBook.value, ...data}
   } catch (error) {
     console.error('Ошибка загрузки деталей книги:', error)
   }
@@ -387,28 +440,9 @@ function closeRatingModal() {
   selectedRatingValue.value = 0
 }
 
-async function handleSubmitRating() {
-  if (!selectedRatingValue.value) return
 
-  const success = await submitRating(selectedBook.value.id, selectedRatingValue.value)
-  if (success) {
-    closeRatingModal()
-    await loadBookDetails(selectedBook.value.id)
-  }
-}
 
-// Комментарии
-async function handleSubmitComment(text) {
-  await submitComment(selectedBook.value.id, text)
-}
 
-async function handleUpdateComment({ id, text }) {
-  await updateComment(id, text)
-}
-
-async function handleDeleteComment(id) {
-  await deleteComment(id)
-}
 
 async function handleModerateDeleteComment(id) {
   await moderateDeleteComment(id)
@@ -430,7 +464,7 @@ async function checkAuthentication() {
   if (jwt) {
     try {
       const response = await fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${jwt}` }
+        headers: {'Authorization': `Bearer ${jwt}`}
       })
 
       if (response.ok) {
@@ -656,4 +690,6 @@ onMounted(async () => {
     border: 2px solid #e0e0e0 !important;
   }
 }
+
+
 </style>

@@ -1,4 +1,3 @@
-
 import { createRouter, createWebHistory } from 'vue-router';
 import BooksView from '../views/BooksView.vue';
 import AuthorsView from '../views/AuthorsView.vue';
@@ -11,28 +10,33 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: HomeView
+    component: HomeView,
+    meta: { requiresAuth: false } // ← Гостям разрешён доступ
   },
   {
     path: '/books',
     name: 'Books',
-    component: BooksView
+    component: BooksView,
+    meta: { requiresAuth: false } // ← Гостям разрешён доступ
   },
   {
     path: '/authors',
     name: 'Authors',
-    component: AuthorsView
+    component: AuthorsView,
+    meta: { requiresAuth: false } // ← Гостям разрешён доступ
   },
   {
     path: '/authors/:authorId/books',
     name: 'AuthorBooks',
     component: AuthorBooksView,
-    props: true
+    props: true,
+    meta: { requiresAuth: false } // ← Гостям разрешён доступ
   },
   {
     path: '/login',
     name: 'login',
-    component: LoginRegisterView
+    component: LoginRegisterView,
+    meta: { requiresAuth: false, guestOnly: true } // ← Только для неавторизованных
   },
   {
     path: '/admin',
@@ -49,13 +53,21 @@ const router = createRouter({
 
 
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth) {
-    const jwt = getCookie('jwt');
-    if (!jwt) {
-      next('/login');
-      return;
-    }
+  const jwt = getCookie('jwt');
+  const isAuthenticated = !!jwt;
+
+  // Если страница требует авторизации
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next('/login');
+    return;
   }
+
+  // Если авторизованный пользователь пытается зайти на страницу логина
+  if (to.meta.guestOnly && isAuthenticated) {
+    next('/');
+    return;
+  }
+
   next();
 });
 

@@ -3,28 +3,54 @@
     <div class="header-content">
       <h2 class="header-title">📚 Библиотека</h2>
       <div class="user-info">
-        <span v-if="loading" class="username loading-text">Загрузка...</span>
-        <span v-else-if="username" class="username">👤 {{ username }}</span>
-        <button
-            @click="logout"
-            class="logout-button"
-            :disabled="loading"
-        >
-          🚪 Выйти
-        </button>
+        <!-- Для гостей -->
+        <template v-if="!isAuthenticated">
+          <span class="username guest-label">👤 Гость</span>
+          <button @click="goToLogin" class="login-button">
+            🔑 Войти
+          </button>
+        </template>
+
+        <!-- Для авторизованных пользователей -->
+        <template v-else>
+          <span v-if="loading" class="username loading-text">Загрузка...</span>
+          <span v-else-if="username" class="username">👤 {{ username }}</span>
+          <button
+              @click="logout"
+              class="logout-button"
+              :disabled="loading"
+          >
+            🚪 Выйти
+          </button>
+        </template>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
+import { getCookie } from '@/utils/cookies'
 
+const router = useRouter()
 const { username, loading, fetchUserProfile, logout } = useUser()
 
+// Проверка авторизации
+const isAuthenticated = computed(() => {
+  return !!getCookie('jwt')
+})
+
+const goToLogin = () => {
+  router.push('/login')
+}
+
 onMounted(async () => {
-  await fetchUserProfile()
+  // Загружаем профиль только если есть токен
+  if (isAuthenticated.value) {
+    await fetchUserProfile()
+  }
 })
 </script>
 
@@ -64,11 +90,17 @@ onMounted(async () => {
   color: #5c4033;
 }
 
+.guest-label {
+  color: #999;
+  font-style: italic;
+}
+
 .loading-text {
   color: #999;
   font-style: italic;
 }
 
+.login-button,
 .logout-button {
   background: none;
   border: 1px solid #e8d9c7;
@@ -80,12 +112,22 @@ onMounted(async () => {
   transition: all 0.2s;
 }
 
+.login-button {
+  background-color: #e8d9c7;
+}
+
+.login-button:hover {
+  background-color: #d9c9b7;
+  transform: translateY(-1px);
+}
+
 .logout-button:hover:not(:disabled) {
   background-color: #e8d9c7;
   transform: translateY(-1px);
 }
 
-.logout-button:active:not(:disabled) {
+.logout-button:active:not(:disabled),
+.login-button:active {
   transform: translateY(0);
 }
 
@@ -93,4 +135,7 @@ onMounted(async () => {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
+
 </style>

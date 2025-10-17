@@ -49,6 +49,9 @@
 
     <div v-if="!isAuthenticated" class="auth-message">
       <p>Войдите, чтобы оставить комментарий</p>
+      <button @click="$emit('go-to-login')" class="btn-login-inline">
+        Войти / Регистрация
+      </button>
     </div>
 
     <div v-if="loading" class="loading-comments">
@@ -166,7 +169,8 @@ const emit = defineEmits([
   'delete',
   'moderate-delete',
   'restore',
-  'load-more'
+  'load-more',
+  'go-to-login'
 ])
 
 const newCommentText = ref('')
@@ -502,5 +506,34 @@ function handleRestore(id) {
   color: #ccc;
   border-color: #ccc;
   cursor: not-allowed;
+}
+
+.auth-message {
+  text-align: center;
+  padding: 2rem;
+  background: #f9f2e6;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.auth-message p {
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.btn-login-inline {
+  padding: 0.75rem 1.5rem;
+  background: #5c4033;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-login-inline:hover {
+  background: #4a3329;
+  transform: translateY(-2px);
 }
 </style>
