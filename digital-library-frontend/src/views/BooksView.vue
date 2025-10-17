@@ -203,9 +203,7 @@ function getCoverUrl(book) {
 async function loadBooks(page = 0) {
   loading.value = true
   try {
-    const response = await fetch(
-        `http://localhost:8080/api/books?page=${page}&size=${pageSize}`
-    )
+    const response = await fetch(`/api/books?page=${page}&size=${pageSize}`)
     if (!response.ok) throw new Error('Ошибка загрузки книг')
     const data = await response.json()
     updateBookList(data.content, data.number, data.totalPages)
@@ -252,7 +250,7 @@ async function loadSimpleSearchResults(page = 0) {
   try {
     const query = encodeURIComponent(searchQuery.value.trim())
     const response = await fetch(
-        `http://localhost:8080/api/books/search?title=${query}&page=${page}&size=${pageSize}`
+        `/api/books/search?title=${query}&page=${page}&size=${pageSize}`
     )
     if (!response.ok) throw new Error('Ошибка поиска')
     const data = await response.json()
@@ -361,7 +359,7 @@ function selectBook(book) {
 
 async function loadBookDetails(bookId) {
   try {
-    const response = await fetch(`http://localhost:8080/api/books/${bookId}`)
+    const response = await fetch(`/api/books/${bookId}`)
     if (!response.ok) throw new Error('Ошибка загрузки деталей')
     const data = await response.json()
     selectedBook.value = { ...selectedBook.value, ...data }
@@ -431,7 +429,7 @@ async function checkAuthentication() {
 
   if (jwt) {
     try {
-      const response = await fetch('http://localhost:8080/api/users/me', {
+      const response = await fetch('/api/users/me', {
         headers: { 'Authorization': `Bearer ${jwt}` }
       })
 

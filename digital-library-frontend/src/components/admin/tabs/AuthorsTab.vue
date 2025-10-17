@@ -79,8 +79,8 @@ async function loadAuthors(page = 0) {
     const jwt = getCookie('jwt')
     const query = searchQuery.value.trim()
     const url = query
-        ? `http://localhost:8080/api/authors?query=${encodeURIComponent(query)}&page=${page}&size=${pageSize}`
-        : `http://localhost:8080/api/authors?page=${page}&size=${pageSize}`
+        ? `/api/authors?query=${encodeURIComponent(query)}&page=${page}&size=${pageSize}`
+        : `/api/authors?page=${page}&size=${pageSize}`
 
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${jwt}` }
@@ -129,8 +129,8 @@ async function handleSave(formData) {
   try {
     const jwt = getCookie('jwt')
     const url = editingAuthor.value
-        ? `http://localhost:8080/api/authors/${editingAuthor.value.id}`
-        : 'http://localhost:8080/api/authors'
+        ? `/api/authors/${editingAuthor.value.id}`
+        : '/api/authors'
 
     const params = new URLSearchParams()
     params.append('firstName', formData.firstName.trim())
@@ -163,7 +163,7 @@ async function handleDelete(authorId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/authors/${authorId}`, {
+    const response = await fetch(`/api/authors/${authorId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })

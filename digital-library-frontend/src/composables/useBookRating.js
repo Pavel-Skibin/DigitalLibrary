@@ -12,7 +12,7 @@ export function useBookRating() {
             const jwt = getCookie('jwt')
             if (!jwt) return
 
-            const response = await fetch('http://localhost:8080/api/ratings/me', {
+            const response = await fetch('/api/ratings/me', {
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })
 
@@ -29,7 +29,7 @@ export function useBookRating() {
         submitting.value = true
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch('http://localhost:8080/api/ratings', {
+            const response = await fetch('/api/ratings', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

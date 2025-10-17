@@ -17,7 +17,7 @@ export function useBookComments() {
 
         try {
             const response = await fetch(
-                `http://localhost:8080/api/comments/books/${bookId}?page=${page}&size=${pageSize}&sort=createdAt,desc`
+                `/api/comments/books/${bookId}?page=${page}&size=${pageSize}&sort=createdAt,desc`
             )
 
             if (response.ok) {
@@ -44,7 +44,7 @@ export function useBookComments() {
         submitting.value = true
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch('http://localhost:8080/api/comments', {
+            const response = await fetch('/api/comments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ export function useBookComments() {
         submitting.value = true
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}`, {
+            const response = await fetch(`/api/comments/${commentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ export function useBookComments() {
     async function deleteComment(commentId) {
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}`, {
+            const response = await fetch(`/api/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })
@@ -131,7 +131,7 @@ export function useBookComments() {
     async function moderateDeleteComment(commentId) {
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}/moderate`, {
+            const response = await fetch(`/api/comments/${commentId}/moderate`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })
@@ -155,7 +155,7 @@ export function useBookComments() {
     async function restoreComment(commentId) {
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}/restore`, {
+            const response = await fetch(`/api/comments/${commentId}/restore`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })

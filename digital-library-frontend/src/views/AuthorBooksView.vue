@@ -164,7 +164,7 @@ let debounceTimeout = null
 async function loadBooks(page = 0) {
   loading.value = true
   try {
-    const url = `http://localhost:8080/api/books/authors/${authorId.value}/books?page=${page}&size=${pageSize}`
+    const url = `/api/books/authors/${authorId.value}/books?page=${page}&size=${pageSize}`
     const response = await fetch(url)
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
@@ -217,7 +217,7 @@ async function loadSearchResults() {
   loading.value = true
   try {
     const query = encodeURIComponent(searchQuery.value.trim())
-    const url = `http://localhost:8080/api/books/search?title=${query}&authorIds=${authorId.value}&page=0&size=1000`
+    const url = `/api/books/search?title=${query}&authorIds=${authorId.value}&page=0&size=1000`
 
     const response = await fetch(url)
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
@@ -270,7 +270,7 @@ function selectBook(book) {
 
 async function loadBookDetails(bookId) {
   try {
-    const response = await fetch(`http://localhost:8080/api/books/${bookId}`)
+    const response = await fetch(`/api/books/${bookId}`)
     if (!response.ok) throw new Error('Ошибка загрузки деталей')
     const data = await response.json()
     selectedBook.value = { ...selectedBook.value, ...data }
@@ -340,7 +340,7 @@ async function checkAuthentication() {
 
   if (jwt) {
     try {
-      const response = await fetch('http://localhost:8080/api/users/me', {
+      const response = await fetch('/api/users/me', {
         headers: { 'Authorization': `Bearer ${jwt}` }
       })
 

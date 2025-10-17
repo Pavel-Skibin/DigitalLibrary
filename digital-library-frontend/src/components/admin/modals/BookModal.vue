@@ -177,7 +177,7 @@ watch(() => props.book, async (newBook) => {
   if (newBook) {
     try {
       const jwt = getCookie('jwt')
-      const response = await fetch(`http://localhost:8080/api/books/${newBook.id}`, {
+      const response = await fetch(`/api/books/${newBook.id}`, {
         headers: { 'Authorization': `Bearer ${jwt}` }
       })
 

@@ -57,7 +57,7 @@ async function loadGenres() {
   loading.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/genres', {
+    const response = await fetch('/api/genres', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -89,8 +89,8 @@ async function handleSave(formData) {
   try {
     const jwt = getCookie('jwt')
     const url = editingGenre.value
-        ? `http://localhost:8080/api/genres/${editingGenre.value.id}`
-        : 'http://localhost:8080/api/genres'
+        ? `/api/genres/${editingGenre.value.id}`
+        : '/api/genres'
 
     const params = new URLSearchParams()
     params.append('name', formData.name.trim())
@@ -122,7 +122,7 @@ async function handleDelete(genreId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/genres/${genreId}`, {
+    const response = await fetch(`/api/genres/${genreId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })

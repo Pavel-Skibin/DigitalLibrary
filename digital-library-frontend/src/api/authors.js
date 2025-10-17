@@ -18,7 +18,7 @@ export async function createAuthor(firstName, lastName) {
 
     const jwt = document.cookie.split('; ').find(row => row.startsWith('jwt='))?.split('=')[1];
 
-    const response = await fetch(`http://localhost:8080/api/authors?${params.toString()}`, {
+    const response = await fetch(`/api/authors?${params.toString()}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${jwt}` }
     });
@@ -37,7 +37,7 @@ export async function updateAuthor(id, firstName, lastName) {
 
     const jwt = document.cookie.split('; ').find(row => row.startsWith('jwt='))?.split('=')[1];
 
-    const response = await fetch(`http://localhost:8080/api/authors/${id}?${params.toString()}`, {
+    const response = await fetch(`/api/authors/${id}?${params.toString()}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${jwt}` }
     });

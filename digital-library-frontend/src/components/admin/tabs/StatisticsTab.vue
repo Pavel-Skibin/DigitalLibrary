@@ -245,7 +245,7 @@ function getBookTitle(bookId) {
 async function loadSystemStatistics() {
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/system', {
+    const response = await fetch('/api/statistics/system', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -261,7 +261,7 @@ async function loadTopRatedBooks() {
   loadingTopRatedBooks.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/books/top-rated?minRatings=3&size=5', {
+    const response = await fetch('/api/statistics/books/top-rated?minRatings=3&size=5', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -280,7 +280,7 @@ async function loadTopGenres() {
   loadingTopGenres.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/genres/top-by-count?size=5', {
+    const response = await fetch('/api/statistics/genres/top-by-count?size=5', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -299,7 +299,7 @@ async function loadTopAuthors() {
   loadingTopAuthors.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/authors/top-by-count?size=5', {
+    const response = await fetch('/api/statistics/authors/top-by-count?size=5', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -318,7 +318,7 @@ async function loadRatingDistribution() {
   loadingRatingDistribution.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/ratings/distribution', {
+    const response = await fetch('/api/statistics/ratings/distribution', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -338,7 +338,7 @@ async function loadUserRoleStats() {
   loadingUserRoles.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/users/by-role', {
+    const response = await fetch('/api/statistics/users/by-role', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -356,7 +356,7 @@ async function loadActiveCommenters() {
   loadingActiveCommenters.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/users/most-active-commenters?size=5', {
+    const response = await fetch('/api/statistics/users/most-active-commenters?size=5', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -375,7 +375,7 @@ async function loadRecentComments() {
   loadingRecentComments.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/comments/recent?size=5', {
+    const response = await fetch('/api/statistics/comments/recent?size=5', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -397,7 +397,7 @@ async function loadBookTitles() {
 
   for (const bookId of bookIds) {
     try {
-      const response = await fetch(`http://localhost:8080/api/books/${bookId}`, {
+      const response = await fetch(`/api/books/${bookId}`, {
         headers: { 'Authorization': `Bearer ${jwt}` }
       })
 
@@ -415,7 +415,7 @@ async function loadBookTitles() {
 async function loadDeletedCommentsPercentage() {
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/statistics/comments/deleted-percentage', {
+    const response = await fetch('/api/statistics/comments/deleted-percentage', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 

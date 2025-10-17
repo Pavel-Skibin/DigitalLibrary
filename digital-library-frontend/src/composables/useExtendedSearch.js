@@ -16,7 +16,7 @@ export function useExtendedSearch() {
 
     async function loadAuthors() {
         try {
-            const response = await fetch('http://localhost:8080/api/authors?size=1000')
+            const response = await fetch('/api/authors?size=1000')
             if (!response.ok) throw new Error('Ошибка загрузки авторов')
             const data = await response.json()
             authors.value = data.content || []
@@ -27,7 +27,7 @@ export function useExtendedSearch() {
 
     async function loadGenres() {
         try {
-            const response = await fetch('http://localhost:8080/api/genres')
+            const response = await fetch('/api/genres')
             if (!response.ok) throw new Error('Ошибка загрузки жанров')
             genres.value = await response.json()
         } catch (error) {
@@ -87,7 +87,7 @@ export function useExtendedSearch() {
             params.append('sort', 'averageRating,desc')
         }
 
-        return `http://localhost:8080/api/books/search?${params.toString()}`
+        return `/api/books/search?${params.toString()}`
     }
 
     function performSearch(newFilters) {
