@@ -1,3 +1,7 @@
+
+
+
+
 <template>
   <div class="app-layout">
     <Header />
@@ -40,11 +44,12 @@
         </div>
 
         <div v-else class="books-list">
+          <!-- ✅ ИЗМЕНЕНО: используем book.coverUrl напрямую -->
           <BookCard
               v-for="book in books"
               :key="book.id"
               :book="book"
-              :cover-url="coverImageUrls[book.id]"
+              :cover-url="getCoverUrl(book)"
               @select="selectBook"
           />
         </div>
@@ -62,7 +67,7 @@
       <aside v-if="selectedBook" class="book-detail-panel">
         <BookDetailPanel
             :book="selectedBook"
-            :cover-url="coverImageUrls[selectedBook.id]"
+            :cover-url="getCoverUrl(selectedBook)"
             :user-rating="userRating"
             :is-authenticated="isAuthenticated"
             @open-reader="openBookInReader"
@@ -124,7 +129,6 @@ import CommentsSection from '@/components/books/CommentsSection.vue'
 import RatingModal from '@/components/books/RatingModal.vue'
 import ExtendedSearchModal from '@/components/books/ExtendedSearchModal.vue'
 
-import { useBookCover } from '@/composables/useBookCover'
 import { useBookComments } from '@/composables/useBookComments'
 import { useBookRating } from '@/composables/useBookRating'
 import { useAdminAuth } from '@/composables/useAdminAuth'
@@ -143,8 +147,6 @@ const searchQuery = ref('')
 const isSearchMode = ref(false)
 let searchTimeout = null
 
-// Composables
-const { coverImageUrls, fetchBookCover } = useBookCover()
 
 const {
   comments,
@@ -193,6 +195,10 @@ const currentUserId = ref(null)
 const showRatingModal = ref(false)
 const selectedRatingValue = ref(0)
 
+function getCoverUrl(book) {
+  return book.coverUrl || '/placeholder.jpg'
+}
+
 // Загрузка книг
 async function loadBooks(page = 0) {
   loading.value = true
@@ -236,7 +242,7 @@ function performSimpleSearch() {
     return
   }
   isSearchMode.value = true
-  activeExtendedFilters.value = null // Сброс расширенного поиска
+  activeExtendedFilters.value = null
   currentPage.value = 0
   loadSimpleSearchResults(0)
 }
@@ -263,7 +269,6 @@ async function loadSimpleSearchResults(page = 0) {
 
 // Расширенный поиск
 function openExtendedSearch() {
-
   if (activeExtendedFilters.value) {
     extendedFilters.value = { ...activeExtendedFilters.value }
   } else {
@@ -278,7 +283,7 @@ function closeExtendedSearch() {
 
 function handleExtendedSearch(filters) {
   const activeFilters = performExtendedSearchFilters(filters)
-  searchQuery.value = activeFilters.title // Синхронизируем
+  searchQuery.value = activeFilters.title
   isSearchMode.value = true
   currentPage.value = 0
   loadExtendedSearchResults(0)
@@ -297,11 +302,9 @@ async function loadExtendedSearchResults(page = 0) {
   loading.value = true
   try {
     const url = buildSearchUrl(page, pageSize)
-    console.log('🔍 Extended search URL:', url) // DEBUG
     const response = await fetch(url)
     if (!response.ok) throw new Error('Ошибка расширенного поиска')
     const data = await response.json()
-    console.log('📊 Search results:', data) // DEBUG
     updateBookList(data.content, data.number, data.totalPages)
   } catch (error) {
     console.error('Ошибка расширенного поиска:', error)
@@ -317,11 +320,7 @@ function updateBookList(content, page, totalPagesCount) {
   currentPage.value = page
   totalPages.value = totalPagesCount
 
-  console.log('📚 Books loaded:', books.value.length) // DEBUG
-  console.log('📄 Current page:', currentPage.value) // DEBUG
-  console.log('📄 Total pages:', totalPages.value) // DEBUG
 
-  books.value.forEach(book => fetchBookCover(book.id))
 
   if (books.value.length > 0) {
     selectBook(books.value[0])
@@ -341,7 +340,6 @@ function resetToMainList() {
 
 // Пагинация
 function handlePageChange(page) {
-  console.log('📄 Page change to:', page) // DEBUG
   if (isSearchMode.value) {
     if (activeExtendedFilters.value) {
       loadExtendedSearchResults(page)
@@ -367,7 +365,6 @@ async function loadBookDetails(bookId) {
     if (!response.ok) throw new Error('Ошибка загрузки деталей')
     const data = await response.json()
     selectedBook.value = { ...selectedBook.value, ...data }
-    fetchBookCover(bookId)
   } catch (error) {
     console.error('Ошибка загрузки деталей книги:', error)
   }
@@ -404,10 +401,7 @@ async function handleSubmitRating() {
 
 // Комментарии
 async function handleSubmitComment(text) {
-  const success = await submitComment(selectedBook.value.id, text)
-  if (success) {
-    // Комментарий уже добавлен в composable
-  }
+  await submitComment(selectedBook.value.id, text)
 }
 
 async function handleUpdateComment({ id, text }) {

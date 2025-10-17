@@ -8,5 +8,6 @@ public record BookResponse(
         String description,
         List<String> authors,
         List<String> genres,
-        Double averageRating
+        Double averageRating,
+        String coverUrl
 ) {}

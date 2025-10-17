@@ -55,6 +55,8 @@ public class SecurityConfig {
                         // Регистрация (публичная)
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/books/*/cover").permitAll()
+
                         // Чтение авторов, книг, жанров, комментариев (только GET)
                         .requestMatchers(HttpMethod.GET, "/api/authors", "/api/authors/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**").permitAll()

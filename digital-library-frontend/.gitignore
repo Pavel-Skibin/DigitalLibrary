@@ -49,6 +49,8 @@ yarn.lock
 build/
 
 src/foliate-js/
+libs/
+
 
 #временно
 digital-library-backend/src/test/java/org/nahap/digital_library_backend/controller/

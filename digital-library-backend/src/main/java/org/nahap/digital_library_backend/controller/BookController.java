@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -145,5 +146,32 @@ public class BookController {
         log.info("Запрос всех книг автора ID: {}", authorId);
         List<BookResponse> books = bookService.getBooksByAuthorId(authorId);
         return ResponseEntity.ok(books);
+    }
+
+
+    @GetMapping("/{bookId}/cover")
+    public ResponseEntity<Resource> getBookCover(@PathVariable Integer bookId) {
+        try {
+            Resource resource = bookService.getBookCover(bookId);
+
+            if (resource == null || !resource.exists()) {
+                log.warn("Обложка не найдена для книги ID: {}", bookId);
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType = Files.probeContentType(resource.getFile().toPath());
+            if (contentType == null) {
+                contentType = MediaType.IMAGE_JPEG_VALUE;
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable") // Кэш на год
+                    .body(resource);
+
+        } catch (Exception e) {
+            log.error("Ошибка получения обложки для книги ID: {}", bookId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

@@ -36,6 +36,9 @@ public class Book {
     @Column(name = "file_path", nullable = false)
     private String filePath;
 
+    @Column(name = "cover_image_path")
+    private String coverImagePath;
+
     // Связи
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookAuthor> bookAuthors = new ArrayList<>();
