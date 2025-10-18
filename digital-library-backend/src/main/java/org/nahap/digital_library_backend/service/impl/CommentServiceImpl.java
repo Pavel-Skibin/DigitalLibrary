@@ -114,7 +114,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void restoreComment(Integer commentId, Integer currentUserId, boolean isAdminOrModerator) {
-        Comment comment = commentRepository.findByIdWithRelations(commentId)  // <-- ИЗМЕНЕНО
+        Comment comment = commentRepository.findByIdWithRelations(commentId)
                 .orElseThrow(() -> new CommentNotFoundException("Комментарий не найден"));
 
         if (!isAdminOrModerator) {
@@ -124,6 +124,15 @@ public class CommentServiceImpl implements CommentService {
         if (comment.getDeletedAt() == null) {
             log.warn("Попытка восстановить неудалённый комментарий ID {}", commentId);
             return;
+        }
+
+        Integer userId = comment.getUser().getId();
+        Integer bookId = comment.getBook().getId();
+
+        if (commentRepository.findActiveByUserAndBook(userId, bookId).isPresent()) {
+            throw new CommentAlreadyExistsException(
+                    "Невозможно восстановить комментарий: у пользователя уже есть активный комментарий к этой книге"
+            );
         }
 
         comment.setDeletedAt(null);

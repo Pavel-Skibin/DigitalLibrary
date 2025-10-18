@@ -40,7 +40,6 @@ export function useBookRating() {
 
             if (response.ok) {
                 userRating.value = await response.json()
-                alert('Оценка успешно сохранена!')
                 return true
             }
         } catch (error) {

@@ -172,12 +172,12 @@ async function handleDelete(authorId) {
       alert('Автор удалён!')
       await loadAuthors(currentPage.value)
     } else {
-      const error = await response.text()
-      alert(`Ошибка: ${error}`)
+      const errorMessage = await response.text()
+      alert(`Ошибка: ${errorMessage}`)
     }
   } catch (error) {
     console.error('Ошибка удаления автора:', error)
-    alert('Не удалось удалить автора')
+    alert('Не удалось подключиться к серверу')
   }
 }
 

@@ -59,7 +59,6 @@ export function useBookComments() {
             if (response.ok) {
                 const newComment = await response.json()
                 comments.value.unshift(newComment)
-                alert('Комментарий добавлен!')
                 return true
             } else if (response.status === 400) {
                 alert('Вы уже оставили комментарий к этой книге')
@@ -93,7 +92,6 @@ export function useBookComments() {
                 if (index !== -1) {
                     comments.value[index] = updatedComment
                 }
-                alert('Комментарий обновлен!')
                 return true
             }
         } catch (error) {
@@ -118,7 +116,6 @@ export function useBookComments() {
                 if (comment) {
                     comment.deletedAt = new Date().toISOString()
                 }
-                alert('Комментарий удален')
                 return true
             }
         } catch (error) {

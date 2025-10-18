@@ -154,7 +154,7 @@
               class="form-input"
               placeholder="Например: /Автор.Книга.fb2"
           />
-          <small class="form-hint">Или загрузите файл выше</small>
+
         </div>
         <div v-else class="form-group">
           <label>Файл загружен</label>
