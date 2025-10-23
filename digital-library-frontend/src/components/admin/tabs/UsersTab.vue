@@ -98,8 +98,8 @@ async function loadUsers(page = 0) {
     const jwt = getCookie('jwt')
     const query = searchQuery.value.trim()
     const url = query
-        ? `http://localhost:8080/api/users?query=${encodeURIComponent(query)}&page=${page}&size=${pageSize}`
-        : `http://localhost:8080/api/users?page=${page}&size=${pageSize}`
+        ? `/api/users?query=${encodeURIComponent(query)}&page=${page}&size=${pageSize}`
+        : `/api/users?page=${page}&size=${pageSize}`
 
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${jwt}` }
@@ -139,7 +139,7 @@ async function banUser(userId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/users/${userId}`, {
+    const response = await fetch(`/api/users/${userId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
@@ -163,7 +163,7 @@ async function unbanUser(userId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/users/${userId}/restore`, {
+    const response = await fetch(`/api/users/${userId}/restore`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
@@ -197,7 +197,7 @@ async function handleRoleChange(roleId) {
   saving.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/users/${editingUser.value.id}/role`, {
+    const response = await fetch(`/api/users/${editingUser.value.id}/role`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -45,4 +45,5 @@ target/
 /src/test/java/org/nahap/digital_library_backend/repository/AuthorRepositoryWithDataTest.java
 /test/java/org/nahap/digital_library_backend/repository/BookRepositoryWithDataTest.java
 /test/resources/application-test.properties
+/src/main/java/org/nahap/digital_library_backend/BookCoverMigration.java
 

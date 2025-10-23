@@ -8,7 +8,7 @@ export function useBookCover() {
         if (coverImageUrls.value[bookId]) return // Уже загружена
 
         try {
-            const response = await fetch(`http://localhost:8080/api/books/${bookId}/fb2`)
+            const response = await fetch(`/api/books/${bookId}/fb2`)
             if (!response.ok) throw new Error('Ошибка загрузки FB2')
 
             const fb2Blob = await response.blob()

@@ -41,7 +41,7 @@ const loading = ref(true)
 
 async function loadStats() {
   try {
-    const response = await fetch('http://localhost:8080/api/statistics/system')
+    const response = await fetch('/api/statistics/system')
     if (response.ok) {
       stats.value = await response.json()
     }

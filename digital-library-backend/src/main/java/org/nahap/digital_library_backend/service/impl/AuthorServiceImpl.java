@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.nahap.digital_library_backend.dto.mapper.AuthorMapper;
 import org.nahap.digital_library_backend.dto.response.AuthorResponse;
 import org.nahap.digital_library_backend.entity.Author;
+import org.nahap.digital_library_backend.exception.AuthorHasBooksException;
 import org.nahap.digital_library_backend.exception.AuthorNotFoundException;
 import org.nahap.digital_library_backend.exception.InvalidAuthorNameException;
 import org.nahap.digital_library_backend.repository.AuthorRepository;
@@ -124,9 +125,8 @@ public class AuthorServiceImpl implements AuthorService {
                 .orElseThrow(() -> new AuthorNotFoundException("Автор с ID " + authorId + " не найден"));
 
         if (authorRepository.hasBooks(authorId)) {
-            throw new IllegalStateException("Невозможно удалить автора: у него есть связанные книги");
+            throw new AuthorHasBooksException("Невозможно удалить автора: у него есть связанные книги");
         }
-
         authorRepository.delete(author);
         log.info("Удалён автор ID {}: {} {}", authorId, author.getFirstName(), author.getLastName());
     }

@@ -70,14 +70,17 @@
       </button>
 
       <div v-else class="auth-message-inline">
-        Войдите, чтобы оценить книгу
+        <span>Войдите, чтобы оценить книгу</span>
+        <button @click="$emit('go-to-login')" class="inline-login-link">
+          Войти →
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { formatRating } from '@/utils/formatters'
+import {formatRating} from '@/utils/formatters'
 
 const props = defineProps({
   book: {
@@ -98,13 +101,13 @@ const props = defineProps({
   }
 })
 
-defineEmits(['open-reader', 'open-rating'])
+defineEmits(['open-reader', 'open-rating', 'go-to-login'])
 
 function getStarClass(starIndex) {
   const rating = props.book.averageRating || 0
 
   if (starIndex <= rating) {
-    return { class: 'filled-star', fillPercentage: 100 }
+    return {class: 'filled-star', fillPercentage: 100}
   }
 
   if (starIndex - 1 < rating && starIndex > rating) {
@@ -114,7 +117,7 @@ function getStarClass(starIndex) {
     }
   }
 
-  return { class: 'empty-star', fillPercentage: 0 }
+  return {class: 'empty-star', fillPercentage: 0}
 }
 </script>
 
@@ -330,5 +333,22 @@ function getStarClass(starIndex) {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+
+
+.inline-login-link {
+  background: none;
+  border: none;
+  color: #5c4033;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  transition: color 0.2s;
+}
+
+.inline-login-link:hover {
+  color: #4a3329;
 }
 </style>

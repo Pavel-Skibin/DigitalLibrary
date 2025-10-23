@@ -43,4 +43,7 @@ public interface BookService {
 
     List<BookResponse> getBooksByAuthorId(Integer authorId);
 
+    Resource getBookCover(Integer bookId);
+
+
 }

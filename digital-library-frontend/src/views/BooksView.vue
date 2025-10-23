@@ -1,8 +1,8 @@
 <template>
   <div class="app-layout">
-    <Header />
+    <Header/>
     <div class="library-container">
-      <AppSidebar :show-admin-link="isModeratorOrAdmin" />
+      <AppSidebar :show-admin-link="isModeratorOrAdmin"/>
 
       <main class="content">
         <h1 class="page-title">📚 Книги</h1>
@@ -40,11 +40,12 @@
         </div>
 
         <div v-else class="books-list">
+          <!-- ✅ ИЗМЕНЕНО: используем book.coverUrl напрямую -->
           <BookCard
               v-for="book in books"
               :key="book.id"
               :book="book"
-              :cover-url="coverImageUrls[book.id]"
+              :cover-url="getCoverUrl(book)"
               @select="selectBook"
           />
         </div>
@@ -62,11 +63,12 @@
       <aside v-if="selectedBook" class="book-detail-panel">
         <BookDetailPanel
             :book="selectedBook"
-            :cover-url="coverImageUrls[selectedBook.id]"
+            :cover-url="getCoverUrl(selectedBook)"
             :user-rating="userRating"
             :is-authenticated="isAuthenticated"
             @open-reader="openBookInReader"
             @open-rating="showRatingModal = true"
+            @go-to-login="goToLogin"
         />
 
         <CommentsSection
@@ -83,6 +85,7 @@
             @moderate-delete="handleModerateDeleteComment"
             @restore="handleRestoreComment"
             @load-more="handleLoadMoreComments"
+            @go-to-login="goToLogin"
         />
       </aside>
     </div>
@@ -107,12 +110,22 @@
         @search="handleExtendedSearch"
         @reset="handleResetExtendedSearch"
     />
+
+    <!--  Модальное окно для неавторизованных -->
+    <AuthPromptModal
+        v-if="showAuthPrompt"
+        :action-description="authPromptAction"
+        @close="showAuthPrompt = false"
+        @login="goToLogin"
+    />
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getCookie } from '@/utils/cookies'
+import {ref, onMounted} from 'vue'
+import {getCookie} from '@/utils/cookies'
+import { useRouter } from 'vue-router'
 
 import Header from '@/components/layout/Header.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
@@ -123,12 +136,12 @@ import BookDetailPanel from '@/components/books/BookDetailPanel.vue'
 import CommentsSection from '@/components/books/CommentsSection.vue'
 import RatingModal from '@/components/books/RatingModal.vue'
 import ExtendedSearchModal from '@/components/books/ExtendedSearchModal.vue'
+import AuthPromptModal from '@/components/ui/AuthPromptModal.vue'
 
-import { useBookCover } from '@/composables/useBookCover'
-import { useBookComments } from '@/composables/useBookComments'
-import { useBookRating } from '@/composables/useBookRating'
-import { useAdminAuth } from '@/composables/useAdminAuth'
-import { useExtendedSearch } from '@/composables/useExtendedSearch'
+import {useBookComments} from '@/composables/useBookComments'
+import {useBookRating} from '@/composables/useBookRating'
+import {useAdminAuth} from '@/composables/useAdminAuth'
+import {useExtendedSearch} from '@/composables/useExtendedSearch'
 
 // Состояние книг
 const books = ref([])
@@ -143,8 +156,8 @@ const searchQuery = ref('')
 const isSearchMode = ref(false)
 let searchTimeout = null
 
-// Composables
-const { coverImageUrls, fetchBookCover } = useBookCover()
+const router = useRouter()
+
 
 const {
   comments,
@@ -167,7 +180,7 @@ const {
   submitRating
 } = useBookRating()
 
-const { isAdmin, isModerator } = useAdminAuth()
+const {isAdmin, isModerator} = useAdminAuth()
 const isModeratorOrAdmin = ref(false)
 
 const {
@@ -193,13 +206,58 @@ const currentUserId = ref(null)
 const showRatingModal = ref(false)
 const selectedRatingValue = ref(0)
 
+const showAuthPrompt = ref(false)
+const authPromptAction = ref('')
+
+function getCoverUrl(book) {
+  return book.coverUrl || '/placeholder.jpg'
+}
+
+function requireAuth(action) {
+  if (!isAuthenticated.value) {
+    authPromptAction.value = action
+    showAuthPrompt.value = true
+    return false
+  }
+  return true
+}
+
+function goToLogin() {
+  router.push('/login')
+}
+
+
+async function handleSubmitRating() {
+  if (!requireAuth('оценить книгу')) return
+
+  if (!selectedRatingValue.value) return
+  const success = await submitRating(selectedBook.value.id, selectedRatingValue.value)
+  if (success) {
+    closeRatingModal()
+    await loadBookDetails(selectedBook.value.id)
+  }
+}
+
+async function handleSubmitComment(text) {
+  if (!requireAuth('оставить комментарий')) return
+  await submitComment(selectedBook.value.id, text)
+}
+
+async function handleUpdateComment({ id, text }) {
+  if (!requireAuth('редактировать комментарий')) return
+  await updateComment(id, text)
+}
+
+async function handleDeleteComment(id) {
+  if (!requireAuth('удалить комментарий')) return
+  await deleteComment(id)
+}
+
 // Загрузка книг
 async function loadBooks(page = 0) {
   loading.value = true
   try {
-    const response = await fetch(
-        `http://localhost:8080/api/books?page=${page}&size=${pageSize}`
-    )
+    const response = await fetch(`/api/books?page=${page}&size=${pageSize}`)
     if (!response.ok) throw new Error('Ошибка загрузки книг')
     const data = await response.json()
     updateBookList(data.content, data.number, data.totalPages)
@@ -236,7 +294,7 @@ function performSimpleSearch() {
     return
   }
   isSearchMode.value = true
-  activeExtendedFilters.value = null // Сброс расширенного поиска
+  activeExtendedFilters.value = null
   currentPage.value = 0
   loadSimpleSearchResults(0)
 }
@@ -246,7 +304,7 @@ async function loadSimpleSearchResults(page = 0) {
   try {
     const query = encodeURIComponent(searchQuery.value.trim())
     const response = await fetch(
-        `http://localhost:8080/api/books/search?title=${query}&page=${page}&size=${pageSize}`
+        `/api/books/search?title=${query}&page=${page}&size=${pageSize}`
     )
     if (!response.ok) throw new Error('Ошибка поиска')
     const data = await response.json()
@@ -263,9 +321,8 @@ async function loadSimpleSearchResults(page = 0) {
 
 // Расширенный поиск
 function openExtendedSearch() {
-
   if (activeExtendedFilters.value) {
-    extendedFilters.value = { ...activeExtendedFilters.value }
+    extendedFilters.value = {...activeExtendedFilters.value}
   } else {
     extendedFilters.value.title = searchQuery.value
   }
@@ -278,7 +335,7 @@ function closeExtendedSearch() {
 
 function handleExtendedSearch(filters) {
   const activeFilters = performExtendedSearchFilters(filters)
-  searchQuery.value = activeFilters.title // Синхронизируем
+  searchQuery.value = activeFilters.title
   isSearchMode.value = true
   currentPage.value = 0
   loadExtendedSearchResults(0)
@@ -297,11 +354,9 @@ async function loadExtendedSearchResults(page = 0) {
   loading.value = true
   try {
     const url = buildSearchUrl(page, pageSize)
-    console.log('🔍 Extended search URL:', url) // DEBUG
     const response = await fetch(url)
     if (!response.ok) throw new Error('Ошибка расширенного поиска')
     const data = await response.json()
-    console.log('📊 Search results:', data) // DEBUG
     updateBookList(data.content, data.number, data.totalPages)
   } catch (error) {
     console.error('Ошибка расширенного поиска:', error)
@@ -317,11 +372,6 @@ function updateBookList(content, page, totalPagesCount) {
   currentPage.value = page
   totalPages.value = totalPagesCount
 
-  console.log('📚 Books loaded:', books.value.length) // DEBUG
-  console.log('📄 Current page:', currentPage.value) // DEBUG
-  console.log('📄 Total pages:', totalPages.value) // DEBUG
-
-  books.value.forEach(book => fetchBookCover(book.id))
 
   if (books.value.length > 0) {
     selectBook(books.value[0])
@@ -341,7 +391,6 @@ function resetToMainList() {
 
 // Пагинация
 function handlePageChange(page) {
-  console.log('📄 Page change to:', page) // DEBUG
   if (isSearchMode.value) {
     if (activeExtendedFilters.value) {
       loadExtendedSearchResults(page)
@@ -363,11 +412,10 @@ function selectBook(book) {
 
 async function loadBookDetails(bookId) {
   try {
-    const response = await fetch(`http://localhost:8080/api/books/${bookId}`)
+    const response = await fetch(`/api/books/${bookId}`)
     if (!response.ok) throw new Error('Ошибка загрузки деталей')
     const data = await response.json()
-    selectedBook.value = { ...selectedBook.value, ...data }
-    fetchBookCover(bookId)
+    selectedBook.value = {...selectedBook.value, ...data}
   } catch (error) {
     console.error('Ошибка загрузки деталей книги:', error)
   }
@@ -392,31 +440,9 @@ function closeRatingModal() {
   selectedRatingValue.value = 0
 }
 
-async function handleSubmitRating() {
-  if (!selectedRatingValue.value) return
 
-  const success = await submitRating(selectedBook.value.id, selectedRatingValue.value)
-  if (success) {
-    closeRatingModal()
-    await loadBookDetails(selectedBook.value.id)
-  }
-}
 
-// Комментарии
-async function handleSubmitComment(text) {
-  const success = await submitComment(selectedBook.value.id, text)
-  if (success) {
-    // Комментарий уже добавлен в composable
-  }
-}
 
-async function handleUpdateComment({ id, text }) {
-  await updateComment(id, text)
-}
-
-async function handleDeleteComment(id) {
-  await deleteComment(id)
-}
 
 async function handleModerateDeleteComment(id) {
   await moderateDeleteComment(id)
@@ -437,8 +463,8 @@ async function checkAuthentication() {
 
   if (jwt) {
     try {
-      const response = await fetch('http://localhost:8080/api/users/me', {
-        headers: { 'Authorization': `Bearer ${jwt}` }
+      const response = await fetch('/api/users/me', {
+        headers: {'Authorization': `Bearer ${jwt}`}
       })
 
       if (response.ok) {
@@ -664,4 +690,6 @@ onMounted(async () => {
     border: 2px solid #e0e0e0 !important;
   }
 }
+
+
 </style>

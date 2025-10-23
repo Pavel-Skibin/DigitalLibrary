@@ -17,7 +17,7 @@ export function useBookComments() {
 
         try {
             const response = await fetch(
-                `http://localhost:8080/api/comments/books/${bookId}?page=${page}&size=${pageSize}&sort=createdAt,desc`
+                `/api/comments/books/${bookId}?page=${page}&size=${pageSize}&sort=createdAt,desc`
             )
 
             if (response.ok) {
@@ -44,7 +44,7 @@ export function useBookComments() {
         submitting.value = true
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch('http://localhost:8080/api/comments', {
+            const response = await fetch('/api/comments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -59,7 +59,6 @@ export function useBookComments() {
             if (response.ok) {
                 const newComment = await response.json()
                 comments.value.unshift(newComment)
-                alert('Комментарий добавлен!')
                 return true
             } else if (response.status === 400) {
                 alert('Вы уже оставили комментарий к этой книге')
@@ -78,7 +77,7 @@ export function useBookComments() {
         submitting.value = true
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}`, {
+            const response = await fetch(`/api/comments/${commentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +92,6 @@ export function useBookComments() {
                 if (index !== -1) {
                     comments.value[index] = updatedComment
                 }
-                alert('Комментарий обновлен!')
                 return true
             }
         } catch (error) {
@@ -108,7 +106,7 @@ export function useBookComments() {
     async function deleteComment(commentId) {
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}`, {
+            const response = await fetch(`/api/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })
@@ -118,7 +116,6 @@ export function useBookComments() {
                 if (comment) {
                     comment.deletedAt = new Date().toISOString()
                 }
-                alert('Комментарий удален')
                 return true
             }
         } catch (error) {
@@ -131,7 +128,7 @@ export function useBookComments() {
     async function moderateDeleteComment(commentId) {
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}/moderate`, {
+            const response = await fetch(`/api/comments/${commentId}/moderate`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })
@@ -155,7 +152,7 @@ export function useBookComments() {
     async function restoreComment(commentId) {
         try {
             const jwt = getCookie('jwt')
-            const response = await fetch(`http://localhost:8080/api/comments/${commentId}/restore`, {
+            const response = await fetch(`/api/comments/${commentId}/restore`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${jwt}` }
             })

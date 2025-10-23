@@ -7,6 +7,7 @@ import org.nahap.digital_library_backend.dto.mapper.GenreMapper;
 import org.nahap.digital_library_backend.dto.response.GenreResponse;
 import org.nahap.digital_library_backend.entity.Genre;
 import org.nahap.digital_library_backend.exception.GenreAlreadyExistsException;
+import org.nahap.digital_library_backend.exception.GenreHasBooksException;
 import org.nahap.digital_library_backend.exception.GenreNotFoundException;
 import org.nahap.digital_library_backend.exception.InvalidGenreNameException;
 import org.nahap.digital_library_backend.repository.GenreRepository;
@@ -93,7 +94,7 @@ public class GenreServiceImpl implements GenreService {
                 .orElseThrow(() -> new GenreNotFoundException("Жанр с ID " + genreId + " не найден"));
 
         if (genreRepository.hasBooks(genreId)) {
-            throw new IllegalStateException("Невозможно удалить жанр: у него есть связанные книги");
+            throw new GenreHasBooksException("Невозможно удалить жанр: у него есть связанные книги");
         }
 
         genreRepository.delete(genre);

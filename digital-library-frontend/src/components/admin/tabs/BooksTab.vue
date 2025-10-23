@@ -94,8 +94,8 @@ async function loadBooks(page = 0) {
     const jwt = getCookie('jwt')
     const query = searchQuery.value.trim()
     const url = query
-        ? `http://localhost:8080/api/books/search?title=${encodeURIComponent(query)}&page=${page}&size=${pageSize}`
-        : `http://localhost:8080/api/books?page=${page}&size=${pageSize}`
+        ? `/api/books/search?title=${encodeURIComponent(query)}&page=${page}&size=${pageSize}`
+        : `/api/books?page=${page}&size=${pageSize}`
 
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${jwt}` }
@@ -123,7 +123,7 @@ function loadPage(page) {
 async function loadAuthors() {
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/authors?page=0&size=1000', {
+    const response = await fetch('/api/authors?page=0&size=1000', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -140,7 +140,7 @@ async function loadAuthors() {
 async function loadGenres() {
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch('http://localhost:8080/api/genres', {
+    const response = await fetch('/api/genres', {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -181,8 +181,8 @@ async function handleSave(formData) {
   try {
     const jwt = getCookie('jwt')
     const url = editingBook.value
-        ? `http://localhost:8080/api/books/${editingBook.value.id}`
-        : 'http://localhost:8080/api/books'
+        ? `/api/books/${editingBook.value.id}`
+        : '/api/books'
 
     const requestBody = {
       title: formData.title.trim(),
@@ -223,7 +223,7 @@ async function handleDelete(bookId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/books/${bookId}`, {
+    const response = await fetch(`/api/books/${bookId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })

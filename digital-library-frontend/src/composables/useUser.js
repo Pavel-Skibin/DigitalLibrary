@@ -12,7 +12,7 @@ export function useUser() {
         try {
             const jwt = getCookie('jwt')
 
-            const response = await fetch('http://localhost:8080/api/users/me', {
+            const response = await fetch('/api/users/me', {
                 credentials: 'include',
                 headers: jwt ? { 'Authorization': `Bearer ${jwt}` } : {}
             })
@@ -37,7 +37,7 @@ export function useUser() {
 
     async function logout() {
         try {
-            await fetch('http://localhost:8080/api/auth/logout', {
+            await fetch('/api/auth/logout', {
                 method: 'POST',
                 credentials: 'include'
             })

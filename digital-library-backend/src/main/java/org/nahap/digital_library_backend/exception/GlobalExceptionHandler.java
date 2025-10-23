@@ -89,4 +89,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.");
     }
+
+    @ExceptionHandler(AuthorHasBooksException.class)
+    public ResponseEntity<String> handleAuthorHasBooks(AuthorHasBooksException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(GenreHasBooksException.class)
+    public ResponseEntity<String> handleGenreHasBooks(GenreHasBooksException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
 }

@@ -110,7 +110,7 @@ watch(bookSearchQuery, () => {
     try {
       const jwt = getCookie('jwt')
       const response = await fetch(
-          `http://localhost:8080/api/books/search?title=${encodeURIComponent(bookSearchQuery.value)}&size=10`,
+          `/api/books/search?title=${encodeURIComponent(bookSearchQuery.value)}&size=10`,
           { headers: { 'Authorization': `Bearer ${jwt}` } }
       )
 
@@ -143,7 +143,7 @@ async function loadComments(bookId) {
   loadingComments.value = true
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/comments/books/${bookId}/all`, {
+    const response = await fetch(`/api/comments/books/${bookId}/all`, {
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
 
@@ -166,7 +166,7 @@ async function deleteComment(commentId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/comments/${commentId}/moderate`, {
+    const response = await fetch(`/api/comments/${commentId}/moderate`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
@@ -190,7 +190,7 @@ async function restoreComment(commentId) {
 
   try {
     const jwt = getCookie('jwt')
-    const response = await fetch(`http://localhost:8080/api/comments/${commentId}/restore`, {
+    const response = await fetch(`/api/comments/${commentId}/restore`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
