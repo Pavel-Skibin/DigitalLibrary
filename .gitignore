@@ -36,3 +36,6 @@ build/
 
 *.sql
  digital-library-frontend/src/foliate-js/
+docker/k6/utils/config.js
+
+*.json
