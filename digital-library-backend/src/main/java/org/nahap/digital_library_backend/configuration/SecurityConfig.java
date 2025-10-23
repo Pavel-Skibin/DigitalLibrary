@@ -48,6 +48,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
+
+                        // ========== ACTUATOR ==========
+                        .requestMatchers("/actuator/**").permitAll()
+
                         // ========== ПУБЛИЧНЫЕ ЭНДПОИНТЫ (Гости) ==========
                         // Авторизация
                         .requestMatchers("/api/auth/login").permitAll()
@@ -55,11 +59,12 @@ public class SecurityConfig {
                         // Регистрация (публичная)
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/books/*/cover").permitAll()
-
                         // Чтение авторов, книг, жанров, комментариев (только GET)
                         .requestMatchers(HttpMethod.GET, "/api/authors", "/api/authors/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**").permitAll()
+
+                        .requestMatchers(HttpMethod.HEAD, "/api/books/*/cover").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/genres", "/api/genres/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comments/books/*").permitAll()
                         .requestMatchers("/api/books/search", "/api/books/*/fb2", "/api/books/*/download").permitAll()
@@ -73,31 +78,26 @@ public class SecurityConfig {
                         .requestMatchers("/api/ratings/**").authenticated()
 
                         // ========== MODERATOR + ADMIN ==========
-                        // Управление авторами
                         .requestMatchers(HttpMethod.POST, "/api/authors").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/authors/**").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/authors/**").hasAnyRole("MODERATOR", "ADMIN")
 
-                        // Управление жанрами
                         .requestMatchers(HttpMethod.POST, "/api/genres").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/genres/**").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/genres/**").hasAnyRole("MODERATOR", "ADMIN")
 
-                        // Управление книгами
                         .requestMatchers(HttpMethod.POST, "/api/books").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/books/upload").hasAnyRole("MODERATOR", "ADMIN")
 
-                        // Модерация комментариев
                         .requestMatchers(HttpMethod.GET, "/api/comments/books/*/all").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/*/moderate").hasAnyRole("MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/comments/*/restore").hasAnyRole("MODERATOR", "ADMIN")
 
-                        // Просмотр оценок книги
                         .requestMatchers(HttpMethod.GET, "/api/ratings/books/**").hasAnyRole("MODERATOR", "ADMIN")
 
-                        // ========== СТАТИСТИКА (MODERATOR + ADMIN) ==========
+                        // ========== СТАТИСТИКА ==========
                         .requestMatchers("/api/statistics/system").permitAll()
                         .requestMatchers("/api/statistics/**").hasAnyRole("MODERATOR", "ADMIN")
 
