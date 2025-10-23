@@ -41,6 +41,9 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_LOCATION=file:/config/application-docker.properties
       - JAVA_OPTS=-Xmx512m -Xms256m -XX:+UseG1GC
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_PASSWORD=${DB_PASSWORD}
+
     ports:
       - "8080:8080"
     volumes:
@@ -57,11 +60,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 1G
+          cpus: '4'
+          memory: 2G
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1'
+          memory: 1G
 
   # ========== Prometheus ==========
   prometheus:
