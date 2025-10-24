@@ -1,0 +1,253 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 YaBrowser/25.8.0.0 Safari/537.36" version="28.2.8">
+  <diagram name="Digital Library Architecture" id="digital-library-arch">
+    <mxGraphModel dx="2242" dy="1280" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="client-container" value="🖥️ Client Layer" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e1f5ff;strokeColor=#0277bd;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="40" y="40" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="user" value="👤 User&lt;br&gt;(Browser)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b3e5fc;strokeColor=#01579b;fontStyle=1;" parent="client-container" vertex="1">
+          <mxGeometry x="40" y="40" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend-container" value="🎨 Frontend Layer (Vue 3 + Vite)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#2e7d32;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="300" y="40" width="280" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-components" value="UI Components" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81c784;strokeColor=#2e7d32;fontColor=#ffffff;fontStyle=1;" parent="frontend-container" vertex="1">
+          <mxGeometry x="40" y="40" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="vue-router" value="Vue Router" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81c784;strokeColor=#2e7d32;fontColor=#ffffff;fontStyle=1;" parent="frontend-container" vertex="1">
+          <mxGeometry x="40" y="110" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="api-client" value="API Client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#66bb6a;strokeColor=#2e7d32;fontColor=#ffffff;fontStyle=1;" parent="frontend-container" vertex="1">
+          <mxGeometry x="40" y="180" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="backend-container" value="⚙️ Backend Layer (Spring Boot 3)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f57f17;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="640" y="40" width="720" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="controllers-group" value="Controllers" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffecb3;strokeColor=#f57f17;fontStyle=1;" parent="backend-container" vertex="1">
+          <mxGeometry x="20" y="40" width="320" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-controller" value="Auth Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd54f;strokeColor=#f57f17;" parent="controllers-group" vertex="1">
+          <mxGeometry x="10" y="40" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="book-controller" value="Book Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd54f;strokeColor=#f57f17;" parent="controllers-group" vertex="1">
+          <mxGeometry x="160" y="40" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="user-controller" value="User Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd54f;strokeColor=#f57f17;" parent="controllers-group" vertex="1">
+          <mxGeometry x="10" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="comment-controller" value="Comment Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd54f;strokeColor=#f57f17;" parent="controllers-group" vertex="1">
+          <mxGeometry x="160" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="services-group" value="Services" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffecb3;strokeColor=#f57f17;fontStyle=1;" parent="backend-container" vertex="1">
+          <mxGeometry x="20" y="200" width="320" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-service" value="Auth Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffca28;strokeColor=#f57f17;" parent="services-group" vertex="1">
+          <mxGeometry x="10" y="40" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="book-service" value="Book Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffca28;strokeColor=#f57f17;" parent="services-group" vertex="1">
+          <mxGeometry x="160" y="40" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="user-service" value="User Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffca28;strokeColor=#f57f17;" parent="services-group" vertex="1">
+          <mxGeometry x="10" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="comment-service" value="Comment Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffca28;strokeColor=#f57f17;" parent="services-group" vertex="1">
+          <mxGeometry x="160" y="90" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="security-group" value="Security" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffecb3;strokeColor=#f57f17;fontStyle=1;" parent="backend-container" vertex="1">
+          <mxGeometry x="360" y="40" width="340" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="jwt-filter" value="JWT Auth Filter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd54f;strokeColor=#f57f17;" parent="security-group" vertex="1">
+          <mxGeometry x="20" y="50" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="user-details" value="User Details Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffd54f;strokeColor=#f57f17;" parent="security-group" vertex="1">
+          <mxGeometry x="180" y="50" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="repositories-group" value="Repositories" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffecb3;strokeColor=#f57f17;fontStyle=1;" parent="backend-container" vertex="1">
+          <mxGeometry x="20" y="360" width="680" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="book-repo" value="Book Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffb300;strokeColor=#f57f17;" parent="repositories-group" vertex="1">
+          <mxGeometry x="20" y="40" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="user-repo" value="User Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffb300;strokeColor=#f57f17;" parent="repositories-group" vertex="1">
+          <mxGeometry x="180" y="40" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="comment-repo" value="Comment Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffb300;strokeColor=#f57f17;" parent="repositories-group" vertex="1">
+          <mxGeometry x="340" y="40" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rating-repo" value="Rating Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffb300;strokeColor=#f57f17;" parent="repositories-group" vertex="1">
+          <mxGeometry x="510" y="40" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="data-container" value="💾 Data Layer" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#424242;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="640" y="680" width="480" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="database" value="PostgreSQL&lt;br&gt;Database" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#90a4ae;strokeColor=#263238;fontColor=#ffffff;fontStyle=1;" parent="data-container" vertex="1">
+          <mxGeometry x="40" y="40" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="file-storage" value="📁 File Storage&lt;br&gt;(Books &amp; Covers)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#90a4ae;strokeColor=#263238;fontColor=#ffffff;fontStyle=1;" parent="data-container" vertex="1">
+          <mxGeometry x="260" y="40" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="monitoring-container" value="📊 Monitoring &amp; Testing" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffccbc;strokeColor=#d84315;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="40" y="380" width="540" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="prometheus" value="Prometheus&lt;br&gt;(Metrics Collector)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff8a65;strokeColor=#d84315;fontColor=#ffffff;fontStyle=1;" parent="monitoring-container" vertex="1">
+          <mxGeometry x="14" y="50" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="grafana" value="Grafana&lt;br&gt;(Visualization)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff8a65;strokeColor=#d84315;fontColor=#ffffff;fontStyle=1;" parent="monitoring-container" vertex="1">
+          <mxGeometry x="210" y="50" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="k6" value="k6&lt;br&gt;(Load Testing)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff8a65;strokeColor=#d84315;fontColor=#ffffff;fontStyle=1;" parent="monitoring-container" vertex="1">
+          <mxGeometry x="380" y="50" width="140" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="infrastructure-container" value="🐳 Infrastructure" style="swimlane;whiteSpace=wrap;html=1;fillColor=#b3e5fc;strokeColor=#01579b;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="40" y="600" width="540" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="docker" value="Docker Compose&lt;br&gt;(Orchestration)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#4fc3f7;strokeColor=#01579b;fontColor=#ffffff;fontStyle=1;" parent="infrastructure-container" vertex="1">
+          <mxGeometry x="170" y="40" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ZV9waBLgGAsOg5EY6-9Q-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#01579b;dashed=1;dashPattern=5 5;" edge="1" parent="infrastructure-container">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="80" as="sourcePoint" />
+            <mxPoint x="130" y="-40" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="130" y="80" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0277bd;" parent="1" source="user" target="ui-components" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn1-label" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn1" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2e7d32;" parent="1" source="ui-components" target="vue-router" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2e7d32;" parent="1" source="vue-router" target="api-client" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#f57f17;" parent="1" source="api-client" target="controllers-group" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="245" />
+              <mxPoint x="600" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn4-label" value="REST API (JSON)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn4" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="2" relative="1" as="geometry">
+            <mxPoint x="12" y="-60" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#f57f17;dashed=1;" parent="1" source="controllers-group" target="services-group" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#f57f17;dashed=1;" parent="1" source="services-group" target="repositories-group" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#424242;" parent="1" source="repositories-group" target="database" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="610" />
+              <mxPoint x="760" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn7-label" value="SQL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn7" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#424242;" parent="1" source="book-service" target="file-storage" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1350" y="300" />
+              <mxPoint x="1350" y="520" />
+              <mxPoint x="990" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn8-label" value="Read/Write&lt;div&gt;File I/O&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn8" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d84315;" parent="1" source="backend-container" target="prometheus" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn9-label" value="Metrics" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn9" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d84315;" parent="1" source="prometheus" target="grafana" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn10-label" value="Data" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn10" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d84315;dashed=1;" parent="1" source="k6" target="controllers-group" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="470" />
+              <mxPoint x="620" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn11-label" value="Load" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;" parent="conn11" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#01579b;dashed=1;dashPattern=5 5;" parent="1" source="docker" target="frontend-container" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="750" />
+              <mxPoint x="10" y="750" />
+              <mxPoint x="10" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#01579b;dashed=1;dashPattern=5 5;" parent="1" source="docker" target="backend-container" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="525" y="680" />
+              <mxPoint x="525" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#01579b;dashed=1;dashPattern=5 5;" parent="1" source="docker" target="data-container" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#f57f17;dashed=1;" parent="1" source="controllers-group" target="jwt-filter" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn15-label" value="Auth" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;fontSize=10;" parent="conn15" vertex="1" connectable="0">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="conn16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#f57f17;dashed=1;" parent="1" source="jwt-filter" target="user-details" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
