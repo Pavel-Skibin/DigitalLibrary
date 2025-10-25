@@ -12,14 +12,55 @@
 
 
 
+
+---
+
 ## 🚀 Быстрый старт
 
 ### Требования
 - Docker и Docker Compose
 
-> 💡 **Примечание:** В конфигурации `docker-compose.yml` для контейнеров заданы ограничения по ресурсам (CPU и память), использованные при нагрузочном тестировании. При необходимости их можно отключить или скорректировать.
+> 💡 **Примечание:** Этот `docker-compose.yml` предназначен для **обычного развёртывания приложения**, а не для нагрузочного тестирования. Ограничения ресурсов (CPU/память) **не заданы**.
 
-### Запуск через Docker
+### Подготовка базы данных
+
+Приложение использует **Flyway** для управления миграциями и **JPA/Hibernate** для генерации схемы. Чтобы корректно инициализировать БД с тестовыми данными, выполните следующие шаги:
+
+1. **Первый запуск (создание схемы):**  
+   Во время первого запуска **отключите Flyway** и разрешите Hibernate создать таблицы:  
+   [`docker/application-docker.properties`](docker/application-docker.properties)
+   ```properties
+   # docker/application-docker.properties
+   spring.jpa.hibernate.ddl-auto=create
+   spring.flyway.enabled=false
+   ```
+   Запустите контейнеры:
+   ```bash
+   cd docker
+   docker compose up --build
+   ```
+   После того как приложение запустится и создаст таблицы — **остановите** контейнеры (`Ctrl+C`).
+
+2. **Включение миграций и загрузка данных:**  
+   Измените конфигурацию:
+   ```properties
+   # docker/application-docker.properties
+   spring.jpa.hibernate.ddl-auto=none
+   spring.flyway.enabled=true
+   spring.flyway.baseline-on-migrate=true
+   ```
+   Поместите SQL-файл с тестовыми данными (например, `init-data.sql`) в папку `docker/postgres/`. Он автоматически выполнится при следующем запуске, так как PostgreSQL запускает все `.sql`-файлы из `/docker-entrypoint-initdb.d/`.
+
+3. **Финальный запуск:**
+   ```bash
+   docker compose up --build
+   ```
+
+> 📌 **Важно:** Файл `init-data.sql` должен содержать **только данные** (INSERT), а не DDL (CREATE TABLE), так как таблицы уже созданы либо Hibernate’ом, либо Flyway-миграциями.
+> 
+> тестовый админ если решили оставить данные из примера: Pedro/qwerty
+
+### Запуск приложения
 
 ```bash
 cd docker
@@ -28,9 +69,17 @@ docker compose up --build
 
 После запуска:
 
-- **Backend API**: http://localhost:8080
+- **Frontend (Vue)**: http://localhost
+- **Backend API**: http://localhost/api
 - **Grafana (мониторинг)**: http://localhost:3000 (`admin` / `admin`)
 - **Prometheus**: http://localhost:9090
+
+> 🔐 **JWT и пароли:**  
+> Убедитесь, что в корне папки `docker/` создан файл `.env` с переменными:
+> ```env
+> DB_PASSWORD=your_secure_db_password
+> JWT_SECRET=your_strong_jwt_secret
+> ```
 
 
 
@@ -44,7 +93,7 @@ docker compose up --build
 
 ![Схема БД](docs/db-schema_w.png)
 
-> Подробное описание сущностей, связей и бизнес-логики — в [backend README](digital-library-backend/README.md).
+> Подробное описание бизнес-логики — в [backend README](digital-library-backend/README.md).
 
 
 ## 📊 Нагрузочное тестирование
