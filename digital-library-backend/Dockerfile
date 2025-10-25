@@ -1,5 +1,5 @@
-# Этап 1: Сборка (Multi-stage build)
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# ========== Stage 1: Build ==========
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Копируем pom.xml и скачиваем зависимости (кэширование слоёв)
@@ -10,25 +10,25 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Этап 2: Финальный образ (только runtime)
-FROM eclipse-temurin:17-jre-alpine
+# ========== Stage 2: Runtime ==========
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Создаём пользователя (не root)
+# Создаём непривилегированного пользователя
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 # Копируем JAR из build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Здоровье контейнера
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # Порт
 EXPOSE 8080
 
-# JVM параметры (можно переопределить в docker-compose)
+# JVM параметры (можно переопределить через ENV)
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
 # Запуск

@@ -4,7 +4,7 @@ services:
   # ========== PostgreSQL ==========
   postgres:
     image: postgres:16-alpine
-    container_name: digital-library-postgres
+    container_name: digital-library-postgres-test
     environment:
       POSTGRES_DB: digital_library_db
       POSTGRES_USER: digital_library_user
@@ -13,28 +13,32 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data-test:/var/lib/postgresql/data
       - ./postgres/init-data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
     networks:
-      - app-network
+      - test-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U digital_library_user -d digital_library_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
-  # ========== Spring Boot Backend ==========
+  # ========== Spring Boot Backend (тестовый) ==========
   backend:
     build:
       context: ../digital-library-backend
       dockerfile: Dockerfile
-    container_name: digital-library-backend
+    container_name: digital-library-backend-test
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_LOCATION=file:/config/application-docker.properties
       - JAVA_OPTS=-Xmx512m -Xms256m -XX:+UseG1GC
       - JWT_SECRET=${JWT_SECRET}
@@ -45,56 +49,49 @@ services:
       - ./application-docker.properties:/config/application-docker.properties:ro
       - D:/books-for-library:/app/books:ro
     networks:
-      - app-network
+      - test-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
-    restart: unless-stopped
-
-  # ========== Vue.js Frontend ==========
-  frontend:
-    build:
-      context: ../digital-library-frontend
-      dockerfile: Dockerfile
-    container_name: digital-library-frontend
-    depends_on:
-      - backend
-    ports:
-      - "80:80"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # ========== Prometheus ==========
   prometheus:
     image: prom/prometheus:v2.48.0
-    container_name: digital-library-prometheus
+    container_name: digital-library-prometheus-test
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.time=7d'
       - '--web.enable-lifecycle'
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
+      - prometheus-data-test:/prometheus
     networks:
-      - app-network
+      - test-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   # ========== Grafana ==========
   grafana:
     image: grafana/grafana:10.2.2
-    container_name: digital-library-grafana
+    container_name: digital-library-grafana-test
     depends_on:
       - prometheus
     environment:
@@ -106,20 +103,25 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - grafana-data:/var/lib/grafana
+      - grafana-data-test:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
-      - app-network
+      - test-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
 volumes:
-  postgres-data:
+  postgres-data-test:
     driver: local
-  prometheus-data:
+  prometheus-data-test:
     driver: local
-  grafana-data:
+  grafana-data-test:
     driver: local
 
 networks:
-  app-network:
+  test-network:
     driver: bridge
