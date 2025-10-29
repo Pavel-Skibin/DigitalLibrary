@@ -3,22 +3,18 @@
     <h2 class="stats-title">Наша библиотека в цифрах</h2>
     <div class="stats-grid">
       <div class="stat-card">
-
         <div class="stat-value">{{ loading ? '...' : stats.totalBooks }}</div>
-        <div class="stat-label">Книг</div>
+        <div class="stat-label">{{ getBooksLabel(stats.totalBooks) }}</div>
       </div>
       <div class="stat-card">
-
         <div class="stat-value">{{ loading ? '...' : stats.totalAuthors }}</div>
-        <div class="stat-label">Авторов</div>
+        <div class="stat-label">{{ getAuthorsLabel(stats.totalAuthors) }}</div>
       </div>
       <div class="stat-card">
-
         <div class="stat-value">{{ loading ? '...' : stats.totalGenres }}</div>
-        <div class="stat-label">Жанров</div>
+        <div class="stat-label">{{ getGenresLabel(stats.totalGenres) }}</div>
       </div>
       <div class="stat-card">
-
         <div class="stat-value">{{ loading ? '...' : formatRating(stats.globalAverageRating) }}</div>
         <div class="stat-label">Средний рейтинг</div>
       </div>
@@ -39,6 +35,30 @@ const stats = ref({
 
 const loading = ref(true)
 
+function getBooksLabel(n) {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'Книга'
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'Книги'
+  return 'Книг'
+}
+
+function getAuthorsLabel(n) {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'Автор'
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'Автора'
+  return 'Авторов'
+}
+
+function getGenresLabel(n) {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'Жанр'
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return 'Жанра'
+  return 'Жанров'
+}
+
 async function loadStats() {
   try {
     const response = await fetch('/api/statistics/system')
@@ -56,6 +76,7 @@ onMounted(() => {
   loadStats()
 })
 </script>
+
 
 <style scoped>
 .library-stats {

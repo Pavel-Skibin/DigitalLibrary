@@ -84,8 +84,10 @@
 
 > Все связи, индексы и ограничения описаны в миграциях Flyway (`V1__add_partial_unique_indexes.sql`).
 
-## 🧩 Диаграмма сущностей (Entity Class Diagram)
+[//]: # (## 🧩 Диаграмма сущностей &#40;Entity Class Diagram&#41;)
 
-![Entity Diagram](../docs/backend-entities.png)
+[//]: # ()
+[//]: # (![Entity Diagram]&#40;../docs/backend-entities.png&#41;)
 
-> Сущности находятся в пакете `org.nahap.digital_library_backend.entity`.
+[//]: # ()
+[//]: # (> Сущности находятся в пакете `org.nahap.digital_library_backend.entity`.)

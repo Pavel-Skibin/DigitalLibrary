@@ -3,7 +3,6 @@
     <div class="welcome-text">
       <h1 class="page-title">
         Добро пожаловать<br>
-        <span class="gradient-text">в библиотеку!</span>
       </h1>
       <p class="welcome-description">
         Исследуйте наш обширный каталог книг,<br>
