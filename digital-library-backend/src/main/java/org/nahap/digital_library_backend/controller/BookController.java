@@ -1,5 +1,7 @@
 package org.nahap.digital_library_backend.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,11 @@ public class BookController {
 
     // Гость: GET /api/books — список всех книг с пагинацией и сортировкой
     @GetMapping
+    @Parameters({
+            @Parameter(name = "page", description = "Номер страницы", example = "0"),
+            @Parameter(name = "size", description = "Размер страницы", example = "10"),
+            @Parameter(name = "sort", description = "Сортировка: property,direction", example = "title,asc")
+    })
     public ResponseEntity<Page<BookResponse>> getAllBooks(Pageable pageable) {
         log.info("Запрос списка книг с пагинацией: {}", pageable);
         Page<BookResponse> books = bookService.getAllBooks(pageable);

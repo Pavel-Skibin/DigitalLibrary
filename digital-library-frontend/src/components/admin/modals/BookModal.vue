@@ -146,22 +146,23 @@
         </div>
 
         <!-- Путь к файлу -->
-        <div v-if="!uploadedFile" class="form-group">
-          <label>Путь к файлу *</label>
-          <input
-              v-model="form.filePath"
-              type="text"
-              class="form-input"
-              placeholder="Например: /Автор.Книга.fb2"
-          />
-
-        </div>
-        <div v-else class="form-group">
-          <label>Файл загружен</label>
-          <div class="file-path-display">
-            ✅ {{ form.filePath || 'Будет сохранён при нажатии "Сохранить"' }}
-          </div>
-        </div>
+<!--        <div v-if="!uploadedFile" class="form-group">-->
+<!--          <label>Путь к файлу *</label>-->
+<!--          <input-->
+<!--              v-model="form.filePath"-->
+<!--              type="text"-->
+<!--              class="form-input"-->
+<!--              placeholder="Например: /Автор.Книга.fb2"-->
+<!--          />-->
+<!--        </div>-->
+<!--        -->
+<!--        -->
+<!--        <div v-else class="form-group">-->
+<!--          <label>Файл загружен</label>-->
+<!--          <div class="file-path-display">-->
+<!--            ✅ {{ form.filePath || 'Будет сохранён при нажатии "Сохранить"' }}-->
+<!--          </div>-->
+<!--        </div>-->
       </div>
 
       <div class="modal-buttons">
@@ -214,12 +215,18 @@ const filteredAuthors = ref([])
 const filteredGenres = ref([])
 
 // === Валидация формы ===
+const isEditing = computed(() => !!props.book)
+
 const isValid = computed(() => {
+  const hasFile = isEditing.value
+      ? true // При редактировании не требуем файл/путь — он уже существует
+      : uploadedFile.value // При создании — обязателен файл
+
   return (
       form.value.title.trim() &&
       form.value.authorIds.length > 0 &&
       form.value.genreIds.length > 0 &&
-      (form.value.filePath.trim() || uploadedFile.value)
+      hasFile
   )
 })
 
@@ -455,7 +462,9 @@ function getGenreName(genreId) {
 async function handleSave() {
   if (!isValid.value) return
 
-  // Загрузка файла на сервер, если он был выбран
+  let currentFilePath = form.value.filePath
+
+  // Если загружен новый файл — загружаем его и получаем новый путь
   if (uploadedFile.value) {
     try {
       parsing.value = true
@@ -479,7 +488,7 @@ async function handleSave() {
 
       if (!response.ok) throw new Error('Ошибка загрузки файла')
       const uploadResult = await response.json()
-      form.value.filePath = uploadResult.filePath
+      currentFilePath = uploadResult.filePath // обновляем путь после загрузки
     } catch (error) {
       console.error('Ошибка загрузки файла:', error)
       alert('Не удалось загрузить файл: ' + error.message)
@@ -490,7 +499,26 @@ async function handleSave() {
     }
   }
 
-  emit('save', form.value)
+  // Формируем payload для отправки
+  const payload = {
+    title: form.value.title.trim(),
+    description: form.value.description || '',
+    authorIds: [...form.value.authorIds],
+    genreIds: [...form.value.genreIds]
+  }
+
+  // Отправляем filePath ТОЛЬКО если:
+  // - это новая книга (props.book === null) → тогда filePath обязан быть (он пришёл от загрузки)
+  // - или если это редактирование, но файл был загружен заново (uploadedFile.value)
+  // В остальных случаях (редактирование без нового файла) — НЕ отправляем filePath
+  if (uploadedFile.value || !props.book) {
+    // Для новой книги filePath должен быть (иначе isValid не пропустил бы)
+    // Для редактирования с новым файлом — тоже отправляем
+    payload.filePath = currentFilePath
+  }
+  // Если редактируем и файл не меняли — filePath НЕ включаем в payload
+
+  emit('save', payload)
 }
 
 // === Инициализация формы при открытии ===

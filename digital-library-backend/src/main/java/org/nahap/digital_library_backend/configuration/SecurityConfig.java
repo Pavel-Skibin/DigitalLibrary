@@ -38,9 +38,6 @@ public class SecurityConfig {
     }
 
 
-
-
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -51,6 +48,9 @@ public class SecurityConfig {
 
                         // ========== ACTUATOR ==========
                         .requestMatchers("/actuator/**").permitAll()
+
+                        // ========== SWAGGER / OPENAPI ==========
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // ========== ПУБЛИЧНЫЕ ЭНДПОИНТЫ (Гости) ==========
                         // Авторизация
@@ -98,6 +98,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/ratings/books/**").hasAnyRole("MODERATOR", "ADMIN")
 
                         // ========== СТАТИСТИКА ==========
+                        .requestMatchers("/api/statistics/books/top-rated").permitAll()
                         .requestMatchers("/api/statistics/system").permitAll()
                         .requestMatchers("/api/statistics/**").hasAnyRole("MODERATOR", "ADMIN")
 

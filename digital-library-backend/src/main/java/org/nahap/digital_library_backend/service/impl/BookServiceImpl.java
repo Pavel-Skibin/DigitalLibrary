@@ -97,20 +97,18 @@ public class BookServiceImpl implements BookService {
     @Override
     @Transactional
     public BookResponse updateBook(Integer bookId, BookUpdateRequest request) {
-        if (request.filePath() != null && !StringUtils.hasText(request.filePath())) {
-            throw new BookStorageException("Путь к файлу книги не может быть пустым");
-        }
-
         Book book = findBookOrThrow(bookId);
 
         book.setTitle(request.title());
         if (request.description() != null) {
             book.setDescription(request.description());
         }
-        if (request.filePath() != null && !request.filePath().isBlank()) {
+        if (request.filePath() != null) {
+            if (request.filePath().isBlank()) {
+                throw new BookStorageException("Путь к файлу книги не может быть пустым");
+            }
             book.setFilePath(request.filePath());
         }
-
         if (request.authorIds() != null) {
             bookAuthorRepository.deleteByBookId(bookId);
             if (!request.authorIds().isEmpty()) {
@@ -118,7 +116,6 @@ public class BookServiceImpl implements BookService {
                 saveBookAuthors(book, request.authorIds());
             }
         }
-
         if (request.genreIds() != null) {
             bookGenreRepository.deleteByBookId(bookId);
             if (!request.genreIds().isEmpty()) {
@@ -130,7 +127,6 @@ public class BookServiceImpl implements BookService {
         book = bookRepository.save(book);
         return bookMapper.toResponseWithCover(book);
     }
-
     @Override
     @Transactional(readOnly = true)
     public Page<BookResponse> searchBooks(

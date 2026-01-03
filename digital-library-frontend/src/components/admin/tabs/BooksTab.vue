@@ -185,11 +185,15 @@ async function handleSave(formData) {
         : '/api/books'
 
     const requestBody = {
-      title: formData.title.trim(),
-      description: formData.description.trim() || null,
-      authorIds: formData.authorIds,
-      genreIds: formData.genreIds,
-      filePath: formData.filePath.trim()
+      title: formData.title?.trim() || '',
+      description: formData.description?.trim() || null,
+      authorIds: formData.authorIds || [],
+      genreIds: formData.genreIds || []
+    }
+
+    // Добавляем filePath только если он был передан
+    if (formData.filePath != null) {
+      requestBody.filePath = formData.filePath.trim()
     }
 
     const response = await fetch(url, {
