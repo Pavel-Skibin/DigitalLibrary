@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Login - Detailed</title>
+    <style>
+      body {
+        font-family: "Courier New", monospace;
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+      }
+      h1 {
+        color: #4ec9b0;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #9cdcfe;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        background-color: #2d2d30;
+        border: 1px solid #3e3e42;
+        color: #d4d4d4;
+      }
+      button {
+        background-color: #0e639c;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background-color: #1177bb;
+      }
+      #result {
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #3e3e42;
+        border-radius: 4px;
+        background-color: #252526;
+        white-space: pre-wrap;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .success {
+        color: #4ec9b0;
+      }
+      .error {
+        color: #f48771;
+      }
+      .warning {
+        color: #dcdcaa;
+      }
+      .info {
+        color: #9cdcfe;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 Detailed Login Test</h1>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          value="testuser_184350"
+        />
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          value="password123"
+        />
+      </div>
+      <button type="submit">🚀 Login</button>
+      <button type="button" onclick="checkCookies()">🍪 Check Cookies</button>
+      <button type="button" onclick="testDirectAPI()">
+        ⚡ Test API Gateway
+      </button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+      function log(message, type = "info") {
+        const resultDiv = document.getElementById("result");
+        const className = type;
+        resultDiv.innerHTML += `<span class="${className}">${message}</span>\n`;
+      }
+
+      function clearLog() {
+        document.getElementById("result").innerHTML = "";
+      }
+
+      function checkCookies() {
+        clearLog();
+        log("=== CURRENT COOKIES ===", "info");
+        const cookies = document.cookie
+          .split(";")
+          .map((c) => c.trim())
+          .filter((c) => c);
+        if (cookies.length === 0) {
+          log("❌ No cookies found", "error");
+        } else {
+          cookies.forEach((cookie) => {
+            const [name, value] = cookie.split("=");
+            log(`✅ ${name} = ${value.substring(0, 50)}...`, "success");
+          });
+        }
+      }
+
+      async function testDirectAPI() {
+        clearLog();
+        log("=== TESTING API GATEWAY DIRECTLY ===", "info");
+        try {
+          const response = await fetch("http://localhost:8080/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              username: document.getElementById("username").value,
+              password: document.getElementById("password").value,
+            }),
+          });
+
+          log(
+            `Status: ${response.status} ${response.statusText}`,
+            response.ok ? "success" : "error",
+          );
+          log(`response.ok: ${response.ok}`, response.ok ? "success" : "error");
+
+          const data = await response.json();
+          log(`\nResponse Body:\n${JSON.stringify(data, null, 2)}`, "info");
+
+          log(
+            `\nCookies after request:\n${document.cookie || "(none)"}`,
+            "warning",
+          );
+        } catch (error) {
+          log(`❌ Error: ${error.message}`, "error");
+          log(`Stack: ${error.stack}`, "error");
+        }
+      }
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          clearLog();
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          log("=== LOGIN TEST STARTED ===", "info");
+          log(`Username: ${username}`, "info");
+          log(`URL: ${window.location.origin}/api/auth/login`, "info");
+          log("", "info");
+
+          log("📤 Sending request...", "warning");
+
+          try {
+            const startTime = performance.now();
+
+            const response = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({ username, password }),
+            });
+
+            const endTime = performance.now();
+            const duration = (endTime - startTime).toFixed(2);
+
+            log("", "info");
+            log("📥 Response received:", "info");
+            log(`⏱️  Time: ${duration}ms`, "info");
+            log(
+              `📊 Status: ${response.status} ${response.statusText}`,
+              response.ok ? "success" : "error",
+            );
+            log(
+              `✓  response.ok: ${response.ok}`,
+              response.ok ? "success" : "error",
+            );
+            log(`🌐 URL: ${response.url}`, "info");
+            log(`🔄 Redirected: ${response.redirected}`, "info");
+            log(`📝 Type: ${response.type}`, "info");
+
+            log("", "info");
+            log("📋 Response Headers:", "info");
+            for (const [key, value] of response.headers.entries()) {
+              log(`   ${key}: ${value}`, "info");
+            }
+
+            log("", "info");
+            let data;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              data = await response.json();
+              log("📦 Response Body (JSON):", "info");
+              log(
+                JSON.stringify(data, null, 2),
+                response.ok ? "success" : "error",
+              );
+            } else {
+              data = await response.text();
+              log("📦 Response Body (TEXT):", "warning");
+              log(data, "warning");
+            }
+
+            log("", "info");
+            log("🍪 Cookies after request:", "info");
+            const cookies = document.cookie
+              .split(";")
+              .map((c) => c.trim())
+              .filter((c) => c);
+            if (cookies.length === 0) {
+              log("   ❌ No cookies found!", "error");
+              log(
+                "   ⚠️  This is the problem - Set-Cookie header not working",
+                "error",
+              );
+            } else {
+              cookies.forEach((cookie) => {
+                const [name, value] = cookie.split("=");
+                if (name === "jwt") {
+                  log(
+                    `   ✅ ${name} = ${value.substring(0, 60)}...`,
+                    "success",
+                  );
+                } else {
+                  log(`   📌 ${name} = ${value}`, "info");
+                }
+              });
+            }
+
+            log("", "info");
+            if (response.ok && data.token) {
+              log("✅ LOGIN SUCCESSFUL!", "success");
+              log("✅ Token received in response body", "success");
+              if (document.cookie.includes("jwt=")) {
+                log("✅ JWT cookie set correctly", "success");
+              } else {
+                log("⚠️  JWT cookie NOT set (but token in body)", "warning");
+              }
+            } else {
+              log("❌ LOGIN FAILED!", "error");
+              log(`❌ Status: ${response.status}`, "error");
+              if (!response.ok) {
+                log(
+                  "❌ response.ok is false - this triggers alert in Vue app",
+                  "error",
+                );
+              }
+            }
+          } catch (error) {
+            log("", "info");
+            log("💥 EXCEPTION CAUGHT:", "error");
+            log(`Error: ${error.message}`, "error");
+            log(`Stack: ${error.stack}`, "error");
+          }
+        });
+
+      // Initial cookie check on page load
+      window.addEventListener("load", () => {
+        log("=== PAGE LOADED ===", "info");
+        log(`Current URL: ${window.location.href}`, "info");
+        log(`Origin: ${window.location.origin}`, "info");
+        checkCookies();
+      });
+    </script>
+  </body>
+</html>
