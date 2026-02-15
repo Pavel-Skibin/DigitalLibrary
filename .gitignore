@@ -28,7 +28,11 @@ build/
 
 # Environment files
 .env
-.local
+.env.local
+*.env
+!.env.example
+application-local.properties
+application-local.yml
 
 # Logs
 *.log
@@ -36,6 +40,6 @@ build/
 
 *.sql
  digital-library-frontend/src/foliate-js/
-docker/k6/utils/config.js
+old_docker/k6/utils/config.js
 
 *.json
