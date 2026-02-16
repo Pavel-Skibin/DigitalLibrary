@@ -8,7 +8,7 @@
 
 - [`digital-library-backend/`](digital-library-backend/) — Spring Boot 3 (Java) API
 - [`digital-library-frontend/`](digital-library-frontend/) — Vue 3 + Vite клиент
-- [`docker/`](docker/) — Docker Compose, мониторинг (Prometheus + Grafana), нагрузочные тесты (k6)
+- [`docker/`](old_docker/) — Docker Compose, мониторинг (Prometheus + Grafana), нагрузочные тесты (k6)
 
 
 
@@ -28,7 +28,7 @@
 
 1. **Первый запуск (создание схемы):**  
    Во время первого запуска **отключите Flyway** и разрешите Hibernate создать таблицы:  
-   [`docker/application-docker.properties`](docker/application-docker.properties)
+   [`docker/application-docker.properties`](old_docker/application-docker.properties)
    ```properties
    # docker/application-docker.properties
    spring.jpa.hibernate.ddl-auto=create
