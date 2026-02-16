@@ -26,12 +26,4 @@ public interface GenreRepository extends JpaRepository<Genre, Integer> {
            "GROUP BY bg.genre.id, bg.genre.name " +
            "ORDER BY bookCount DESC")
     Page<Object[]> findTopGenresByBookCount(Pageable pageable);
-
-    @Query("SELECT bg.genre.id, bg.genre.name, AVG(r.value) as avgRating " +
-           "FROM BookGenre bg " +
-           "LEFT JOIN bg.book.ratings r " +
-           "GROUP BY bg.genre.id, bg.genre.name " +
-           "HAVING COUNT(r) >= :minRatings " +
-           "ORDER BY avgRating DESC")
-    Page<Object[]> findTopGenresByRating(@Param("minRatings") Long minRatings, Pageable pageable);
 }

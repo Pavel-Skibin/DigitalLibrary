@@ -41,4 +41,19 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.bookId = :bookId AND c.deletedAt IS NULL")
     Long countActiveCommentsByBookId(@Param("bookId") Integer bookId);
+
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.deletedAt IS NOT NULL")
+    Long countDeletedComments();
+
+    @Query("SELECT c.userId, COUNT(c) " +
+           "FROM Comment c " +
+           "WHERE c.deletedAt IS NULL " +
+           "GROUP BY c.userId " +
+           "ORDER BY COUNT(c) DESC")
+    List<Object[]> findMostActiveCommenters(Pageable pageable);
+
+    @Query("SELECT c FROM Comment c " +
+           "WHERE c.deletedAt IS NULL " +
+           "ORDER BY c.createdAt DESC")
+    List<Comment> findRecentComments(Pageable pageable);
 }

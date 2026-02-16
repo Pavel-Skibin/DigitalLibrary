@@ -2,6 +2,8 @@ package org.nahap.commentratingservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.nahap.commentratingservice.client.book.InternalBookApiApi;
+import org.nahap.commentratingservice.client.user.InternalUserApiApi;
 import org.nahap.commentratingservice.dto.mapper.BookmarkMapper;
 import org.nahap.commentratingservice.dto.request.BookmarkCreateRequest;
 import org.nahap.commentratingservice.dto.request.BookmarkUpdateRequest;
@@ -25,10 +27,24 @@ public class BookmarkServiceImpl implements BookmarkService {
 
     private final BookmarkRepository bookmarkRepository;
     private final BookmarkMapper bookmarkMapper;
+    private final InternalUserApiApi userServiceClient;
+    private final InternalBookApiApi bookServiceClient;
 
     @Override
     @Transactional
     public BookmarkResponse createBookmark(BookmarkCreateRequest request, Integer currentUserId) {
+        // Validate user exists
+        var userValidation = userServiceClient.validateUser(currentUserId);
+        if (!userValidation.getExists()) {
+            throw new ResourceNotFoundException("User not found: " + currentUserId);
+        }
+
+        // Validate book exists
+        var bookValidation = bookServiceClient.validateBook(request.bookId());
+        if (!bookValidation.getExists()) {
+            throw new ResourceNotFoundException("Book not found: " + request.bookId());
+        }
+
         Bookmark bookmark = new Bookmark();
         bookmark.setUserId(currentUserId);
         bookmark.setBookId(request.bookId());

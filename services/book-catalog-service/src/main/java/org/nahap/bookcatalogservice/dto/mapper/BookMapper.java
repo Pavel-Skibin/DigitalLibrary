@@ -3,11 +3,9 @@ package org.nahap.bookcatalogservice.dto.mapper;
 import org.mapstruct.*;
 import org.nahap.bookcatalogservice.dto.response.BookDetailResponse;
 import org.nahap.bookcatalogservice.dto.response.BookResponse;
-import org.nahap.bookcatalogservice.dto.response.CommentResponse;
 import org.nahap.bookcatalogservice.entity.*;
 import org.nahap.bookcatalogservice.repository.BookAuthorRepository;
 import org.nahap.bookcatalogservice.repository.BookGenreRepository;
-import org.nahap.bookcatalogservice.repository.RatingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,9 +25,6 @@ public abstract class BookMapper {
     @Autowired
     protected BookGenreRepository bookGenreRepository;
 
-    @Autowired
-    protected RatingRepository ratingRepository;
-
     /**
      * Преобразует Book в BookResponse БЕЗ обложки (для StatisticsService)
      */
@@ -40,7 +35,6 @@ public abstract class BookMapper {
 
         List<String> authors = getAuthorNames(book);
         List<String> genres = getGenreNames(book);
-        Double avgRating = calculateAverageRating(book);
 
         return new BookResponse(
                 book.getId(),
@@ -48,7 +42,8 @@ public abstract class BookMapper {
                 book.getDescription(),
                 authors,
                 genres,
-                avgRating > 0 ? avgRating : null,
+                book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
+                book.getRatingsCount() != null ? book.getRatingsCount() : 0,
                 null // coverUrl не нужен для статистики
         );
     }
@@ -64,7 +59,6 @@ public abstract class BookMapper {
         List<Integer> bookIds = Collections.singletonList(book.getId());
         Map<Integer, List<String>> authorsByBookId = loadAuthorNamesByBookId(bookIds);
         Map<Integer, List<String>> genresByBookId = loadGenreNamesByBookId(bookIds);
-        Map<Integer, Double> ratingsByBookId = loadAverageRatingsByBookId(bookIds);
 
         String coverUrl = book.getCoverImagePath() != null
                 ? "/api/books/" + book.getId() + "/cover"
@@ -76,7 +70,8 @@ public abstract class BookMapper {
                 book.getDescription(),
                 authorsByBookId.getOrDefault(book.getId(), Collections.emptyList()),
                 genresByBookId.getOrDefault(book.getId(), Collections.emptyList()),
-                ratingsByBookId.getOrDefault(book.getId(), 0.0),
+                book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
+                book.getRatingsCount() != null ? book.getRatingsCount() : 0,
                 coverUrl
         );
     }
@@ -95,7 +90,6 @@ public abstract class BookMapper {
 
         Map<Integer, List<String>> authorsByBookId = loadAuthorNamesByBookId(bookIds);
         Map<Integer, List<String>> genresByBookId = loadGenreNamesByBookId(bookIds);
-        Map<Integer, Double> ratingsByBookId = loadAverageRatingsByBookId(bookIds);
 
         List<BookResponse> responses = bookPage.getContent().stream()
                 .map(book -> {
@@ -109,11 +103,12 @@ public abstract class BookMapper {
                             book.getDescription(),
                             authorsByBookId.getOrDefault(book.getId(), Collections.emptyList()),
                             genresByBookId.getOrDefault(book.getId(), Collections.emptyList()),
-                            ratingsByBookId.getOrDefault(book.getId(), 0.0),
+                            book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
+                            book.getRatingsCount() != null ? book.getRatingsCount() : 0,
                             coverUrl
                     );
                 })
-                .toList();
+                .collect(Collectors.toList());
 
         return new PageImpl<>(responses, bookPage.getPageable(), bookPage.getTotalElements());
     }
@@ -130,7 +125,6 @@ public abstract class BookMapper {
 
         Map<Integer, List<String>> authorsByBookId = loadAuthorNamesByBookId(bookIds);
         Map<Integer, List<String>> genresByBookId = loadGenreNamesByBookId(bookIds);
-        Map<Integer, Double> ratingsByBookId = loadAverageRatingsByBookId(bookIds);
 
         return books.stream()
                 .map(book -> {
@@ -144,7 +138,8 @@ public abstract class BookMapper {
                             book.getDescription(),
                             authorsByBookId.getOrDefault(book.getId(), Collections.emptyList()),
                             genresByBookId.getOrDefault(book.getId(), Collections.emptyList()),
-                            ratingsByBookId.getOrDefault(book.getId(), 0.0),
+                            book.getAverageRating() != null ? book.getAverageRating().doubleValue() : null,
+                            book.getRatingsCount(),
                             coverUrl
                     );
                 })
@@ -161,9 +156,6 @@ public abstract class BookMapper {
 
         List<String> authors = getAuthorNames(book);
         List<String> genres = getGenreNames(book);
-        Double avgRating = calculateAverageRating(book);
-        Long totalRatings = getTotalRatings(book);
-        List<CommentResponse> comments = mapComments(book.getComments());
 
         String coverUrl = book.getCoverImagePath() != null
                 ? "/api/books/" + book.getId() + "/cover"
@@ -175,9 +167,8 @@ public abstract class BookMapper {
                 book.getDescription(),
                 authors,
                 genres,
-                avgRating > 0 ? avgRating : null,
-                totalRatings,
-                comments,
+                book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
+                book.getRatingsCount() != null ? book.getRatingsCount() : 0,
                 coverUrl
         );
     }
@@ -193,35 +184,6 @@ public abstract class BookMapper {
         if (book.getBookGenres() == null) return Collections.emptyList();
         return book.getBookGenres().stream()
                 .map(bg -> bg.getGenre().getName())
-                .collect(Collectors.toList());
-    }
-
-    protected Double calculateAverageRating(Book book) {
-        if (book.getRatings() == null || book.getRatings().isEmpty()) return 0.0;
-        return book.getRatings().stream()
-                .mapToInt(Rating::getValue)
-                .average()
-                .orElse(0.0);
-    }
-
-    protected Long getTotalRatings(Book book) {
-        if (book.getRatings() == null) return 0L;
-        return (long) book.getRatings().size();
-    }
-
-    protected List<CommentResponse> mapComments(List<Comment> comments) {
-        if (comments == null) return Collections.emptyList();
-        return comments.stream()
-                .filter(comment -> comment.getDeletedAt() == null)
-                .map(comment -> new CommentResponse(
-                        comment.getId(),
-                        comment.getUser().getId(),
-                        comment.getUser().getUsername(),
-                        comment.getBook().getId(),
-                        comment.getText(),
-                        comment.getCreatedAt(),
-                        comment.getDeletedAt()
-                ))
                 .collect(Collectors.toList());
     }
 
@@ -246,15 +208,6 @@ public abstract class BookMapper {
                                 bg -> bg.getGenre().getName(),
                                 Collectors.toList()
                         )
-                ));
-    }
-
-    protected Map<Integer, Double> loadAverageRatingsByBookId(List<Integer> bookIds) {
-        List<Rating> ratings = ratingRepository.findByBookIdIn(bookIds);
-        return ratings.stream()
-                .collect(Collectors.groupingBy(
-                        r -> r.getBook().getId(),
-                        Collectors.averagingDouble(Rating::getValue)
                 ));
     }
 }

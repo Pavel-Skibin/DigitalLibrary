@@ -3,6 +3,7 @@ package org.nahap.bookcatalogservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
@@ -84,6 +85,13 @@ public class Book {
 //    @Column(name = "download_count")
 //    private Long downloadCount;  // NEW: сколько раз скачали
 
+    // === КЭШ РЕЙТИНГА (из Comment Rating Service) ===
+    @Column(name = "average_rating", precision = 3, scale = 2)
+    private BigDecimal averageRating = BigDecimal.ZERO;  // Кэшированный средний рейтинг (0.00-5.00)
+
+    @Column(name = "ratings_count", nullable = false)
+    private Integer ratingsCount = 0;  // Кэшированное количество оценок
+
 
 
     // === СВЯЗИ  ===
@@ -92,15 +100,6 @@ public class Book {
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookGenre> bookGenres;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Rating> ratings;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Bookmark> bookmarks;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookTag> bookTags = new ArrayList<>();

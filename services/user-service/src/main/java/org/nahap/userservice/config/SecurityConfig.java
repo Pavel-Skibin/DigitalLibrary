@@ -46,6 +46,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // CORS preflight requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Internal API для межсервисного взаимодействия
+                        .requestMatchers("/api/internal/**").permitAll()
                         // Публичные endpoints (как в монолите)
                         .requestMatchers("/api/auth/**").permitAll()          // Логин, Logout
                         .requestMatchers("/actuator/**").permitAll()

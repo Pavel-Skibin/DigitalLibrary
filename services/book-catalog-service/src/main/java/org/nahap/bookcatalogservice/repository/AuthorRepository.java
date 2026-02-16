@@ -33,12 +33,4 @@ public interface AuthorRepository extends JpaRepository<Author, Integer> {
            "ORDER BY bookCount DESC")
     Page<Object[]> findTopAuthorsByBookCount(Pageable pageable);
 
-    @Query("SELECT ba.author.id, ba.author.firstName, ba.author.lastName, AVG(r.value) as avgRating " +
-           "FROM BookAuthor ba " +
-           "LEFT JOIN ba.book.ratings r " +
-           "GROUP BY ba.author.id, ba.author.firstName, ba.author.lastName " +
-           "HAVING COUNT(r) >= :minRatings " +
-           "ORDER BY avgRating DESC")
-    Page<Object[]> findTopAuthorsByRating(@Param("minRatings") Long minRatings, Pageable pageable);
-
 }

@@ -3,6 +3,7 @@ package org.nahap.commentratingservice.service;
 import org.nahap.commentratingservice.dto.request.RatingCreateRequest;
 import org.nahap.commentratingservice.dto.response.RatingResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface RatingService {
@@ -13,7 +14,7 @@ public interface RatingService {
 
     List<RatingResponse> getRatingsByBook(Integer bookId);
 
-    Double getAverageRatingForBook(Integer bookId);
+    BigDecimal getAverageRatingForBook(Integer bookId);
 
     Long getTotalRatingsForBook(Integer bookId);
 }

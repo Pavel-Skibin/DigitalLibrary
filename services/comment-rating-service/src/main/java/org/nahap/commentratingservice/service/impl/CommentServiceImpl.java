@@ -2,6 +2,8 @@ package org.nahap.commentratingservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.nahap.commentratingservice.client.book.InternalBookApiApi;
+import org.nahap.commentratingservice.client.user.InternalUserApiApi;
 import org.nahap.commentratingservice.dto.mapper.CommentMapper;
 import org.nahap.commentratingservice.dto.request.CommentCreateRequest;
 import org.nahap.commentratingservice.dto.response.CommentResponse;
@@ -26,10 +28,24 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
+    private final InternalUserApiApi userServiceClient;
+    private final InternalBookApiApi bookServiceClient;
 
     @Override
     @Transactional
     public CommentResponse createComment(CommentCreateRequest request, Integer currentUserId) {
+        // Validate user exists
+        var userValidation = userServiceClient.validateUser(currentUserId);
+        if (!userValidation.getExists()) {
+            throw new ResourceNotFoundException("User not found: " + currentUserId);
+        }
+
+        // Validate book exists
+        var bookValidation = bookServiceClient.validateBook(request.bookId());
+        if (!bookValidation.getExists()) {
+            throw new ResourceNotFoundException("Book not found: " + request.bookId());
+        }
+
         // Check if user already has active comment for this book
         if (commentRepository.findActiveByUserAndBook(currentUserId, request.bookId()).isPresent()) {
             throw new BadRequestException("You already have a comment on this book");

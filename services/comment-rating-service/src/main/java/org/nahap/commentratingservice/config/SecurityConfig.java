@@ -36,6 +36,9 @@ public class SecurityConfig {
                         // CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         
+                        // Internal API
+                        .requestMatchers("/api/internal/**").permitAll()
+                        
                         // Public endpoints: GET comments, ratings
                         .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ratings/**").permitAll()
@@ -51,9 +54,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/bookmarks/**").authenticated()
                         
                         // Moderators/Admins: moderation endpoints
-                        .requestMatchers("/api/comments/**/moderate").hasAnyRole("MODERATOR", "ADMIN")
-                        .requestMatchers("/api/comments/**/restore").hasAnyRole("MODERATOR", "ADMIN")
-                        .requestMatchers("/api/comments/**/all").hasAnyRole("MODERATOR", "ADMIN")
+                        .requestMatchers("/api/comments/*/moderate").hasAnyRole("MODERATOR", "ADMIN")
+                        .requestMatchers("/api/comments/*/restore").hasAnyRole("MODERATOR", "ADMIN")
+                        .requestMatchers("/api/comments/*/all").hasAnyRole("MODERATOR", "ADMIN")
                         
                         // Actuator
                         .requestMatchers("/actuator/**").permitAll()

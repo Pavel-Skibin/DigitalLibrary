@@ -9,5 +9,6 @@ public record BookResponse(
         List<String> authors,
         List<String> genres,
         Double averageRating,
+        Integer ratingsCount,
         String coverUrl
 ) {}

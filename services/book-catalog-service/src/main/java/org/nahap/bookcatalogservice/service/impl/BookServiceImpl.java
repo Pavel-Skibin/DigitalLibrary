@@ -42,7 +42,6 @@ public class BookServiceImpl implements BookService {
     private final GenreRepository genreRepository;
     private final BookAuthorRepository bookAuthorRepository;
     private final BookGenreRepository bookGenreRepository;
-    private final RatingRepository ratingRepository;
     private final BookMapper bookMapper;
     private final BookStorageProperties storageProperties;
     private final BookCoverService bookCoverService;
@@ -138,14 +137,8 @@ public class BookServiceImpl implements BookService {
             Pageable pageable,
             String sortField
     ) {
-        boolean hasRatingFilter = (minRating != null && !minRating.isNaN())
-                                  || (maxRating != null && !maxRating.isNaN());
-        boolean sortByRating = "rating".equals(sortField);
-
-        Page<Book> bookPage = (hasRatingFilter || sortByRating)
-                ? bookRepository.searchBooksWithRatingAndSort(title, authorIds, genreIds,
-                minRating, maxRating, sortField, pageable)
-                : bookRepository.searchBooksSimpleWithSort(title, authorIds, genreIds, pageable);
+        // Сортировка теперь поддерживается через Pageable напрямую (title, averageRating, etc.)
+        Page<Book> bookPage = bookRepository.searchBooksSimpleWithSort(title, authorIds, genreIds, pageable);
 
         return bookMapper.toResponsePageWithCovers(bookPage);
     }
@@ -307,11 +300,6 @@ public class BookServiceImpl implements BookService {
         if (book.getBookGenres() != null) {
             Hibernate.initialize(book.getBookGenres());
             book.getBookGenres().forEach(bg -> Hibernate.initialize(bg.getGenre()));
-        }
-        Hibernate.initialize(book.getRatings());
-        if (book.getComments() != null) {
-            Hibernate.initialize(book.getComments());
-            book.getComments().forEach(c -> Hibernate.initialize(c.getUser()));
         }
     }
 

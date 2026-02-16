@@ -127,23 +127,17 @@ public class BookController {
         log.info("Расширенный поиск: title={}, authorIds={}, genreIds={}, minRating={}, maxRating={}, pageable={}",
                 title, authorIds, genreIds, minRating, maxRating, pageable);
 
-        String sortField = "title";
-        if (!pageable.getSort().isUnsorted()) {
-            var order = pageable.getSort().get().findFirst();
-            if (order.isPresent()) {
-                String property = order.get().getProperty();
-                if ("averageRating".equalsIgnoreCase(property)) {
-                    sortField = "rating";
-                }
-                // title — остаётся по умолчанию
-            }
+        // Если сортировка не указана, сортировать по заголовку по умолчанию
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(
+                    pageable.getPageNumber(), 
+                    pageable.getPageSize(), 
+                    org.springframework.data.domain.Sort.by("title").ascending()
+            );
         }
 
-
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-
         Page<BookResponse> results = bookService.searchBooks(
-                title, authorIds, genreIds, minRating, maxRating, unsortedPageable, sortField
+                title, authorIds, genreIds, minRating, maxRating, pageable, null
         );
         return ResponseEntity.ok(results);
     }

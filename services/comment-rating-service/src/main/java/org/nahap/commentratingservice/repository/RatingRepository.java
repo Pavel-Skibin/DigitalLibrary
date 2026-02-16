@@ -37,4 +37,13 @@ public interface RatingRepository extends JpaRepository<Rating, Integer> {
 
     @Query("SELECT r.value, COUNT(r) FROM Rating r WHERE r.bookId = :bookId GROUP BY r.value ORDER BY r.value")
     List<Object[]> getRatingDistributionByBook(@Param("bookId") Integer bookId);
+
+    @Query("SELECT DISTINCT r.bookId FROM Rating r ORDER BY r.bookId")
+    List<Integer> findAllDistinctBookIds();
+
+    @Query("SELECT COUNT(r) FROM Rating r WHERE r.value = :ratingValue")
+    Long countByRatingValue(@Param("ratingValue") Integer ratingValue);
+
+    @Query("SELECT AVG(r.value) FROM Rating r")
+    Double findGlobalAverageRating();
 }

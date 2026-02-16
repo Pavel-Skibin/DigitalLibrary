@@ -9,7 +9,6 @@ public record BookDetailResponse(
         List<String> authors,
         List<String> genres,
         Double averageRating,
-        Long totalRatings,
-        List<CommentResponse> comments,
+        Integer ratingsCount,
         String coverUrl
 ) {}

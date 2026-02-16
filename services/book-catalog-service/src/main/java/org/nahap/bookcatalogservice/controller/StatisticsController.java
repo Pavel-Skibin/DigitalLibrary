@@ -1,188 +1,161 @@
-// src/main/java/org/nahap/digital_library_backend/controller/StatisticsController.java
 package org.nahap.bookcatalogservice.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.nahap.bookcatalogservice.dto.response.*;
+import lombok.extern.slf4j.Slf4j;
+import org.nahap.bookcatalogservice.client.commentrating.model.ActiveCommenter;
+import org.nahap.bookcatalogservice.client.commentrating.model.BookStatistics;
+import org.nahap.bookcatalogservice.client.commentrating.model.RatingDistribution;
+import org.nahap.bookcatalogservice.client.commentrating.model.RecentComment;
+import org.nahap.bookcatalogservice.client.user.model.RoleStatistics;
+import org.nahap.bookcatalogservice.dto.*;
 import org.nahap.bookcatalogservice.service.StatisticsService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Public REST API for statistics aggregation
+ */
 @RestController
 @RequestMapping("/api/statistics")
 @RequiredArgsConstructor
+@Slf4j
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
 
-    // === ОБЩАЯ СТАТИСТИКА СИСТЕМЫ ===
-
+    /**
+     * GET /api/statistics/system
+     * Get system-wide statistics
+     */
     @GetMapping("/system")
-    public ResponseEntity<SystemStatisticsDTO> getSystemStatistics() {
-        return ResponseEntity.ok(statisticsService.getSystemStatistics());
+    public ResponseEntity<SystemStatisticsResponse> getSystemStatistics() {
+        log.info("REST: GET /api/statistics/system");
+        SystemStatisticsResponse stats = statisticsService.getSystemStatistics();
+        return ResponseEntity.ok(stats);
     }
 
-    // === СТАТИСТИКА ПО КНИГАМ ===
-
-    @GetMapping("/books/top-rated")
-    public ResponseEntity<Page<BookStatDTO>> getTopRatedBooks(
-            @RequestParam(defaultValue = "3") Long minRatings,
-            Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getTopRatedBooks(minRatings, pageable));
-    }
-
-    @GetMapping("/books/most-commented")
-    public ResponseEntity<Page<BookStatDTO>> getMostCommentedBooks(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getMostCommentedBooks(pageable));
-    }
-
-    @GetMapping("/books/most-bookmarked")
-    public ResponseEntity<Page<BookStatDTO>> getMostBookmarkedBooks(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getMostBookmarkedBooks(pageable));
-    }
-
-    @GetMapping("/books/without-ratings")
-    public ResponseEntity<List<BookResponse>> getBooksWithoutRatings() {
-        return ResponseEntity.ok(statisticsService.getBooksWithoutRatings());
-    }
-
-    @GetMapping("/books/total-count")
-    public ResponseEntity<Long> getTotalBooksCount() {
-        return ResponseEntity.ok(statisticsService.getTotalBooksCount());
-    }
-
-    @GetMapping("/books/count-by-genre/{genreId}")
-    public ResponseEntity<Long> getBookCountByGenre(@PathVariable Integer genreId) {
-        return ResponseEntity.ok(statisticsService.getBookCountByGenre(genreId));
-    }
-
-    @GetMapping("/books/count-by-author/{authorId}")
-    public ResponseEntity<Long> getBookCountByAuthor(@PathVariable Integer authorId) {
-        return ResponseEntity.ok(statisticsService.getBookCountByAuthor(authorId));
-    }
-
-    // === СТАТИСТИКА ПО ЖАНРАМ ===
-
-    @GetMapping("/genres/top-by-count")
-    public ResponseEntity<Page<GenreStatDTO>> getTopGenresByBookCount(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getTopGenresByBookCount(pageable));
-    }
-
-    @GetMapping("/genres/top-by-rating")
-    public ResponseEntity<Page<GenreStatDTO>> getTopGenresByRating(
-            @RequestParam(defaultValue = "3") Long minRatings,
-            Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getTopGenresByRating(minRatings, pageable));
-    }
-
-    // === СТАТИСТИКА ПО АВТОРАМ ===
-
-    @GetMapping("/authors/top-by-count")
-    public ResponseEntity<Page<AuthorStatDTO>> getTopAuthorsByBookCount(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getTopAuthorsByBookCount(pageable));
-    }
-
-    @GetMapping("/authors/top-by-rating")
-    public ResponseEntity<Page<AuthorStatDTO>> getTopAuthorsByRating(
-            @RequestParam(defaultValue = "3") Long minRatings,
-            Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getTopAuthorsByRating(minRatings, pageable));
-    }
-
-    // === СТАТИСТИКА ПО ПОЛЬЗОВАТЕЛЯМ ===
-
-    @GetMapping("/users/active-count")
-    public ResponseEntity<Long> getActiveUsersCount() {
-        return ResponseEntity.ok(statisticsService.getActiveUsersCount());
-    }
-
-    @GetMapping("/users/by-role")
-    public ResponseEntity<List<UserRoleCountDTO>> getUserCountByRole() {
-        return ResponseEntity.ok(statisticsService.getUserCountByRole());
-    }
-
-    @GetMapping("/users/most-active-commenters")
-    public ResponseEntity<Page<UserActivityDTO>> getMostActiveCommenters(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getMostActiveCommenters(pageable));
-    }
-
-    @GetMapping("/users/most-active-raters")
-    public ResponseEntity<Page<UserActivityDTO>> getMostActiveRaters(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getMostActiveRaters(pageable));
-    }
-
-    // === СТАТИСТИКА ПО КОММЕНТАРИЯМ ===
-
-    @GetMapping("/comments/active-count")
-    public ResponseEntity<Long> getActiveCommentsCount() {
-        return ResponseEntity.ok(statisticsService.getActiveCommentsCount());
-    }
-
-    @GetMapping("/comments/total-count")
-    public ResponseEntity<Long> getTotalCommentsCount() {
-        return ResponseEntity.ok(statisticsService.getTotalCommentsCount());
-    }
-
+    /**
+     * GET /api/statistics/comments/deleted-percentage
+     * Get percentage of deleted comments
+     */
     @GetMapping("/comments/deleted-percentage")
     public ResponseEntity<Double> getDeletedCommentsPercentage() {
-        return ResponseEntity.ok(statisticsService.getDeletedCommentsPercentage());
+        log.info("REST: GET /api/statistics/comments/deleted-percentage");
+        Double percentage = statisticsService.getDeletedCommentsPercentage();
+        return ResponseEntity.ok(percentage);
     }
 
-    @GetMapping("/comments/recent")
-    public ResponseEntity<Page<CommentResponse>> getRecentComments(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getRecentComments(pageable));
-    }
-
-    // === СТАТИСТИКА ПО РЕЙТИНГАМ ===
-
-    @GetMapping("/ratings/total-count")
-    public ResponseEntity<Long> getTotalRatingsCount() {
-        return ResponseEntity.ok(statisticsService.getTotalRatingsCount());
-    }
-
-    @GetMapping("/ratings/global-average")
-    public ResponseEntity<Double> getGlobalAverageRating() {
-        return ResponseEntity.ok(statisticsService.getGlobalAverageRating());
-    }
-
+    /**
+     * GET /api/statistics/ratings/distribution
+     * Get rating distribution (1-5 stars)
+     */
     @GetMapping("/ratings/distribution")
-    public ResponseEntity<List<RatingDistributionDTO>> getGlobalRatingDistribution() {
-        return ResponseEntity.ok(statisticsService.getGlobalRatingDistribution());
+    public ResponseEntity<List<RatingDistribution>> getRatingDistribution() {
+        log.info("REST: GET /api/statistics/ratings/distribution");
+        List<RatingDistribution> distribution = statisticsService.getRatingDistribution();
+        return ResponseEntity.ok(distribution);
     }
 
-    @GetMapping("/ratings/distribution/book/{bookId}")
-    public ResponseEntity<List<RatingDistributionDTO>> getRatingDistributionByBook(
-            @PathVariable Integer bookId) {
-        return ResponseEntity.ok(statisticsService.getRatingDistributionByBook(bookId));
+    /**
+     * GET /api/statistics/users/top-commenters
+     * Get most active commenters
+     */
+    @GetMapping("/users/top-commenters")
+    public ResponseEntity<PageResponse<ActiveCommenterResponse>> getTopCommenters(
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        log.info("REST: GET /api/statistics/users/top-commenters?size={}", size);
+        PageResponse<ActiveCommenterResponse> commenters = statisticsService.getMostActiveCommentersFormatted(size);
+        return ResponseEntity.ok(commenters);
     }
 
-    // === СТАТИСТИКА ПО ЗАКЛАДКАМ ===
-
-    @GetMapping("/bookmarks/active-count")
-    public ResponseEntity<Long> getActiveBookmarksCount() {
-        return ResponseEntity.ok(statisticsService.getActiveBookmarksCount());
+    /**
+     * GET /api/statistics/users/most-active-commenters
+     * Get most active commenters (alternative endpoint)
+     */
+    @GetMapping("/users/most-active-commenters")
+    public ResponseEntity<PageResponse<ActiveCommenterResponse>> getMostActiveCommenters(
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        log.info("REST: GET /api/statistics/users/most-active-commenters?size={}", size);
+        PageResponse<ActiveCommenterResponse> commenters = statisticsService.getMostActiveCommentersFormatted(size);
+        return ResponseEntity.ok(commenters);
     }
 
-    @GetMapping("/bookmarks/average-per-user")
-    public ResponseEntity<Double> getAverageBookmarksPerUser() {
-        return ResponseEntity.ok(statisticsService.getAverageBookmarksPerUser());
+    /**
+     * GET /api/statistics/comments/recent
+     * Get recent comments
+     */
+    @GetMapping("/comments/recent")
+    public ResponseEntity<PageResponse<RecentCommentResponse>> getRecentComments(
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        log.info("REST: GET /api/statistics/comments/recent?size={}", size);
+        PageResponse<RecentCommentResponse> comments = statisticsService.getRecentCommentsFormatted(size);
+        return ResponseEntity.ok(comments);
     }
 
-    @GetMapping("/bookmarks/most-bookmarked-books")
-    public ResponseEntity<Page<BookmarkStatDTO>> getMostBookmarkedBooksDetailed(Pageable pageable) {
-        return ResponseEntity.ok(statisticsService.getMostBookmarkedBooksDetailed(pageable));
+    /**
+     * GET /api/statistics/books/top-rated
+     * Get top-rated books
+     */
+    @GetMapping("/books/top-rated")
+    public ResponseEntity<PageResponse<TopRatedBookResponse>> getTopRatedBooks(
+            @RequestParam(required = false, defaultValue = "3") Integer minRatings,
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        log.info("REST: GET /api/statistics/books/top-rated?minRatings={}&size={}", minRatings, size);
+        PageResponse<TopRatedBookResponse> books = statisticsService.getTopRatedBooks(minRatings, size);
+        return ResponseEntity.ok(books);
     }
 
-    // === АКТИВНОСТЬ ПО ДАТАМ ===
+    /**
+     * GET /api/statistics/genres/top-by-count
+     * Get top genres by book count
+     */
+    @GetMapping("/genres/top-by-count")
+    public ResponseEntity<PageResponse<TopGenreResponse>> getTopGenresByCount(
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        log.info("REST: GET /api/statistics/genres/top-by-count?size={}", size);
+        PageResponse<TopGenreResponse> genres = statisticsService.getTopGenresByBookCount(size);
+        return ResponseEntity.ok(genres);
+    }
 
-    @GetMapping("/activity/comments")
-    public ResponseEntity<List<ActivityByDateDTO>> getCommentActivityByDate(
-            @RequestParam(required = false) LocalDateTime startDate) {
-        LocalDateTime start = startDate != null ? startDate : LocalDateTime.now().minusDays(30);
-        return ResponseEntity.ok(statisticsService.getCommentActivityByDate(start));
+    /**
+     * GET /api/statistics/authors/top-by-count
+     * Get top authors by book count
+     */
+    @GetMapping("/authors/top-by-count")
+    public ResponseEntity<PageResponse<TopAuthorResponse>> getTopAuthorsByCount(
+            @RequestParam(required = false, defaultValue = "5") Integer size
+    ) {
+        log.info("REST: GET /api/statistics/authors/top-by-count?size={}", size);
+        PageResponse<TopAuthorResponse> authors = statisticsService.getTopAuthorsByBookCount(size);
+        return ResponseEntity.ok(authors);
+    }
+
+    /**
+     * GET /api/statistics/users/by-role
+     * Get user statistics by role
+     */
+    @GetMapping("/users/by-role")
+    public ResponseEntity<List<RoleStatistics>> getUsersByRole() {
+        log.info("REST: GET /api/statistics/users/by-role");
+        List<RoleStatistics> roleStats = statisticsService.getUsersByRole();
+        return ResponseEntity.ok(roleStats);
+    }
+
+    /**
+     * GET /api/statistics/books/all
+     * Get all books statistics (used for cache synchronization)
+     */
+    @GetMapping("/books/all")
+    public ResponseEntity<List<BookStatistics>> getAllBooksStatistics() {
+        log.info("REST: GET /api/statistics/books/all");
+        List<BookStatistics> stats = statisticsService.getAllBooksStatistics();
+        return ResponseEntity.ok(stats);
     }
 }
