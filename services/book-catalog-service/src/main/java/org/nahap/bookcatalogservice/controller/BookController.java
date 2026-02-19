@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.nahap.bookcatalogservice.client.UserTrackingClient;
 import org.nahap.bookcatalogservice.dto.request.BookCreateRequest;
 import org.nahap.bookcatalogservice.dto.request.BookUpdateRequest;
 import org.nahap.bookcatalogservice.dto.response.BookDetailResponse;
@@ -31,6 +32,7 @@ import java.util.List;
 public class BookController {
 
     private final BookService bookService;
+    private final UserTrackingClient userTrackingClient;
 
     // Гость: GET /api/books — список всех книг с пагинацией и сортировкой
     @GetMapping
@@ -48,7 +50,7 @@ public class BookController {
     // Гость: GET /api/books/{id} — детали книги
     @GetMapping("/{id}")
     public ResponseEntity<BookDetailResponse> getBookDetails(@PathVariable Integer id) {
-        log.info("Запрос деталей книги ID: {}", id);
+        log.info("📖 Запрос деталей книги ID: {}", id);
         BookDetailResponse response = bookService.getBookDetails(id);
         return ResponseEntity.ok(response);
     }
@@ -90,7 +92,7 @@ public class BookController {
 
     // ️ MODERATOR / ADMIN: POST /api/books — создать книгу
     @PostMapping
-    public ResponseEntity<BookResponse> createBook(@Valid  @RequestBody BookCreateRequest request) {
+    public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookCreateRequest request) {
         log.info("Создание новой книги: {}", request.title());
         BookResponse response = bookService.createBook(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -130,8 +132,8 @@ public class BookController {
         // Если сортировка не указана, сортировать по заголовку по умолчанию
         if (pageable.getSort().isUnsorted()) {
             pageable = PageRequest.of(
-                    pageable.getPageNumber(), 
-                    pageable.getPageSize(), 
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
                     org.springframework.data.domain.Sort.by("title").ascending()
             );
         }

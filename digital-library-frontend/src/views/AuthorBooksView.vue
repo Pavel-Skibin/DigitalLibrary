@@ -6,124 +6,128 @@
 
       <main class="content">
         <h1 class="page-title">
-          Книги автора: {{ authorName || 'Загрузка...' }}
+          Книги автора: {{ authorName || "Загрузка..." }}
         </h1>
 
         <div class="search-box">
           <SearchInput
-              v-model="searchQuery"
-              placeholder="🔍 Поиск по названию книги"
+            v-model="searchQuery"
+            placeholder="🔍 Поиск по названию книги"
           />
           <button class="search-button" @click="performSearch" title="Найти">
             🔍
           </button>
         </div>
 
-        <div v-if="loading" class="loading-message">
-          Загрузка книг...
-        </div>
+        <div v-if="loading" class="loading-message">Загрузка книг...</div>
 
-        <div v-else-if="books.length === 0 && !searchQuery.trim()" class="no-books-message">
+        <div
+          v-else-if="books.length === 0 && !searchQuery.trim()"
+          class="no-books-message"
+        >
           У этого автора пока нет книг.
         </div>
 
-        <div v-else-if="books.length === 0 && searchQuery.trim()" class="no-search-results">
+        <div
+          v-else-if="books.length === 0 && searchQuery.trim()"
+          class="no-search-results"
+        >
           Ничего не найдено по запросу "{{ searchQuery }}".
         </div>
 
         <div v-else class="books-list">
           <BookCard
-              v-for="book in books"
-              :key="book.id"
-              :book="book"
-              :cover-url="coverImageUrls[book.id]"
-              @select="selectBook"
+            v-for="book in books"
+            :key="book.id"
+            :book="book"
+            :cover-url="coverImageUrls[book.id]"
+            @select="selectBook"
           />
         </div>
 
         <Pagination
-            v-if="totalPages > 1 && books.length > 0"
-            :current-page="currentPage"
-            :total-pages="totalPages"
-            @page-change="handlePageChange"
+          v-if="totalPages > 1 && books.length > 0"
+          :current-page="currentPage"
+          :total-pages="totalPages"
+          @page-change="handlePageChange"
         />
       </main>
 
       <aside v-if="selectedBook" class="book-detail-panel">
         <BookDetailPanel
-            :book="selectedBook"
-            :cover-url="coverImageUrls[selectedBook.id]"
-            :user-rating="userRating"
-            :is-authenticated="isAuthenticated"
-            @open-reader="openBookInReader"
-            @open-rating="showRatingModal = true"
+          :book="selectedBook"
+          :cover-url="coverImageUrls[selectedBook.id]"
+          :user-rating="userRating"
+          :is-authenticated="isAuthenticated"
+          @open-reader="openBookInReader"
+          @open-rating="showRatingModal = true"
         />
 
         <CommentsSection
-            :comments="comments"
-            :loading="loadingComments"
-            :submitting="submittingComment"
-            :is-authenticated="isAuthenticated"
-            :current-user-id="currentUserId"
-            :is-moderator="isModerator"
-            :has-more="hasMoreComments"
-            @submit="handleSubmitComment"
-            @update="handleUpdateComment"
-            @delete="handleDeleteComment"
-            @moderate-delete="handleModerateDeleteComment"
-            @restore="handleRestoreComment"
-            @load-more="handleLoadMoreComments"
+          :comments="comments"
+          :loading="loadingComments"
+          :submitting="submittingComment"
+          :is-authenticated="isAuthenticated"
+          :current-user-id="currentUserId"
+          :is-moderator="isModerator"
+          :has-more="hasMoreComments"
+          @submit="handleSubmitComment"
+          @update="handleUpdateComment"
+          @delete="handleDeleteComment"
+          @moderate-delete="handleModerateDeleteComment"
+          @restore="handleRestoreComment"
+          @load-more="handleLoadMoreComments"
         />
       </aside>
     </div>
 
     <RatingModal
-        v-if="showRatingModal"
-        v-model="selectedRatingValue"
-        :book-title="selectedBook?.title"
-        :loading="submittingRating"
-        @close="closeRatingModal"
-        @submit="handleSubmitRating"
+      v-if="showRatingModal"
+      v-model="selectedRatingValue"
+      :book-title="selectedBook?.title"
+      :loading="submittingRating"
+      @close="closeRatingModal"
+      @submit="handleSubmitRating"
     />
   </div>
 </template>
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { getCookie } from '@/utils/cookies'
+import { ref, computed, watch, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { getCookie } from "@/utils/cookies";
 
-import Header from '@/components/layout/Header.vue'
-import AppSidebar from '@/components/layout/AppSidebar.vue'
-import SearchInput from '@/components/ui/SearchInput.vue'
-import Pagination from '@/components/ui/Pagination.vue'
-import BookCard from '@/components/books/BookCard.vue'
-import BookDetailPanel from '@/components/books/BookDetailPanel.vue'
-import CommentsSection from '@/components/books/CommentsSection.vue'
-import RatingModal from '@/components/books/RatingModal.vue'
+import Header from "@/components/layout/Header.vue";
+import AppSidebar from "@/components/layout/AppSidebar.vue";
+import SearchInput from "@/components/ui/SearchInput.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import BookCard from "@/components/books/BookCard.vue";
+import BookDetailPanel from "@/components/books/BookDetailPanel.vue";
+import CommentsSection from "@/components/books/CommentsSection.vue";
+import RatingModal from "@/components/books/RatingModal.vue";
 
-import { useBookCover } from '@/composables/useBookCover'
-import { useBookComments } from '@/composables/useBookComments'
-import { useBookRating } from '@/composables/useBookRating'
-import { useUser } from '@/composables/useUser'
-import { useAdminAuth } from '@/composables/useAdminAuth'
+import { useBookCover } from "@/composables/useBookCover";
+import { useBookComments } from "@/composables/useBookComments";
+import { useBookRating } from "@/composables/useBookRating";
+import { useUser } from "@/composables/useUser";
+import { useAdminAuth } from "@/composables/useAdminAuth";
 
-const route = useRoute()
-const authorId = ref(route.params.authorId)
+const route = useRoute();
+const authorId = ref(route.params.authorId);
 
 // Состояние
-const authorName = ref('')
-const books = ref([])
-const selectedBook = ref(null)
-const searchQuery = ref('')
-const currentPage = ref(0)
-const totalPages = ref(0)
-const loading = ref(false)
-const isSearchMode = ref(false)
-const searchResultsCache = ref([])
-const pageSize = 10
+const authorName = ref("");
+const books = ref([]);
+const selectedBook = ref(null);
+const searchQuery = ref("");
+const currentPage = ref(0);
+const totalPages = ref(0);
+const loading = ref(false);
+const isSearchMode = ref(false);
+const searchResultsCache = ref([]);
+const pageSize = 10;
 
 // Composables
-const { coverImageUrls, fetchBookCover } = useBookCover()
+const { coverImageUrls, fetchBookCover } = useBookCover();
 const {
   comments,
   loading: loadingComments,
@@ -135,261 +139,277 @@ const {
   deleteComment,
   moderateDeleteComment,
   restoreComment,
-  loadMore: loadMoreComments
-} = useBookComments()
+  loadMore: loadMoreComments,
+} = useBookComments();
 
 const {
   userRating,
   submitting: submittingRating,
   loadUserRating,
-  submitRating
-} = useBookRating()
+  submitRating,
+} = useBookRating();
 
-const { username } = useUser()
-const { isAdmin, isModerator, checkAccess } = useAdminAuth()
+const { username } = useUser();
+const { isAdmin, isModerator, checkAccess } = useAdminAuth();
 
+const isModeratorOrAdmin = computed(() => isAdmin.value || isModerator.value);
 
-const isModeratorOrAdmin = computed(() => isAdmin.value || isModerator.value)
+const isAuthenticated = ref(false);
+const currentUserId = ref(null);
 
-const isAuthenticated = ref(false)
-const currentUserId = ref(null)
+const showRatingModal = ref(false);
+const selectedRatingValue = ref(0);
 
-
-const showRatingModal = ref(false)
-const selectedRatingValue = ref(0)
-
-let debounceTimeout = null
-
+let debounceTimeout = null;
 
 async function loadBooks(page = 0) {
-  loading.value = true
+  loading.value = true;
   try {
-    const url = `/api/books/authors/${authorId.value}/books?page=${page}&size=${pageSize}`
-    const response = await fetch(url)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const url = `/api/books/authors/${authorId.value}/books?page=${page}&size=${pageSize}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    const data = await response.json()
+    const data = await response.json();
 
     if (Array.isArray(data)) {
-      updateBookList(data, 0, 1, data.length)
+      updateBookList(data, 0, 1, data.length);
     } else {
-      updateBookList(data.content, data.number, data.totalPages, data.totalElements)
+      updateBookList(
+        data.content,
+        data.number,
+        data.totalPages,
+        data.totalElements,
+      );
     }
 
     if (books.value.length > 0 && !authorName.value) {
-      authorName.value = books.value[0].authors[0] || 'Неизвестный автор'
+      authorName.value = books.value[0].authors[0] || "Неизвестный автор";
     }
   } catch (error) {
-    console.error('Ошибка загрузки книг:', error)
-    books.value = []
-    selectedBook.value = null
+    console.error("Ошибка загрузки книг:", error);
+    books.value = [];
+    selectedBook.value = null;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function updateBookList(content, page, totalPagesCount, totalElements) {
-  books.value = content || []
-  currentPage.value = page
-  totalPages.value = totalPagesCount
+  books.value = content || [];
+  currentPage.value = page;
+  totalPages.value = totalPagesCount;
 
-  books.value.forEach(book => fetchBookCover(book.id))
+  books.value.forEach((book) => fetchBookCover(book.id));
 
   if (books.value.length > 0) {
-    selectBook(books.value[0])
+    selectBook(books.value[0]);
   } else {
-    selectedBook.value = null
+    selectedBook.value = null;
   }
 }
 
 async function performSearch() {
-  const query = searchQuery.value.trim()
-  if (query === '') {
-    resetToMainList()
-    return
+  const query = searchQuery.value.trim();
+  if (query === "") {
+    resetToMainList();
+    return;
   }
-  isSearchMode.value = true
-  currentPage.value = 0
-  await loadSearchResults()
+  isSearchMode.value = true;
+  currentPage.value = 0;
+  await loadSearchResults();
 }
 
 async function loadSearchResults() {
-  loading.value = true
+  loading.value = true;
   try {
-    const query = encodeURIComponent(searchQuery.value.trim())
-    const url = `/api/books/search?title=${query}&authorIds=${authorId.value}&page=0&size=1000`
+    const query = encodeURIComponent(searchQuery.value.trim());
+    const url = `/api/books/search?title=${query}&authorIds=${authorId.value}&page=0&size=1000`;
 
-    const response = await fetch(url)
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    const data = await response.json()
-    const results = data.content || []
-    searchResultsCache.value = results
+    const data = await response.json();
+    const results = data.content || [];
+    searchResultsCache.value = results;
 
-    applyClientPagination(0)
+    applyClientPagination(0);
   } catch (error) {
-    console.error('Ошибка поиска:', error)
-    books.value = []
-    selectedBook.value = null
-    searchResultsCache.value = []
+    console.error("Ошибка поиска:", error);
+    books.value = [];
+    selectedBook.value = null;
+    searchResultsCache.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function applyClientPagination(page) {
-  const startIndex = page * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedBooks = searchResultsCache.value.slice(startIndex, endIndex)
-  const totalPagesCount = Math.ceil(searchResultsCache.value.length / pageSize)
+  const startIndex = page * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedBooks = searchResultsCache.value.slice(startIndex, endIndex);
+  const totalPagesCount = Math.ceil(searchResultsCache.value.length / pageSize);
 
-  updateBookList(paginatedBooks, page, totalPagesCount, searchResultsCache.value.length)
+  updateBookList(
+    paginatedBooks,
+    page,
+    totalPagesCount,
+    searchResultsCache.value.length,
+  );
 }
 
 function resetToMainList() {
-  isSearchMode.value = false
-  searchResultsCache.value = []
-  loadBooks(0)
+  isSearchMode.value = false;
+  searchResultsCache.value = [];
+  loadBooks(0);
 }
 
 function handlePageChange(page) {
   if (isSearchMode.value) {
-    applyClientPagination(page)
+    applyClientPagination(page);
   } else {
-    loadBooks(page)
+    loadBooks(page);
   }
 }
 
 // Выбор книги
 function selectBook(book) {
-  selectedBook.value = book
-  loadBookDetails(book.id)
-  loadComments(book.id)
-  loadUserRating(book.id)
+  selectedBook.value = book;
+  loadBookDetails(book.id);
+  loadComments(book.id);
+  loadUserRating(book.id);
 }
 
 async function loadBookDetails(bookId) {
   try {
-    const response = await fetch(`/api/books/${bookId}`)
-    if (!response.ok) throw new Error('Ошибка загрузки деталей')
-    const data = await response.json()
-    selectedBook.value = { ...selectedBook.value, ...data }
-    fetchBookCover(bookId)
+    const response = await fetch(`/api/books/${bookId}`);
+    if (!response.ok) throw new Error("Ошибка загрузки деталей");
+    const data = await response.json();
+    selectedBook.value = { ...selectedBook.value, ...data };
+    fetchBookCover(bookId);
   } catch (error) {
-    console.error('Ошибка загрузки деталей книги:', error)
+    console.error("Ошибка загрузки деталей книги:", error);
   }
 }
 
 function openBookInReader() {
-  if (!selectedBook.value) return
+  if (!selectedBook.value) return;
 
-  const jwt = getCookie('jwt')
+  const jwt = getCookie("jwt");
   if (!jwt) {
-    window.open(`/reader.html?bookId=${selectedBook.value.id}`, '_blank')
-    return
+    window.open(`/reader.html?bookId=${selectedBook.value.id}`, "_blank");
+    return;
   }
 
-  window.open(`/reader.html?bookId=${selectedBook.value.id}&token=${jwt}`, '_blank')
+  window.open(
+    `/reader.html?bookId=${selectedBook.value.id}&token=${jwt}`,
+    "_blank",
+  );
 }
 
 // Рейтинг
 function closeRatingModal() {
-  showRatingModal.value = false
-  selectedRatingValue.value = 0
+  showRatingModal.value = false;
+  selectedRatingValue.value = 0;
 }
 
 async function handleSubmitRating() {
-  if (!selectedRatingValue.value) return
+  if (!selectedRatingValue.value) return;
 
-  const success = await submitRating(selectedBook.value.id, selectedRatingValue.value)
+  const success = await submitRating(
+    selectedBook.value.id,
+    selectedRatingValue.value,
+  );
   if (success) {
-    closeRatingModal()
-    await loadBookDetails(selectedBook.value.id)
+    closeRatingModal();
+    await loadBookDetails(selectedBook.value.id);
   }
 }
 
 // Комментарии
 async function handleSubmitComment(text) {
-  await submitComment(selectedBook.value.id, text)
+  await submitComment(selectedBook.value.id, text);
 }
 
 async function handleUpdateComment({ id, text }) {
-  await updateComment(id, text)
+  await updateComment(id, text);
 }
 
 async function handleDeleteComment(id) {
-  await deleteComment(id)
+  await deleteComment(id);
 }
 
 async function handleModerateDeleteComment(id) {
-  await moderateDeleteComment(id)
+  await moderateDeleteComment(id);
 }
 
 async function handleRestoreComment(id) {
-  await restoreComment(id)
+  await restoreComment(id);
 }
 
 function handleLoadMoreComments() {
-  loadMoreComments(selectedBook.value.id)
+  loadMoreComments(selectedBook.value.id);
 }
 
 // Аутентификация
 async function checkAuthentication() {
-  const jwt = getCookie('jwt')
-  isAuthenticated.value = !!jwt
+  const jwt = getCookie("jwt");
+  isAuthenticated.value = !!jwt;
 
   if (jwt) {
     try {
-      const response = await fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${jwt}` }
-      })
+      const response = await fetch("/api/users/me", {
+        headers: { Authorization: `Bearer ${jwt}` },
+      });
 
       if (response.ok) {
-        const userData = await response.json()
-        currentUserId.value = userData.id
+        const userData = await response.json();
+        currentUserId.value = userData.id;
       }
     } catch (error) {
-      console.error('Ошибка аутентификации:', error)
+      console.error("Ошибка аутентификации:", error);
     }
   }
 }
 
 // Watchers
-watch(() => route.params.authorId, (newId) => {
-  if (newId) {
-    authorId.value = newId
-    resetToMainList()
-  }
-})
+watch(
+  () => route.params.authorId,
+  (newId) => {
+    if (newId) {
+      authorId.value = newId;
+      resetToMainList();
+    }
+  },
+);
 
 watch(searchQuery, () => {
-  const query = searchQuery.value.trim()
-  if (query === '') {
-    resetToMainList()
-    return
+  const query = searchQuery.value.trim();
+  if (query === "") {
+    resetToMainList();
+    return;
   }
-  if (query.length < 3) return
+  if (query.length < 3) return;
 
-  clearTimeout(debounceTimeout)
+  clearTimeout(debounceTimeout);
   debounceTimeout = setTimeout(() => {
-    performSearch()
-  }, 300)
-})
+    performSearch();
+  }, 300);
+});
 
 // Lifecycle
 onMounted(async () => {
   // ИСПРАВЛЕНИЕ: сначала проверяем права
-  await checkAccess()
-  console.log('🔐 Auth status (AuthorBooks):', {
+  await checkAccess();
+  console.log("🔐 Auth status (AuthorBooks):", {
     isAdmin: isAdmin.value,
     isModerator: isModerator.value,
-    isModeratorOrAdmin: isModeratorOrAdmin.value
-  })
+    isModeratorOrAdmin: isModeratorOrAdmin.value,
+  });
 
   // Затем загружаем данные
-  await loadBooks(0)
-  await checkAuthentication()
-})
+  await loadBooks(0);
+  await checkAuthentication();
+});
 </script>
 
 <style scoped src="@/assets/styles/library-common.css"></style>
@@ -419,9 +439,9 @@ onMounted(async () => {
 }
 
 .search-button:hover {
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
-  border-color: #2196F3;
+  border-color: #2196f3;
 }
 
 /* Стили для input внутри SearchInput */
@@ -437,7 +457,7 @@ onMounted(async () => {
 
 .search-box :deep(input:focus),
 .search-box :deep(.search-input:focus) {
-  border-color: #2196F3 !important;
+  border-color: #2196f3 !important;
   outline: none !important;
 }
 
@@ -493,7 +513,6 @@ onMounted(async () => {
     border-top: 1px solid #e0e0e0;
   }
 }
-
 
 @media (max-width: 768px) {
   .search-box {
