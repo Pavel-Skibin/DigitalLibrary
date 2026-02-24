@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { getCookie } from "@/utils/cookies";
+import { getCookie, deleteCookie } from "@/utils/cookies";
 
 export function useUser() {
   const username = ref(null);
@@ -47,8 +47,8 @@ export function useUser() {
       console.error("Logout error:", e);
     }
 
-    // Очищаем cookie (если есть)
-    document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    // Очищаем cookie используя безопасную функцию
+    deleteCookie("jwt");
 
     username.value = null;
     userId.value = null;

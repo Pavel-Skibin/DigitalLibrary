@@ -25,7 +25,9 @@
 <script setup>
 import { ref, watch, onMounted } from "vue";
 import { useFavorites } from "@/composables/useFavorites";
+import { useUser } from "@/composables/useUser";
 import { getCookie } from "@/utils/cookies";
+import { invalidateUserCache } from "@/api/recommendations";
 
 const props = defineProps({
   bookId: {
@@ -37,12 +39,19 @@ const props = defineProps({
 const { isFavorite, loading, checkFavoriteStatus, toggleFavorite } =
   useFavorites();
 
+const { userId, fetchUserProfile } = useUser();
+
 const isAuthenticated = ref(false);
 
 onMounted(async () => {
   // Проверяем авторизацию
   const jwt = getCookie("jwt");
   isAuthenticated.value = !!jwt;
+
+  // Загружаем профиль пользователя (включая userId)
+  if (isAuthenticated.value) {
+    await fetchUserProfile();
+  }
 
   // Загружаем статус избранного если авторизован
   if (isAuthenticated.value && props.bookId) {
@@ -67,7 +76,25 @@ async function handleToggle() {
 
   const success = await toggleFavorite(props.bookId);
 
-  if (!success) {
+  if (success) {
+    // Инвалидация кеша рекомендаций после изменения избранного
+    if (userId.value) {
+      try {
+        await invalidateUserCache(userId.value);
+        console.log(
+          "✓ Кеш рекомендаций обновлен после изменения избранного",
+          "userId=",
+          userId.value,
+        );
+        // Уведомить другие компоненты об обновлении
+        window.dispatchEvent(new CustomEvent('recommendations-invalidated'));
+      } catch (error) {
+        console.error("Ошибка инвалидации кеша:", error);
+      }
+    } else {
+      console.warn("⚠ userId не найден, кеш не обновлен");
+    }
+  } else {
     alert("Не удалось обновить избранное. Попробуйте позже.");
   }
 }

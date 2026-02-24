@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import BooksView from "../views/BooksView.vue";
+import BookDetailView from "../views/BookDetailView.vue";
 import AuthorsView from "../views/AuthorsView.vue";
 import AuthorBooksView from "../views/AuthorBooksView.vue";
 import HomeView from "../views/HomeView.vue";
@@ -18,6 +19,13 @@ const routes = [
     path: "/books",
     name: "Books",
     component: BooksView,
+    meta: { requiresAuth: false }, // ← Гостям разрешён доступ
+  },
+  {
+    path: "/books/:id",
+    name: "BookDetail",
+    component: BookDetailView,
+    props: true,
     meta: { requiresAuth: false }, // ← Гостям разрешён доступ
   },
   {

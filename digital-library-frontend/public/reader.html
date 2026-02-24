@@ -1255,6 +1255,9 @@
           console.log(
             `💓 Heartbeat: updating session ${currentReadingSessionId}, duration: ${durationSeconds}s`,
           );
+          console.log(
+            `📍 Current position being sent: ${currentPosition} (${(currentPosition * 100).toFixed(2)}%)`,
+          );
 
           // Используем /update для heartbeat (НЕ завершает сессию)
           const result = await apiCall(
@@ -1284,11 +1287,17 @@
 
         try {
           console.log("⏰ Starting reading session for book:", currentBookId);
+          console.log(
+            "📍 Starting position:",
+            currentPosition,
+            `(${(currentPosition * 100).toFixed(2)}%)`,
+          );
+
           const response = await apiCall(`${API_BASE_URL}/readings/start`, {
             method: "POST",
             body: JSON.stringify({
               bookId: parseInt(currentBookId),
-              startPosition: 0.0,
+              startPosition: (currentPosition || 0.0).toString(),
             }),
           });
 
@@ -1384,6 +1393,9 @@
             console.log(`   URL: ${url}`);
             console.log(`   sessionId: ${currentReadingSessionId}`);
             console.log(`   duration: ${durationSeconds}s`);
+            console.log(
+              `   finalPosition: ${finalPosition} (${(finalPosition * 100).toFixed(2)}%)`,
+            );
             console.log(`   payload:`, payload);
 
             // СИНХРОННЫЙ XHR - единственный надежный способ при beforeunload!
@@ -1469,6 +1481,25 @@
           });
 
           await open(fb2File);
+
+          // 🔴 ВАЖНО: Подписываемся на событие relocate для отслеживания позиции
+          if (globalThis.reader?.view) {
+            globalThis.reader.view.addEventListener(
+              "relocate",
+              ({ detail }) => {
+                // Обновляем currentPosition при каждом перелистывании
+                currentPosition = detail.fraction || 0;
+                console.log(
+                  "📍 Position updated:",
+                  currentPosition,
+                  `(${(currentPosition * 100).toFixed(2)}%)`,
+                );
+              },
+            );
+            console.log("✅ Position tracking listener added");
+          } else {
+            console.warn("⚠️ Reader view not available for position tracking");
+          }
 
           // Загружаем закладки только если пользователь авторизован
           if (authenticated) {

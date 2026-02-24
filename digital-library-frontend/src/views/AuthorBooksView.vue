@@ -110,6 +110,7 @@ import { useBookComments } from "@/composables/useBookComments";
 import { useBookRating } from "@/composables/useBookRating";
 import { useUser } from "@/composables/useUser";
 import { useAdminAuth } from "@/composables/useAdminAuth";
+import { invalidateUserCache } from "@/api/recommendations";
 
 const route = useRoute();
 const authorId = ref(route.params.authorId);
@@ -149,7 +150,7 @@ const {
   submitRating,
 } = useBookRating();
 
-const { username } = useUser();
+const { username, userId, fetchUserProfile } = useUser();
 const { isAdmin, isModerator, checkAccess } = useAdminAuth();
 
 const isModeratorOrAdmin = computed(() => isAdmin.value || isModerator.value);
@@ -322,16 +323,25 @@ async function handleSubmitRating() {
   if (success) {
     closeRatingModal();
     await loadBookDetails(selectedBook.value.id);
+
+    // Инвалидация кеша рекомендаций после оценки
+    if (userId.value) {
+      try {
+        await invalidateUserCache(userId.value);
+        console.log(
+          "✓ Кеш рекомендаций обновлен после оценки книги",
+          "userId=",
+          userId.value,
+        );
+        // Уведомить другие компоненты об обновлении
+        window.dispatchEvent(new CustomEvent('recommendations-invalidated'));
+      } catch (error) {
+        console.error("Ошибка инвалидации кеша:", error);
+      }
+    } else {
+      console.warn("⚠ userId не найден, кеш не обновлен");
+    }
   }
-}
-
-// Комментарии
-async function handleSubmitComment(text) {
-  await submitComment(selectedBook.value.id, text);
-}
-
-async function handleUpdateComment({ id, text }) {
-  await updateComment(id, text);
 }
 
 async function handleDeleteComment(id) {
@@ -398,6 +408,9 @@ watch(searchQuery, () => {
 
 // Lifecycle
 onMounted(async () => {
+  // Загрузка userId для инвалидации кеша
+  await fetchUserProfile();
+
   // ИСПРАВЛЕНИЕ: сначала проверяем права
   await checkAccess();
   console.log("🔐 Auth status (AuthorBooks):", {
