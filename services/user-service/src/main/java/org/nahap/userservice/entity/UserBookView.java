@@ -2,6 +2,7 @@ package org.nahap.userservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +10,8 @@ import java.time.LocalDateTime;
  * Сущность для истории просмотров книг пользователями
  * С версии 3.0: содержит агрегированную статистику чтения для системы рекомендаций
  */
+
+@Slf4j
 @Entity
 @Table(
         name = "user_book_views",
@@ -113,6 +116,17 @@ public class UserBookView {
         
         if (session.getLastPosition() != null) {
             this.lastPosition = session.getLastPosition();
+
+            try {
+                double position = Double.parseDouble(session.getLastPosition());
+                if (position >= 0.95 && !Boolean.TRUE.equals(this.isCompleted)) {
+                    log.info(" Книга помечена как прочитанная: userId={}, bookId={}, position={}%",
+                            this.userId, this.bookId, String.format("%.2f", position * 100));
+                    this.isCompleted = true;
+                }
+            } catch (NumberFormatException e) {
+                // Игнорируем ошибки парсинга (может быть CFI для EPUB)
+            }
         }
     }
 

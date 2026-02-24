@@ -64,19 +64,24 @@ public class UserReadingSessionService {
         UserReadingSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Reading session not found: " + sessionId));
 
-        // Обновляем только duration и position, НЕ завершаем сессию
         session.setDurationSeconds(request.getDurationSeconds());
         
         if (request.getLastPosition() != null) {
             session.setLastPosition(request.getLastPosition());
         }
-        
-        // Обновляем флаг significant (3+ минуты)
+
         session.setIsSignificant(request.getDurationSeconds() != null && request.getDurationSeconds() >= 180);
 
         session = sessionRepository.save(session);
-        log.info("Updated reading session (heartbeat): sessionId={}, duration={}, significant={}", 
-                sessionId, request.getDurationSeconds(), session.getIsSignificant());
+        log.info("Updated reading session (heartbeat): sessionId={}, duration={}, significant={}, position={}", 
+                sessionId, request.getDurationSeconds(), session.getIsSignificant(), session.getLastPosition());
+
+        try {
+            bookViewService.updateAggregatedStats(session);
+            log.info(" Aggregated stats updated on heartbeat for session: {}", sessionId);
+        } catch (Exception e) {
+            log.error(" Ошибка при обновлении агрегированной статистики в heartbeat: {}", e.getMessage(), e);
+        }
 
         return mapToResponse(session);
     }
@@ -104,12 +109,12 @@ public class UserReadingSessionService {
         log.info("Ended reading session: sessionId={}, duration={}, significant={}", 
                 sessionId, request.getDurationSeconds(), session.getIsSignificant());
 
-        // КЛЮЧЕВОЕ: Обновляем агрегированную статистику для системы рекомендаций
+
         try {
             bookViewService.updateAggregatedStats(session);
         } catch (Exception e) {
-            log.error("❌ Ошибка при обновлении агрегированной статистики: {}", e.getMessage(), e);
-            // Не пробрасываем исключение - статистика не критична
+            log.error(" Ошибка при обновлении агрегированной статистики: {}", e.getMessage(), e);
+
         }
 
         return mapToResponse(session);

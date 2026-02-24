@@ -9,6 +9,7 @@ import org.nahap.bookcatalogservice.api.internal.model.ValidationResponse;
 import org.nahap.bookcatalogservice.dto.mapper.InternalBookMapper;
 import org.nahap.bookcatalogservice.entity.Book;
 import org.nahap.bookcatalogservice.repository.BookRepository;
+import org.nahap.bookcatalogservice.service.BookInternalService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class BookInternalController implements InternalBookApiApi {
 
     private final BookRepository bookRepository;
+    private final BookInternalService bookInternalService;
     private final InternalBookMapper internalBookMapper;
 
     @Override
@@ -56,7 +58,8 @@ public class BookInternalController implements InternalBookApiApi {
     public ResponseEntity<Map<String, BookResponse>> getBooksBatch(List<Integer> bookIds) {
         log.debug("Internal API: Getting batch of books: {}", bookIds);
         
-        List<Book> books = bookRepository.findAllById(bookIds);
+        // Use service with @Transactional to properly load all relations
+        List<Book> books = bookInternalService.getBooksWithRelations(bookIds);
         
         Map<String, BookResponse> bookMap = books.stream()
                 .collect(Collectors.toMap(
@@ -65,6 +68,18 @@ public class BookInternalController implements InternalBookApiApi {
                 ));
         
         return ResponseEntity.ok(bookMap);
+    }
+
+    @Override
+    public ResponseEntity<List<Integer>> getAllBookIds() {
+        log.debug("Internal API: Getting all book IDs");
+
+        List<Integer> bookIds = bookRepository.findAll().stream()
+                .map(Book::getId)
+                .collect(Collectors.toList());
+        
+        log.info("Internal API: Found {} active books", bookIds.size());
+        return ResponseEntity.ok(bookIds);
     }
 
     @Override

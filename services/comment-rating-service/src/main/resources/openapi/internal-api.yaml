@@ -53,6 +53,30 @@ paths:
                 type: integer
                 format: int64
 
+  /api/internal/users/{userId}/ratings:
+    get:
+      summary: Get user ratings
+      description: Returns list of all ratings given by the user for AI recommendation service
+      operationId: getUserRatings
+      tags:
+        - Internal Rating API
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: List of user ratings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserRatingResponse"
+
   /api/internal/comments/books/{bookId}/count:
     get:
       summary: Get count of comments for a book
@@ -302,6 +326,20 @@ components:
           type: integer
           format: int64
 
+    UserRatingResponse:
+      type: object
+      properties:
+        bookId:
+          type: integer
+          format: int32
+        ratingValue:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+        createdAt:
+          type: string
+          format: date-time
     RecentComment:
       type: object
       properties:

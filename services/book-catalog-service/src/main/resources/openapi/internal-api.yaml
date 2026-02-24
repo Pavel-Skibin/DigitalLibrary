@@ -77,6 +77,24 @@ paths:
                 additionalProperties:
                   $ref: "#/components/schemas/BookResponse"
 
+  /api/internal/books/ids:
+    get:
+      summary: Get all book IDs
+      description: Returns list of all active (non-deleted) book IDs for AI embedding generation
+      operationId: getAllBookIds
+      tags:
+        - Internal Book API
+      responses:
+        "200":
+          description: List of all book IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  format: int32
+
   /api/internal/books/{id}/rating-cache:
     put:
       summary: Update cached rating for a book

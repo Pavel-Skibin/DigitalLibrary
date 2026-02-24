@@ -42,8 +42,11 @@ public interface UserBookViewRepository extends JpaRepository<UserBookView, Long
 
     /**
      * Получить уникальные ID книг, просмотренных пользователем (для рекомендаций)
+     * Отсортировано по последнему времени просмотра каждой книги
      */
-    @Query("SELECT DISTINCT v.bookId FROM UserBookView v WHERE v.userId = :userId ORDER BY v.viewedAt DESC")
+    @Query(value = "SELECT book_id FROM user_book_views WHERE user_id = :userId " +
+                   "GROUP BY book_id ORDER BY MAX(viewed_at) DESC", 
+           nativeQuery = true)
     List<Integer> findDistinctBookIdsByUserId(@Param("userId") Integer userId);
 
     /**

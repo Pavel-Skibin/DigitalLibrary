@@ -61,4 +61,11 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     @Query("SELECT COUNT(DISTINCT ba.book.id) FROM BookAuthor ba WHERE ba.author.id = :authorId")
     Long countBooksByAuthor(@Param("authorId") Integer authorId);
 
+
+    @Query("SELECT DISTINCT b FROM Book b " +
+           "LEFT JOIN FETCH b.bookAuthors ba " +
+           "LEFT JOIN FETCH ba.author " +
+           "WHERE b.id IN :ids")
+    List<Book> findAllByIdWithAuthors(@Param("ids") List<Integer> ids);
+
 }

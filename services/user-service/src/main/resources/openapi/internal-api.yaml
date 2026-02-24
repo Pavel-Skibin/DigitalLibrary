@@ -108,6 +108,82 @@ paths:
                 items:
                   $ref: "#/components/schemas/RoleStatistics"
 
+  /api/internal/users/{userId}/history:
+    get:
+      summary: Get user reading history
+      description: Returns reading history with aggregated statistics for AI recommendation service
+      operationId: getUserHistory
+      tags:
+        - Internal User API
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: User reading history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookViewResponse"
+        "404":
+          description: User not found
+
+  /api/internal/users/{userId}/favorites:
+    get:
+      summary: Get user favorite book IDs
+      description: Returns list of book IDs that user added to favorites
+      operationId: getUserFavorites
+      tags:
+        - Internal User API
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: List of favorite book IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  format: int32
+
+  /api/internal/users/{userId}/viewed-books:
+    get:
+      summary: Get user viewed book IDs
+      description: Returns list of all book IDs that user has viewed (for exclusion in recommendations)
+      operationId: getUserViewedBooks
+      tags:
+        - Internal User API
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: List of viewed book IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  format: int32
+
 components:
   schemas:
     UserResponse:
@@ -149,3 +225,23 @@ components:
         userCount:
           type: integer
           format: int64
+
+    BookViewResponse:
+      type: object
+      properties:
+        bookId:
+          type: integer
+          format: int32
+        viewCount:
+          type: integer
+          format: int32
+        lastViewedAt:
+          type: string
+          format: date-time
+        totalTimeSpent:
+          type: integer
+          format: int64
+          description: Total time spent on book in seconds
+        progressPercent:
+          type: number
+          format: double
