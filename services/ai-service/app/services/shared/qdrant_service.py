@@ -36,7 +36,7 @@ class QdrantService:
         # BM25 parameters (industry standard)
         self.bm25_k1 = 1.5  # Term saturation parameter
         self.bm25_b = 0.75  # Length normalization
-        self.avg_doc_length = 100  # Average document length in tokens
+        self.avg_doc_length = 800  # Average document length in tokens (соответствует RAG_CHUNK_SIZE=800)
         
     def connect(self):
         """Establish connection to Qdrant"""
@@ -65,14 +65,14 @@ class QdrantService:
             
             if self.collection_recommendations not in collection_names:
                 logger.info(f"Creating collection: {self.collection_recommendations}")
-                logger.info("⚡ Enabling hybrid search: Dense vectors (RoSBERTa) + Sparse vectors (BM25)")
+                logger.info("Hybrid search enabled: dense (ru-en-RoSBERTa, 1024-dim) + sparse (BM25)")
                 
                 # Create collection with HYBRID search support
                 self.client.create_collection(
                     collection_name=self.collection_recommendations,
                     vectors_config={
                         "dense": VectorParams(
-                            size=self.settings.EMBEDDING_DIM,
+                            size=self.settings.EMBEDDING_DIM_RECOMMENDATIONS,  # 1024 для RoSBERTa-large
                             distance=Distance.COSINE
                         )
                     },
@@ -114,10 +114,34 @@ class QdrantService:
                     field_schema="integer"
                 )
                 
+                self.client.create_payload_index(
+                    collection_name=self.collection_recommendations,
+                    field_name="word_count",
+                    field_schema="integer"
+                )
+
+                self.client.create_payload_index(
+                    collection_name=self.collection_recommendations,
+                    field_name="average_rating",
+                    field_schema="float"
+                )
+
+                self.client.create_payload_index(
+                    collection_name=self.collection_recommendations,
+                    field_name="ratings_count",
+                    field_schema="integer"
+                )
+
+                self.client.create_payload_index(
+                    collection_name=self.collection_recommendations,
+                    field_name="tags",
+                    field_schema="keyword"
+                )
+
                 logger.info(f"Collection {self.collection_recommendations} created successfully")
             else:
                 logger.info(f"Collection {self.collection_recommendations} already exists")
-                logger.info("⚡ Using hybrid search: Dense vectors (RoSBERTa) + Sparse vectors (BM25)")
+                logger.info("Hybrid search enabled: dense (USER-bge-m3, 1024-dim) + sparse (BM25)")
                 
         except Exception as e:
             logger.error(f"Failed to initialize collection: {e}")
@@ -135,13 +159,11 @@ class QdrantService:
         term_freq = Counter(tokens)
         doc_length = len(tokens)
         
-        # Calculate BM25 scores
-        indices = []
-        values = []
+        # Calculate BM25 scores, accumulating by index (handle hash collisions)
+        index_scores: Dict[int, float] = {}
         
         for term, tf in term_freq.items():
             # Deterministic hash for term to index mapping using MD5
-            # This ensures same term always maps to same index across runs
             term_hash = hashlib.md5(term.encode('utf-8')).hexdigest()
             term_index = int(term_hash[:8], 16) % 1000000  # Limit to 1M unique terms
             
@@ -150,8 +172,14 @@ class QdrantService:
             denominator = tf + self.bm25_k1 * (1 - self.bm25_b + self.bm25_b * doc_length / self.avg_doc_length)
             score = numerator / denominator
             
-            indices.append(term_index)
-            values.append(score)
+            # При коллизии хешей — суммируем scores (индексы должны быть уникальны)
+            if term_index in index_scores:
+                index_scores[term_index] += score
+            else:
+                index_scores[term_index] = score
+        
+        indices = list(index_scores.keys())
+        values = list(index_scores.values())
         
         return SparseVector(indices=indices, values=values)
     
@@ -207,6 +235,126 @@ class QdrantService:
         return [point for score, point in sorted_results[:limit]]
 
     
+    async def initialize_rag_collection(self):
+        """
+        Создаёт Qdrant-коллекцию для RAG-чанков если она ещё не существует.
+
+        Схема:
+          * Dense vector  «text_dense»  — 1024-dim USER-bge-m3 (COSINE)
+          * Sparse vector «text_sparse» — BM25 (IDF modifier)
+        Payload-индексы: book_id, chapter_index, chunk_index.
+        """
+        try:
+            existing = [c.name for c in self.client.get_collections().collections]
+
+            if self.collection_rag in existing:
+                logger.info(f"RAG collection '{self.collection_rag}' already exists — skipping init")
+                return
+
+            logger.info(f"Creating RAG collection '{self.collection_rag}' …")
+
+            from qdrant_client.models import (
+                Modifier,
+                SparseIndexParams,
+            )
+
+            self.client.create_collection(
+                collection_name=self.collection_rag,
+                vectors_config={
+                    "text_dense": VectorParams(
+                        size=self.settings.EMBEDDING_DIM_RAG,  # 1024 для USER-bge-m3
+                        distance=Distance.COSINE,
+                    )
+                },
+                sparse_vectors_config={
+                    "text_sparse": SparseVectorParams(
+                        index=SparseIndexParams(
+                            on_disk=False,
+                        ),
+                        modifier=Modifier.IDF,
+                    )
+                },
+            )
+
+            # Индексы для фильтров
+            for field_name, schema in [
+                ("book_id",       "integer"),
+                ("chapter_index", "integer"),
+                ("chunk_index",   "integer"),
+                ("word_count",    "integer"),
+            ]:
+                self.client.create_payload_index(
+                    collection_name=self.collection_rag,
+                    field_name=field_name,
+                    field_schema=schema,
+                )
+
+            logger.info(f"Collection {self.collection_rag} created with hybrid search support")
+
+        except Exception as exc:
+            logger.error(f"Failed to initialize RAG collection: {exc}")
+            raise
+
+    async def recreate_rag_collection(self):
+        """
+        Принудительно пересоздаёт RAG-коллекцию (удаляет старую и создаёт новую).
+        Нужно при смене embedding-модели.
+        """
+        existing = [c.name for c in self.client.get_collections().collections]
+        if self.collection_rag in existing:
+            logger.info(f"Deleting old RAG collection '{self.collection_rag}' …")
+            self.client.delete_collection(self.collection_rag)
+        await self.initialize_rag_collection()
+
+    def upsert_rag_chunks(self, points: list) -> None:
+        """
+        Batch-upsert заранее подготовленных PointStruct в RAG-коллекцию.
+
+        Args:
+            points: Список qdrant_client.models.PointStruct
+        """
+        try:
+            self.client.upsert(
+                collection_name=self.collection_rag,
+                points=points,
+            )
+            logger.debug(f"Upserted {len(points)} RAG chunk(s)")
+        except Exception as exc:
+            logger.error(f"Failed to upsert RAG chunks: {exc}")
+            raise
+
+    def delete_book_chunks(self, book_id: int) -> None:
+        """Удаляет все чанки книги из RAG-коллекции (для переиндексации)."""
+        from qdrant_client.models import FilterSelector
+
+        try:
+            self.client.delete(
+                collection_name=self.collection_rag,
+                points_selector=FilterSelector(
+                    filter=Filter(
+                        must=[FieldCondition(key="book_id", match=MatchValue(value=book_id))]
+                    )
+                ),
+            )
+            logger.info(f"Deleted all chunks for book_id={book_id} from RAG collection")
+        except Exception as exc:
+            logger.error(f"Failed to delete chunks for book_id={book_id}: {exc}")
+            raise
+
+    def count_book_chunks(self, book_id: int) -> int:
+        """Возвращает количество чанков книги в RAG-коллекции."""
+        try:
+            result = self.client.count(
+                collection_name=self.collection_rag,
+                count_filter=Filter(
+                    must=[FieldCondition(key="book_id", match=MatchValue(value=book_id))]
+                ),
+            )
+            return result.count
+        except Exception as exc:
+            logger.error(f"Failed to count chunks for book_id={book_id}: {exc}")
+            return 0
+
     async def upsert_book_embedding(
         self,
         book_id: int,
@@ -358,6 +506,14 @@ class QdrantService:
                             range=Range(gte=filters["min_year"])
                         )
                     )
+
+                if "author" in filters:
+                    filter_conditions.append(
+                        FieldCondition(
+                            key="authors",
+                            match=MatchValue(value=filters["author"])
+                        )
+                    )
             
             # Create filter object
             search_filter = None
@@ -415,7 +571,7 @@ class QdrantService:
                 
                 # Merge with RRF (Reciprocal Rank Fusion)
                 results = self._merge_results_rrf(dense_results, sparse_results, limit)
-                logger.debug(f"🔍 RRF merged: {len(results)} results")
+                logger.debug(f"RRF merged: {len(results)} results")
             else:
                 # Fallback to dense-only search
                 logger.debug("Using dense-only search")

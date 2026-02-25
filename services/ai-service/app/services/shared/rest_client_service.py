@@ -176,13 +176,14 @@ class RestClientService:
                             title=book_data.get('title'),
                             description=book_data.get('description'),
                             cover_image_path=book_data.get('coverImagePath'),
-                            publication_year=book_data.get('publicationYear'),
+                            publication_year=book_data.get('yearPublished'),   # OpenAPI: yearPublished
                             language=book_data.get('language'),
                             age_rating=book_data.get('ageRating'),
                             series_name=book_data.get('seriesName'),
                             series_number=book_data.get('seriesNumber'),
                             average_rating=book_data.get('averageRating'),
                             ratings_count=book_data.get('ratingsCount'),
+                            word_count=book_data.get('wordCount'),             # было пропущено!
                             authors=book_data.get('authors', []),
                             genres=book_data.get('genres', []),
                             tags=book_data.get('tags', [])
@@ -215,13 +216,14 @@ class RestClientService:
                         title=book_data.get('title'),
                         description=book_data.get('description'),
                         cover_image_path=book_data.get('coverImagePath'),
-                        publication_year=book_data.get('publicationYear'),
+                        publication_year=book_data.get('yearPublished'),       # OpenAPI: yearPublished
                         language=book_data.get('language'),
                         age_rating=book_data.get('ageRating'),
                         series_name=book_data.get('seriesName'),
                         series_number=book_data.get('seriesNumber'),
                         average_rating=book_data.get('averageRating'),
                         ratings_count=book_data.get('ratingsCount'),
+                        word_count=book_data.get('wordCount'),
                         authors=book_data.get('authors', []),
                         genres=book_data.get('genres', []),
                         tags=book_data.get('tags', [])
@@ -237,7 +239,33 @@ class RestClientService:
         except Exception as e:
             logger.error(f"Error calling Book Catalog Service for book {book_id}: {e}")
             return None
-    
+
+    async def get_book_fb2(self, book_id: int) -> Optional[str]:
+        """
+        Получает сырой FB2 XML контент книги из book-catalog-service.
+
+        Endpoint: GET /api/books/{id}/fb2
+
+        Returns:
+            Строка с XML-содержимым FB2 или None при ошибке.
+        """
+        try:
+            url = f"{self.book_catalog_url}/api/books/{book_id}/fb2"
+            async with self.session.get(url) as response:
+                if response.status == 200:
+                    fb2_xml = await response.text(encoding="utf-8", errors="replace")
+                    logger.debug(f"Fetched FB2 for book_id={book_id}: {len(fb2_xml):,} chars")
+                    return fb2_xml
+                elif response.status == 404:
+                    logger.warning(f"FB2 not found for book_id={book_id}")
+                    return None
+                else:
+                    logger.error(f"Failed to fetch FB2 for book_id={book_id}: HTTP {response.status}")
+                    return None
+        except Exception as exc:
+            logger.error(f"Error fetching FB2 for book_id={book_id}: {exc}")
+            return None
+
     async def get_all_book_ids(self, limit: Optional[int] = None) -> List[int]:
         """
         Get all book IDs for initial embedding generation.
@@ -452,6 +480,7 @@ class RestClientService:
                             series_number=book_data.get('seriesNumber'),
                             average_rating=book_data.get('averageRating'),
                             ratings_count=book_data.get('ratingsCount'),
+                            word_count=book_data.get('wordCount'),
                             authors=book_data.get('authors', []),
                             genres=book_data.get('genres', []),
                             tags=book_data.get('tags', [])
@@ -505,6 +534,7 @@ class RestClientService:
                             series_number=book_data.get('seriesNumber'),
                             average_rating=book_data.get('averageRating'),
                             ratings_count=book_data.get('ratingsCount'),
+                            word_count=book_data.get('wordCount'),
                             authors=book_data.get('authors', []),
                             genres=book_data.get('genres', []),
                             tags=book_data.get('tags', [])

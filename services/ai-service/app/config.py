@@ -1,5 +1,10 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import Optional
+
+# Путь к .env всегда рядом с корнем ai-service, независимо от CWD
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -30,10 +35,16 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None
     
-    # Embedding Model
-    EMBEDDING_MODEL_NAME: str = "ai-forever/ru-en-RoSBERTa"
-    EMBEDDING_DIM: int = 1024
-    EMBEDDING_BATCH_SIZE: int = 32
+    # Embedding Models (РАЗНЫЕ для recommendations и RAG!)
+    # Recommendations: похожие книги по метаданным (genres, authors, tags)
+    EMBEDDING_MODEL_NAME_RECOMMENDATIONS: str = "ai-forever/ru-en-RoSBERTa"  # 1024-dim
+    EMBEDDING_DIM_RECOMMENDATIONS: int = 1024
+    
+    # RAG: Q&A по содержимому книги (text chunks)
+    EMBEDDING_MODEL_NAME_RAG: str = "deepvk/USER-bge-m3"  # 1024-dim, русский
+    EMBEDDING_DIM_RAG: int = 1024
+    
+    EMBEDDING_BATCH_SIZE: int = 16
     
     # Recommendation params
     TOP_K_SIMILAR: int = 50
@@ -79,9 +90,33 @@ class Settings(BaseSettings):
     ANCHOR_WEIGHT_READ_5H: int = 3       # Читал 2-5 часов
     ANCHOR_WEIGHT_READ_10H: int = 4      # Читал 5-10 часов
     ANCHOR_WEIGHT_READ_LONG: int = 5     # Читал >10 часов
-    
+
+    # ─── RAG ────────────────────────────────────────────────────────────────────
+    # Chunking параметры (в токенах)
+    RAG_CHUNK_SIZE: int = 800              # Целевой размер чанка (800) — USER-bge-m3 поддерживает до 8192
+    RAG_CHUNK_OVERLAP: int = 150           # Overlap между чанками
+    RAG_BATCH_SIZE: int = 8               # Пакет для генерации embeddings
+
+    # Hybrid-search веса для RAG
+    RAG_SEARCH_WEIGHT_DENSE: float = 0.7
+    RAG_SEARCH_WEIGHT_SPARSE: float = 0.3
+    RAG_TOP_K: int = 10                    # Сколько чанков возвращать при поиске (+context window)
+    RAG_CONTEXT_WINDOW: int = 0            # ВРЕМЕННО ОТКЛЮЧЕНО для RAGAS теста (оценка reranking)
+
+    # Reranking (Cross-encoder для улучшения Context Precision)
+    ENABLE_RERANKER: bool = False                              # Включить переранжирование
+    RERANKER_MODEL_NAME: str = "BAAI/bge-reranker-v2-m3"     # Мультиязычная (русский+английский)
+    RAG_RERANKER_OVERFETCH: int = 20       # fetch-limit перед reranking; если reranker отключён — обрезается до RAG_TOP_K
+
+    # LLM метаданные (генерация summary/themes) — отключено до появления ключа
+    RAG_ENABLE_LLM_METADATA: bool = False
+
+    # ─── DeepSeek LLM ───────────────────────────────────────────────────────────
+    DEEPSEEK_API_KEY: Optional[str] = None          # sk-xxx... (из .env)
+    DEEPSEEK_MODEL: str = "deepseek-chat"           # deepseek-chat / deepseek-reasoner
+
     class Config:
-        env_file = ".env"
+        env_file = str(_ENV_FILE)
         case_sensitive = False
 
 

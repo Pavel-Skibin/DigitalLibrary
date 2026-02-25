@@ -16,6 +16,7 @@ class BookMetadata(BaseModel):
     series_number: Optional[int] = None
     average_rating: Optional[float] = None
     ratings_count: Optional[int] = 0
+    word_count: Optional[int] = None
     authors: List[str] = Field(default_factory=list)
     genres: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
@@ -40,4 +41,4 @@ class BookRecommendation(BaseModel):
     views_count: Optional[int] = 0
     similarity_score: float
     final_score: float
-    reason: Optional[str] = None  # "Similar to books you loved", "Popular in Fantasy"
+    reason: Optional[str] = None

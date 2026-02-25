@@ -80,8 +80,8 @@ class RecommendationEngine:
             
             # Warning if excluding too many books
             if len(exclude_ids) > 1600:
-                logger.warning(f"⚠️ User {user_id} has read {len(exclude_ids)} books - may cause empty results!")
-                logger.warning(f"   Consider disabling exclude_read or using cold start")
+                logger.warning(f"User {user_id} has read {len(exclude_ids)} books — may cause sparse results")
+                logger.warning("Consider disabling exclude_read or falling back to cold start")
         
         # Get embeddings for anchor books WITH WEIGHTS
         anchor_embeddings = []
@@ -121,7 +121,7 @@ class RecommendationEngine:
         # Weighted average: sum(embedding * weight) for each dimension
         user_preference_vector = np.average(anchor_embeddings_array, axis=0, weights=normalized_weights)
         
-        logger.info(f"✨ Created weighted user preference vector (weights: {anchor_weights}, normalized: {normalized_weights.tolist()})")
+        logger.info(f"Created weighted user preference vector (weights: {anchor_weights}, normalized: {normalized_weights.tolist()})")
         
         # Generate query text for BM25 from anchor books
         query_text = self._create_user_preference_text(anchor_metadata)
@@ -254,7 +254,114 @@ class RecommendationEngine:
         logger.info(f"Returning {len(recommendations)} similar books")
         
         return recommendations
-    
+
+    async def get_similar_to_books(
+        self,
+        book_ids: List[int],
+        limit: int = 10,
+        exclude_ids: Optional[List[int]] = None,
+    ) -> List[BookRecommendation]:
+        """
+        Get books similar to a set of books (multi-anchor).
+
+        Algorithm:
+          1. Fetch dense vector for each anchor book from Qdrant.
+          2. Average the vectors (equal weights — все якоря равнозначны).
+          3. Build BM25 query text from anchor metadata.
+          4. Hybrid search (dense + BM25) in books_recommendations.
+          5. Hybrid scoring (vector similarity + rating).
+          6. MMR for diversity.
+
+        Args:
+            book_ids:    List of anchor book IDs (1..N).
+            limit:       How many results to return.
+            exclude_ids: IDs to exclude (usually the anchor books themselves).
+        """
+        logger.info(f"get_similar_to_books: anchors={book_ids}, limit={limit}")
+
+        # ── 1. Collect embeddings ─────────────────────────────────────────────
+        embeddings: List[np.ndarray] = []
+        anchor_metadata: List[dict] = []
+        not_found: List[int] = []
+
+        for bid in book_ids:
+            vec = await self.qdrant.get_book_vector(bid)
+            if vec is not None:
+                embeddings.append(vec)
+                meta = await self.qdrant.get_book_by_id(bid)
+                if meta:
+                    anchor_metadata.append(meta)
+            else:
+                not_found.append(bid)
+
+        if not_found:
+            logger.warning(f"No embeddings for book_ids={not_found}")
+
+        if not embeddings:
+            logger.error("No embeddings found for any anchor book")
+            return []
+
+        # ── 2. Average vector ─────────────────────────────────────────────────
+        query_vector = np.mean(np.stack(embeddings), axis=0)
+
+        # ── 3. BM25 query text from anchor metadata ────────────────────────────
+        query_text = self._create_user_preference_text(anchor_metadata) if anchor_metadata else None
+
+        # ── 4. Hybrid search ──────────────────────────────────────────────────
+        exclude = list(set((exclude_ids or []) + book_ids))
+        similar = await self.qdrant.search_similar_books(
+            query_vector=query_vector,
+            query_text=query_text,
+            limit=self.settings.TOP_K_SIMILAR,
+            exclude_ids=exclude,
+            use_hybrid=bool(query_text),
+        )
+
+        if not similar:
+            logger.warning("No similar books found for multi-anchor query")
+            return []
+
+        # ── 5. Hybrid scoring ─────────────────────────────────────────────────
+        recommendations: List[BookRecommendation] = []
+        for item in similar:
+            meta = item["metadata"]
+            vscore = item["score"]
+            final_score = calculate_hybrid_score(
+                vector_similarity=vscore,
+                avg_rating=meta.get("avg_rating") or 0.0,
+                ratings_count=meta.get("ratings_count") or 0,
+                alpha=0.7,
+            )
+            # Build human-readable reason from anchor titles
+            if anchor_metadata:
+                anchor_titles = [m.get("title", "") for m in anchor_metadata if m.get("title")]
+                reason_str = "Похоже на: " + ", ".join(f"«{t}»" for t in anchor_titles[:3])
+            else:
+                reason_str = "Похожее на выбранные книги"
+
+            recommendations.append(BookRecommendation(
+                book_id=meta["book_id"],
+                title=meta["title"],
+                authors=meta.get("authors", []),
+                genres=meta.get("genres", []),
+                cover_image_path=meta.get("cover_image_path"),
+                average_rating=meta.get("avg_rating"),
+                ratings_count=meta.get("ratings_count", 0),
+                views_count=0,
+                similarity_score=vscore,
+                final_score=final_score,
+                reason=reason_str,
+            ))
+
+        recommendations.sort(key=lambda x: x.final_score, reverse=True)
+
+        # ── 6. MMR diversity ──────────────────────────────────────────────────
+        diverse = self.mmr.apply_mmr(
+            candidates=[r.dict() for r in recommendations],
+            final_count=limit,
+        )
+        return [BookRecommendation(**d) for d in diverse]
+
     async def get_popular_books(
         self,
         limit: int = 10,
@@ -416,6 +523,7 @@ class RecommendationEngine:
                 "publication_year": book.publication_year,
                 "age_rating": book.age_rating,
                 "series_name": book.series_name,
+                "word_count": book.word_count,
                 "average_rating": float(book.average_rating) if book.average_rating else None,
                 "ratings_count": book.ratings_count,
                 "cover_image_path": book.cover_image_path
@@ -485,6 +593,7 @@ class RecommendationEngine:
                         "publication_year": book.publication_year,
                         "age_rating": book.age_rating,
                         "series_name": book.series_name,
+                        "word_count": book.word_count,
                         "average_rating": float(book.average_rating) if book.average_rating else None,
                         "ratings_count": book.ratings_count
                     }
@@ -493,7 +602,7 @@ class RecommendationEngine:
                         "book_id": book.id,
                         "embedding": embedding,
                         "metadata": metadata,
-                        "text_profile": text_profile  # ✅ Передаем text_profile для генерации BM25
+                        "text_profile": text_profile  # передаём для генерации BM25-запроса
                     })
                 
                 # Batch upsert to Qdrant
@@ -584,7 +693,7 @@ class RecommendationEngine:
         """
         try:
             await self.cache.invalidate_user_recommendations(user_id)
-            logger.info(f"✓ Cache invalidated for user_id={user_id}")
+            logger.info(f"Cache invalidated for user_id={user_id}")
         except Exception as e:
             logger.error(f"Failed to invalidate cache for user_id={user_id}: {e}")
             raise

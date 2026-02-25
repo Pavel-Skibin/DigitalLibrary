@@ -6,12 +6,12 @@ from loguru import logger
 import time
 
 from app.config import settings
-from app.api import recommendations, embeddings, rag
+from app.api import recommendations, embeddings, rag, chat
 from app.dependencies import (
     get_qdrant_service,
     get_rest_client_service,
     get_cache_service,
-    get_embedding_service
+    get_embedding_service_recommendations,
 )
 
 
@@ -29,24 +29,25 @@ async def lifespan(app: FastAPI):
         qdrant_service = get_qdrant_service()
         qdrant_service.connect()
         await qdrant_service.initialize_recommendations_collection()
-        logger.info("✓ Qdrant initialized")
-        
+        await qdrant_service.initialize_rag_collection()
+        logger.info("Qdrant initialized (recommendations + RAG collections)")
+
         # Initialize REST Client for microservices communication
         rest_client_service = get_rest_client_service()
         await rest_client_service.init_session()
-        logger.info("✓ REST Client initialized")
-        
+        logger.info("REST Client initialized")
+
         # Initialize Redis
         cache_service = get_cache_service()
         await cache_service.connect()
-        logger.info("✓ Redis connected")
-        
-        # Load embedding model
-        embedding_service = get_embedding_service()
-        embedding_service.load_model()
-        logger.info("✓ Embedding model loaded")
-        
-        logger.info(f"🚀 {settings.SERVICE_NAME} started successfully on port {settings.SERVICE_PORT}")
+        logger.info("Redis connected")
+
+        # Preload recommendations embedding model (ru-en-RoSBERTa).
+        # RAG embedding model (USER-bge-m3) loads lazily on first use.
+        get_embedding_service_recommendations().load_model()
+        logger.info("Recommendations embedding model loaded (ru-en-RoSBERTa)")
+
+        logger.info(f"{settings.SERVICE_NAME} started on port {settings.SERVICE_PORT}")
         
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
@@ -63,7 +64,7 @@ async def lifespan(app: FastAPI):
         await rest_client_service.close_session()
         await cache_service.disconnect()
         
-        logger.info(f"✓ {settings.SERVICE_NAME} shut down gracefully")
+        logger.info(f"{settings.SERVICE_NAME} shut down gracefully")
         
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
@@ -74,18 +75,15 @@ app = FastAPI(
     title="Digital Library AI Service",
     description="""
     AI-powered service for Digital Library providing:
-    - **Personalized recommendations** using collaborative filtering and content-based approaches
-    - **Vector embeddings** with ru-en-RoSBERTa for semantic search
-    - **Hybrid ranking** combining similarity and ratings
-    - **MMR diversity** for varied recommendations
-    - **RAG system** (future) for LLM-powered library assistant
-    
-    Technologies:
-    - FastAPI for REST API
-    - Qdrant for vector database
-    - ru-en-RoSBERTa for multilingual embeddings
-    - Redis for caching
-    - PostgreSQL for metadata
+    - **Personalized recommendations** — anchor-based hybrid search, MMR diversity
+    - **RAG assistant** — Q&A over book content via hybrid search + DeepSeek LLM
+    - **Smart assistant** — intent classification, book Q&A, similar-book discovery
+
+    Embedding models:
+    - Recommendations: ai-forever/ru-en-RoSBERTa (1024-dim, prefix "clustering:")
+    - RAG: deepvk/USER-bge-m3 (1024-dim, no prefix)
+
+    Infrastructure: FastAPI, Qdrant (vector DB), Redis (cache), REST clients to other microservices.
     """,
     version="1.0.0",
     lifespan=lifespan,
@@ -110,16 +108,12 @@ async def log_requests(request: Request, call_next):
     start_time = time.time()
     
     # Log request
-    logger.info(f"→ {request.method} {request.url.path}")
-    
-    # Process request
+    logger.info(f"{request.method} {request.url.path}")
+
     response = await call_next(request)
-    
-    # Calculate duration
+
     duration = time.time() - start_time
-    
-    # Log response
-    logger.info(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
+    logger.info(f"{request.method} {request.url.path} {response.status_code} ({duration:.3f}s)")
     
     return response
 
@@ -142,6 +136,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(recommendations.router, prefix="/api")
 app.include_router(embeddings.router, prefix="/api")
 app.include_router(rag.router, prefix="/api")
+app.include_router(chat.router, prefix="/api/ai")
 
 
 # Health check endpoints
@@ -174,8 +169,8 @@ async def health_check():
         if redis_healthy:
             await cache_service.redis.ping()
         
-        # Check embedding model
-        embedding_service = get_embedding_service()
+        # Check embedding model (recommendations model — loaded at startup)
+        embedding_service = get_embedding_service_recommendations()
         model_healthy = embedding_service.initialized
         
         all_healthy = all([qdrant_healthy, rest_client_healthy, redis_healthy, model_healthy])
