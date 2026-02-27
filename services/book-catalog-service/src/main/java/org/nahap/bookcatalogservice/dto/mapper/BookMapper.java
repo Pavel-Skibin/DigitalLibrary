@@ -44,7 +44,13 @@ public abstract class BookMapper {
                 genres,
                 book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
                 book.getRatingsCount() != null ? book.getRatingsCount() : 0,
-                null // coverUrl не нужен для статистики
+                null, // coverUrl не нужен для статистики
+                book.getWordCount(),
+                book.getLanguage(),
+                book.getPublicationYear(),
+                book.getAgeRating(),
+                book.getSeriesName(),
+                book.getSeriesNumber()
         );
     }
 
@@ -72,7 +78,13 @@ public abstract class BookMapper {
                 genresByBookId.getOrDefault(book.getId(), Collections.emptyList()),
                 book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
                 book.getRatingsCount() != null ? book.getRatingsCount() : 0,
-                coverUrl
+                coverUrl,
+                book.getWordCount(),
+                book.getLanguage(),
+                book.getPublicationYear(),
+                book.getAgeRating(),
+                book.getSeriesName(),
+                book.getSeriesNumber()
         );
     }
 
@@ -105,7 +117,13 @@ public abstract class BookMapper {
                             genresByBookId.getOrDefault(book.getId(), Collections.emptyList()),
                             book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
                             book.getRatingsCount() != null ? book.getRatingsCount() : 0,
-                            coverUrl
+                            coverUrl,
+                            book.getWordCount(),
+                            book.getLanguage(),
+                            book.getPublicationYear(),
+                            book.getAgeRating(),
+                            book.getSeriesName(),
+                            book.getSeriesNumber()
                     );
                 })
                 .collect(Collectors.toList());
@@ -140,7 +158,13 @@ public abstract class BookMapper {
                             genresByBookId.getOrDefault(book.getId(), Collections.emptyList()),
                             book.getAverageRating() != null ? book.getAverageRating().doubleValue() : null,
                             book.getRatingsCount(),
-                            coverUrl
+                            coverUrl,
+                            book.getWordCount(),
+                            book.getLanguage(),
+                            book.getPublicationYear(),
+                            book.getAgeRating(),
+                            book.getSeriesName(),
+                            book.getSeriesNumber()
                     );
                 })
                 .toList();
@@ -156,6 +180,7 @@ public abstract class BookMapper {
 
         List<String> authors = getAuthorNames(book);
         List<String> genres = getGenreNames(book);
+        List<String> tags = getTagNames(book);
 
         String coverUrl = book.getCoverImagePath() != null
                 ? "/api/books/" + book.getId() + "/cover"
@@ -169,7 +194,14 @@ public abstract class BookMapper {
                 genres,
                 book.getAverageRating() != null ? book.getAverageRating().doubleValue() : 0.0,
                 book.getRatingsCount() != null ? book.getRatingsCount() : 0,
-                coverUrl
+                coverUrl,
+                book.getWordCount(),
+                book.getLanguage(),
+                book.getPublicationYear(),
+                book.getAgeRating(),
+                book.getSeriesName(),
+                book.getSeriesNumber(),
+                tags
         );
     }
 
@@ -184,6 +216,13 @@ public abstract class BookMapper {
         if (book.getBookGenres() == null) return Collections.emptyList();
         return book.getBookGenres().stream()
                 .map(bg -> bg.getGenre().getName())
+                .collect(Collectors.toList());
+    }
+
+    protected List<String> getTagNames(Book book) {
+        if (book.getBookTags() == null) return Collections.emptyList();
+        return book.getBookTags().stream()
+                .map(bt -> bt.getTag().getName())
                 .collect(Collectors.toList());
     }
 

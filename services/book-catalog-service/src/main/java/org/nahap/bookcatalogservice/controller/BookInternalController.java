@@ -33,11 +33,14 @@ public class BookInternalController implements InternalBookApiApi {
     @Override
     public ResponseEntity<BookResponse> getBookById(Integer id) {
         log.debug("Internal API: Getting book by id: {}", id);
+
+        List<Book> books = bookInternalService.getBooksWithRelations(List.of(id));
         
-        return bookRepository.findById(id)
-                .map(internalBookMapper::toResponse)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        if (books.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        return ResponseEntity.ok(internalBookMapper.toResponse(books.get(0)));
     }
 
     @Override
@@ -71,14 +74,18 @@ public class BookInternalController implements InternalBookApiApi {
     }
 
     @Override
-    public ResponseEntity<List<Integer>> getAllBookIds() {
-        log.debug("Internal API: Getting all book IDs");
+    public ResponseEntity<List<Integer>> getAllBookIds(Integer limit) {
+        log.debug("Internal API: Getting all book IDs (limit={})", limit);
 
         List<Integer> bookIds = bookRepository.findAll().stream()
                 .map(Book::getId)
+                .sorted()  // Explicit sorting by ID for predictable indexing order
+                .limit(limit != null ? limit : Long.MAX_VALUE)
                 .collect(Collectors.toList());
         
-        log.info("Internal API: Found {} active books", bookIds.size());
+        log.info("Internal API: Found {} book IDs{}", 
+                bookIds.size(), 
+                limit != null ? " (limited to " + limit + ")" : "");
         return ResponseEntity.ok(bookIds);
     }
 

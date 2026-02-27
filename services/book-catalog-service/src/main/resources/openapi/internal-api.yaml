@@ -84,6 +84,14 @@ paths:
       operationId: getAllBookIds
       tags:
         - Internal Book API
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of book IDs to return
+          schema:
+            type: integer
+            format: int32
       responses:
         "200":
           description: List of all book IDs
@@ -154,6 +162,28 @@ components:
           type: integer
         coverImagePath:
           type: string
+        wordCount:
+          type: integer
+          format: int32
+          description: Word count in thousands (e.g., 77 = 77,000 words)
+        ageRating:
+          type: string
+          description: Age rating (e.g., 0+, 6+, 12+, 16+, 18+)
+        seriesName:
+          type: string
+          description: Series name if book is part of a series
+        seriesNumber:
+          type: integer
+          format: int32
+          description: Book number in series
+        averageRating:
+          type: number
+          format: float
+          description: Average rating (0.00-5.00)
+        ratingsCount:
+          type: integer
+          format: int32
+          description: Total number of ratings
         createdAt:
           type: string
           format: date-time
