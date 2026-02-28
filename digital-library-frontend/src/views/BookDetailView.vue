@@ -205,7 +205,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from "vue";
+import { ref, onMounted, computed, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getCookie } from "@/utils/cookies";
 
@@ -266,13 +266,25 @@ const {
 
 const { userRating, loadUserRating, submitRating } = useBookRating();
 
-onMounted(async () => {
-  await checkAccess();
-  isModeratorOrAdmin.value = isAdmin.value || isModerator.value;
+async function loadAll() {
   await loadBookDetails();
   await loadComments(bookId.value);
   if (isAuthenticated.value) {
     await loadUserRating(bookId.value);
+  }
+}
+
+onMounted(async () => {
+  await checkAccess();
+  isModeratorOrAdmin.value = isAdmin.value || isModerator.value;
+  await loadAll();
+});
+
+// Перезагружаем данные при смене книги (для навигации внутри того же маршрута)
+watch(bookId, async (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    await loadAll();
   }
 });
 
