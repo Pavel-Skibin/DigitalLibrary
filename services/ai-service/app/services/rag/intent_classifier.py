@@ -33,23 +33,33 @@ _SYSTEM_PROMPT = """\
 Ты — классификатор запросов для цифровой библиотеки. Твоя задача — \
 проанализировать запрос пользователя и вернуть JSON-объект.
 
+Если перед запросом есть блок "Предыдущий контекст диалога:" — используй его для интерпретации
+недоговорённых местоимений («он», «она», «это», «там» и т.д.) и вывода названия книги/автора.
+
 Определи тип запроса (поле "intent"):
   "book_question"   — пользователь спрашивает о конкретной книге, авторе или персонажах
                       (примеры: «кто такой Раскольников?», «как зовут героев у Ремарка в Трёх товарищах», «что случилось с Фаустом в конце»)
+                      ТАКЖЕ: уточняющий вопрос с местоимением («он», «она», «это», «там»),
+                      когда из "Предыдущий контекст диалога:" ясно что речь о книге/персонаже
+                      (пример: после вопроса про «Владычицу озера Сапковского» → «кем он был?» = book_question)
   "recommendation"  — пользователь просит порекомендовать книги
                       (примеры: «посоветуй фантастику», «что почитать на вечер», «хочу что-то лёгкое»)
   "general"         — всё остальное: поиск цитат, вопросы без привязки к книге, сравнения
 
 Правила для каждого типа:
 
-Если intent = "book_question":
-  - Извлеки "title": название книги (null — если не упомянуто)
+Если intent = "book_question" или intent = "quote_search":
+  - Извлеки "title": название книги (null — если не упомянуто в запросе И в контексте)
   - Извлеки "author": имя автора в ИМЕНИТЕЛЬНОМ падеже, каноническая форма
     (например «Ремарка» → «Эрих Мария Ремарк», «Гете» / «Гёте» → «Иоганн Вольфганг фон Гёте»)
-    null — если автор не упомянут
-  - Извлеки "clean_query": вопрос БЕЗ упоминания книги и автора
+    null — если автор не упомянут ни в запросе, ни в контексте
+  - ВАЖНО: если title/author отсутствует в текущем запросе, НО в "Предыдущий контекст диалога:"
+    упоминалась книга — заполни title/author из контекста
+  - Извлеки "clean_query": запрос БЕЗ упоминания книги и автора, разрешив местоимения
     (пример: «как зовут главных героев в произведении Ремарка Три товарища» →
-             «как зовут главных героев»)
+             «как зовут главных героев»;
+     пример с контекстом: «кем он был?» когда «он» = персонаж книги из контекста →
+             «кем был [имя персонажа]»)
 
 Если intent = "recommendation":
   - Извлеки "genres": список жанров ([], если не упомянуты)
@@ -139,7 +149,13 @@ _FEW_SHOT = """\
 Ответ: {"intent":"recommendation","genres":[],"keywords":["мотивация","вдохновение","саморазвитие","победа"],"author_filter":null,"min_word_count":null,"max_word_count":null,"mood":"мотивирующее","language":null,"min_rating":null,"era":null,"clean_query":"посоветуй что-нибудь мотивирующее"}
 
 Запрос: «найди цитаты про любовь»
-Ответ: {"intent":"general","clean_query":"найди цитаты про любовь"}
+Ответ: {"intent":"quote_search","title":null,"author":null,"clean_query":"цитаты про любовь"}
+
+Запрос: «есть ли фраза про смерть в Мастере и Маргарите»
+Ответ: {"intent":"quote_search","title":"Мастер и Маргарита","author":"Михаил Булгаков","clean_query":"фраза про смерть"}
+
+Запрос: «найди цитату про одиночество из Ремарка»
+Ответ: {"intent":"quote_search","title":null,"author":"Эрих Мария Ремарк","clean_query":"цитата про одиночество"}
 
 Запрос: «что происходит в конце Мастера и Маргариты»
 Ответ: {"intent":"book_question","title":"Мастер и Маргарита","author":"Михаил Булгаков","clean_query":"что происходит в конце"}
@@ -168,6 +184,18 @@ _FEW_SHOT = """\
 Запрос: «что-то в духе Стругацких, но про современность»
 Ответ: {"intent":"recommendation","genres":[],"keywords":[],"author_filter":"Аркадий и Борис Стругацкие","min_word_count":null,"max_word_count":null,"mood":null,"language":null,"min_rating":null,"era":"современная","similar_to_books":[],"clean_query":"что-то в духе Стругацких, но про современность"}
 
+Предыдущий контекст диалога:
+Пользователь: Как погиб Менно Коегорн во Владычице озера Сапковского?
+Ассистент: Менно Коегорн погиб в осаде Нильфгаарда...
+Запрос: «кем он был?»
+Ответ: {"intent":"book_question","title":"Владычица озера","author":"Анджей Сапковский","clean_query":"кем был Менно Коегорн"}
+
+Предыдущий контекст диалога:
+Пользователь: Расскажи про главных героев Трёх товарищей Ремарка
+Ассистент: Главные герои — Роберт Локамп, Отто Кирстер и Пат...
+Запрос: «а что с ней случилось в конце?»
+Ответ: {"intent":"book_question","title":"Три товарища","author":"Эрих Мария Ремарк","clean_query":"что случилось с Пат в конце"}
+
 Теперь классифицируй:
 """
 
@@ -186,9 +214,13 @@ class IntentClassifierService:
 
     # ─── Публичный API ─────────────────────────────────────────────────────────
 
-    async def classify(self, query: str) -> ClassifiedIntent:
+    async def classify(self, query: str, history: list | None = None) -> ClassifiedIntent:
         """
         Классифицирует запрос.
+
+        Args:
+            query:   Текущее сообщение пользователя.
+            history: Последние N сообщений [{role, content}] для контекста.
 
         Returns:
             ClassifiedIntent — тип + извлечённые данные.
@@ -198,9 +230,23 @@ class IntentClassifierService:
             return self._heuristic_classify(query)
 
         try:
+            # Добавляем контекст диалога если есть история
+            context_prefix = ""
+            if history:
+                last = history[-4:]  # не более 2 обменов (4 сообщения)
+                lines = []
+                for m in last:
+                    role_ru = "Пользователь" if m["role"] == "user" else "Ассистент"
+                    lines.append(f"{role_ru}: {m['content'][:200]}")
+                context_prefix = (
+                    "Предыдущий контекст диалога:\n"
+                    + "\n".join(lines)
+                    + "\n\n"
+                )
+
             raw = await self.llm.generate_raw(
                 system_prompt=_SYSTEM_PROMPT,
-                user_message=f"{_FEW_SHOT}Запрос: «{query}»",
+                user_message=f"{context_prefix}{_FEW_SHOT}Запрос: «{query}»",
                 temperature=0.0,
                 max_tokens=256,
             )
@@ -240,6 +286,18 @@ class IntentClassifierService:
             )
             return ClassifiedIntent(
                 intent=intent,
+                book_entity=book_entity,
+                clean_query=clean_query,
+            )
+
+        if intent == IntentType.QUOTE_SEARCH:
+            book_entity = BookEntity(
+                title=data.get("title") or None,
+                author=data.get("author") or None,
+                clean_query=clean_query,
+            )
+            return ClassifiedIntent(
+                intent=IntentType.QUOTE_SEARCH,
                 book_entity=book_entity,
                 clean_query=clean_query,
             )
@@ -286,6 +344,18 @@ class IntentClassifierService:
             return ClassifiedIntent(
                 intent=IntentType.RECOMMENDATION,
                 recommendation_filters=RecommendationFilters(),
+                clean_query=query,
+            )
+
+        # Цитаты и отрывки
+        quote_keywords = [
+            "цитат", "найди фраз", "как писал", "отрывок",
+            "есть ли фраза", "что говорил", "найди цитат",
+        ]
+        if any(k in q for k in quote_keywords):
+            return ClassifiedIntent(
+                intent=IntentType.QUOTE_SEARCH,
+                book_entity=BookEntity(clean_query=query),
                 clean_query=query,
             )
 

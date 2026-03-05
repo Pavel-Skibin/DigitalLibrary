@@ -14,10 +14,12 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+import httpx
 from loguru import logger
 
 from app.config import Settings
 from app.models.chat import (
+    BookEntity,
     BookSource,
     ChatRequest,
     ChatResponse,
@@ -35,6 +37,7 @@ from app.services.recommendations.nl_recommendation_service import (
 )
 from app.services.recommendations.recommendation_engine import RecommendationEngine
 from app.models.book import BookRecommendation
+from app.services.shared.conversation_history_service import ConversationHistoryService
 
 
 class SmartAssistantService:
@@ -55,21 +58,35 @@ class SmartAssistantService:
         "Попробуйте уточнить название или автора."
     )
 
+    _QUOTE_SYSTEM_PROMPT = (
+        "Ты ищешь цитаты и отрывки в предоставленных фрагментах текста.\n"
+        "\n"
+        "ПРАВИЛА:\n"
+        "1. Верни ТОЧНУЮ цитату из текста (дословно, в кавычках), если найдена.\n"
+        "2. Укажи источник: название книги или главы.\n"
+        "3. Если точной цитаты нет — скажи \'Точной цитаты не найдено, но близкий фрагмент:\' "
+        "и приведи отрывок.\n"
+        "4. НЕ перефразируй — только дословный текст из фрагментов.\n"
+        "5. Отвечай на языке вопроса."
+    )
+
     def __init__(
         self,
-        settings:         Settings,
-        intent_classifier: IntentClassifierService,
-        book_resolver:    BookResolverService,
-        rag_service:      RAGService,
-        nl_rec_service:   NaturalLanguageRecommendationService,
-        rec_engine:       RecommendationEngine,
+        settings:             Settings,
+        intent_classifier:    IntentClassifierService,
+        book_resolver:        BookResolverService,
+        rag_service:          RAGService,
+        nl_rec_service:       NaturalLanguageRecommendationService,
+        rec_engine:           RecommendationEngine,
+        conversation_history: Optional[ConversationHistoryService] = None,
     ):
-        self.settings          = settings
-        self.intent_classifier = intent_classifier
-        self.book_resolver     = book_resolver
-        self.rag               = rag_service
-        self.nl_rec            = nl_rec_service
-        self.rec_engine        = rec_engine
+        self.settings              = settings
+        self.intent_classifier     = intent_classifier
+        self.book_resolver         = book_resolver
+        self.rag                   = rag_service
+        self.nl_rec                = nl_rec_service
+        self.rec_engine            = rec_engine
+        self.conversation_history  = conversation_history
 
     # ─── Публичный API ─────────────────────────────────────────────────────────
 
@@ -84,9 +101,28 @@ class SmartAssistantService:
             f"SmartAssistant.chat | user_id={request.user_id} | "
             f"message={request.message[:80]!r}"
         )
+        # ── Шаг 0: История диалога ────────────────────────────────────────────
+        # session_id = если не передан явно, автодеривируем из user_id
+        session_id: Optional[str] = request.session_id
+        if not session_id and request.user_id:
+            session_id = f"user:{request.user_id}"
 
+        history: List[dict] = []
+        active_context: Optional[dict] = None
+        if session_id and self.conversation_history:
+            history = await self.conversation_history.get_history(session_id)
+            active_context = await self.conversation_history.get_active_context(session_id)
+            if history:
+                logger.info(f"History: {len(history)} msgs for session={session_id!r}")
+            if active_context:
+                logger.info(
+                    f"Active book: {active_context.get('title')!r} "
+                    f"ids={active_context.get('book_ids')} for session={session_id!r}"
+                )
         # ── Шаг 1: Классификация интента ─────────────────────────────────────
-        intent: ClassifiedIntent = await self.intent_classifier.classify(request.message)
+        intent: ClassifiedIntent = await self.intent_classifier.classify(
+            request.message, history=history or None
+        )
         logger.info(f"Intent: {intent.intent} | clean_query={intent.clean_query!r}")
 
         debug = (
@@ -96,6 +132,8 @@ class SmartAssistantService:
                 "book_entity":       intent.book_entity.dict() if intent.book_entity else None,
                 "rec_filters":       intent.recommendation_filters.dict()
                                      if intent.recommendation_filters else None,
+                "session_id":        session_id,
+                "history_len":       len(history),
             }
             if self.settings.DEBUG
             else None
@@ -103,45 +141,144 @@ class SmartAssistantService:
 
         # ── Шаг 2: Диспетчеризация ────────────────────────────────────────────
 
+        # Для BOOK_QUESTION / QUOTE_SEARCH — разрешаем контекст книги (sticky book)
+        resolved_book_ids: List[int] = []
+        if intent.intent in (IntentType.BOOK_QUESTION, IntentType.QUOTE_SEARCH):
+            intent, active_context, resolved_book_ids = (
+                await self._resolve_active_book_context(intent, active_context, session_id)
+            )
+
         if intent.intent == IntentType.BOOK_QUESTION:
-            return await self._handle_book_question(request, intent, debug)
+            response = await self._handle_book_question(
+                request, intent, debug, history, resolved_book_ids
+            )
+        elif intent.intent == IntentType.QUOTE_SEARCH:
+            response = await self._handle_quote_search(
+                request, intent, debug, history, resolved_book_ids
+            )
+        elif intent.intent == IntentType.RECOMMENDATION:
+            response = await self._handle_recommendation(request, intent, debug)
+        else:
+            # GENERAL — если есть активная книга, ищем внутри неё
+            general_book_ids = active_context.get("book_ids") if active_context else None
+            response = await self._handle_general(request, intent, debug, history, general_book_ids)
 
-        if intent.intent == IntentType.RECOMMENDATION:
-            return await self._handle_recommendation(request, intent, debug)
+        # ── Шаг 3: Сохранение истории ─────────────────────────────────────────
+        if session_id and self.conversation_history:
+            await self.conversation_history.add_turn(
+                session_id, request.message, response.answer
+            )
+        if session_id:
+            response.session_id = session_id
 
-        # GENERAL — поиск по всей библиотеке
-        return await self._handle_general(request, intent, debug)
+        return response
+
+    # ─── Разрешение активного контекста книги ─────────────────────────────────
+
+    async def _resolve_active_book_context(
+        self,
+        intent:         ClassifiedIntent,
+        active_context: Optional[dict],
+        session_id:     Optional[str],
+    ) -> tuple:
+        """
+        Основная логика «прилипания» к книге в рамках сессии.
+
+        Правила:
+        1. Если в intent явно указан title/author → резолвим book_ids,
+           обновляем active_context (пользователь переключился или это первый запрос).
+        2. Если в intent НЕТ title/author, НО active_context установлен →
+           используем сохранённые book_ids (вопрос о той же книге).
+        3. Если нет ни того, ни другого → book_ids=[] (поиск по всей библиотеке).
+
+        Returns:
+            (intent, active_context, resolved_book_ids: List[int])
+        """
+        entity = intent.book_entity
+        has_explicit_book = bool(entity and (entity.title or entity.author))
+
+        if has_explicit_book:
+            book_ids: List[int] = self.book_resolver.find_book_ids(
+                title=entity.title,
+                author=entity.author,
+                limit=2,
+            )
+            if book_ids:
+                new_ctx = {
+                    "title":    entity.title,
+                    "author":   entity.author,
+                    "book_ids": book_ids,
+                }
+                if session_id and self.conversation_history:
+                    await self.conversation_history.set_active_context(session_id, new_ctx)
+                active_context = new_ctx
+                logger.info(
+                    f"Active context updated: book={entity.title!r} ids={book_ids}"
+                )
+            return intent, active_context, book_ids
+
+        # Нет явной книги — используем active context
+        if active_context and active_context.get("book_ids"):
+            cached_ids: List[int] = active_context["book_ids"]
+            logger.info(
+                f"No book in query → sticky context: "
+                f"{active_context.get('title')!r} ids={cached_ids}"
+            )
+            # Инжектируем данные книги в intent для корректного debug/answer
+            intent.book_entity = BookEntity(
+                title=active_context.get("title"),
+                author=active_context.get("author"),
+                clean_query=intent.clean_query,
+            )
+            return intent, active_context, cached_ids
+
+        return intent, active_context, []
 
     # ─── BOOK_QUESTION ────────────────────────────────────────────────────────
 
     async def _handle_book_question(
         self,
-        request: ChatRequest,
-        intent:  ClassifiedIntent,
-        debug:   Optional[dict],
+        request:           ChatRequest,
+        intent:            ClassifiedIntent,
+        debug:             Optional[dict],
+        history:           Optional[List[dict]] = None,
+        resolved_book_ids: Optional[List[int]] = None,
     ) -> ChatResponse:
         """Отвечает на вопрос по конкретной книге через RAG."""
         entity = intent.book_entity
 
-        # Резолвим книгу(и) по title + author
-        book_ids: List[int] = []
-        if entity and (entity.title or entity.author):
+        # Используем предварительно разрешённые IDs или резолвим на месте
+        if resolved_book_ids is not None:
+            book_ids = resolved_book_ids
+        elif entity and (entity.title or entity.author):
             book_ids = self.book_resolver.find_book_ids(
                 title=entity.title,
                 author=entity.author,
-                limit=2,        # обычно одна книга; берём 2 на случай серий
+                limit=2,
             )
-            if debug:
-                debug["resolved_book_ids"] = book_ids
+        else:
+            book_ids = []
+        if debug:
+            debug["resolved_book_ids"] = book_ids
 
         clean_query = (entity.clean_query if entity else None) or request.message
 
         if not book_ids and (entity and entity.title):
-            # Книга не найдена — сообщаем об этом
             logger.warning(
-                f"Книга не найдена: title={entity.title!r}, "
+                f"Книга не найдена в Qdrant: title={entity.title!r}, "
                 f"author={entity.author!r}"
             )
+            in_catalog = await self._check_book_in_catalog(entity.title)
+            if in_catalog:
+                return ChatResponse(
+                    intent=IntentType.BOOK_QUESTION,
+                    answer=(
+                        f"Книга \u00ab{entity.title}\u00bb есть в каталоге библиотеки, "
+                        "но её текст ещё не проиндексирован для поиска. "
+                        "Обратитесь к администратору для запуска векторизации."
+                    ),
+                    debug=debug,
+                )
             return ChatResponse(
                 intent=IntentType.BOOK_QUESTION,
                 answer=self._NO_BOOK,
@@ -155,6 +292,7 @@ class SmartAssistantService:
             book_ids=book_ids if book_ids else None,  # None = по всей библиотеке
             include_context=True,
             auto_filter_books=False,   # мы уже сами нашли книги
+            history=history or None,
         )
         rag_response = await self.rag.query(rag_request)
 
@@ -162,6 +300,85 @@ class SmartAssistantService:
             intent=IntentType.BOOK_QUESTION,
             answer=rag_response.answer,
             sources=self._rag_sources_to_chat_sources(rag_response.sources or []),
+            debug=debug,
+        )
+
+    # ─── RECOMMENDATION ───────────────────────────────────────────────────────
+    async def _check_book_in_catalog(self, title: str) -> bool:
+        """Проверяет, есть ли книга с таким названием в каталоге (без Qdrant)."""
+        url = f"{self.settings.BOOK_CATALOG_SERVICE_URL}/api/books/search"
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(url, params={"title": title, "page": 0, "size": 1})
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("totalElements", 0) > 0
+        except Exception as exc:
+            logger.warning(f"Catalog check failed for {title!r}: {exc}")
+        return False
+
+    async def _handle_quote_search(
+        self,
+        request:           ChatRequest,
+        intent:            ClassifiedIntent,
+        debug:             Optional[dict],
+        history:           Optional[List[dict]] = None,
+        resolved_book_ids: Optional[List[int]] = None,
+    ) -> ChatResponse:
+        """Ищет цитаты и дословные отрывки через RAG со специальным промптом."""
+        entity = intent.book_entity
+
+        if resolved_book_ids is not None:
+            book_ids = resolved_book_ids
+        elif entity and (entity.title or entity.author):
+            book_ids = self.book_resolver.find_book_ids(
+                title=entity.title,
+                author=entity.author,
+                limit=2,
+            )
+        else:
+            book_ids = []
+        if debug:
+            debug["resolved_book_ids"] = book_ids
+
+        clean_query = (entity.clean_query if entity else None) or request.message
+
+        # Больше чанков — больше шансов найти точную цитату
+        top_k = min(request.top_k * 2, 10)
+
+        chunks = self.rag.retrieval.search_chunks(
+            query=clean_query,
+            top_k=top_k,
+            book_ids=book_ids if book_ids else None,
+            auto_filter_books=False,
+        )
+
+        if not chunks:
+            answer = (
+                "Цитат по данному запросу не найден в доступных текстах. "
+                "Уточните запрос или название книги / автора."
+            )
+            return ChatResponse(intent=IntentType.QUOTE_SEARCH, answer=answer, debug=debug)
+
+        context_texts = [c.text for c in chunks]
+        try:
+            llm_response = await self.rag.llm.generate_answer(
+                query=clean_query,
+                context_chunks=context_texts,
+                system_prompt=self._QUOTE_SYSTEM_PROMPT,
+                history=history or None,
+            )
+            answer = llm_response.answer
+        except Exception as exc:
+            logger.error(f"Quote LLM error: {exc}")
+            answer = (
+                "Ошибка при поиске цитаты. Попробуйте позже."
+            )
+
+        return ChatResponse(
+            intent=IntentType.QUOTE_SEARCH,
+            answer=answer,
+            sources=self._rag_sources_to_chat_sources(self.rag._build_sources(chunks)),
             debug=debug,
         )
 
@@ -348,16 +565,22 @@ class SmartAssistantService:
 
     async def _handle_general(
         self,
-        request: ChatRequest,
-        intent:  ClassifiedIntent,
-        debug:   Optional[dict],
+        request:  ChatRequest,
+        intent:   ClassifiedIntent,
+        debug:    Optional[dict],
+        history:  Optional[List[dict]] = None,
+        book_ids: Optional[List[int]] = None,
     ) -> ChatResponse:
-        """Полнотекстовый RAG по всей библиотеке."""
+        """Полнотекстовый RAG — по всей библиотеке или внутри активной книги."""
+        if book_ids:
+            logger.info(f"GENERAL within active book: ids={book_ids}")
         rag_request = RAGQueryRequest(
             query=intent.clean_query,
             top_k=request.top_k,
+            book_ids=book_ids or None,
             include_context=True,
             auto_filter_books=False,
+            history=history or None,
         )
         rag_response = await self.rag.query(rag_request)
 

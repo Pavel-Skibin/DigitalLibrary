@@ -21,6 +21,7 @@ class IntentType(str, Enum):
     BOOK_QUESTION  = "book_question"   # «Как зовут главного героя в Трёх товарищах?»
     RECOMMENDATION = "recommendation"  # «Посоветуй фантастику на вечер»
     GENERAL        = "general"         # «Найди цитаты про любовь»
+    QUOTE_SEARCH   = "quote_search"    # «Найди цитату про одиночество из Ремарка»
 
 
 # ─── Внутренние структуры классификатора ──────────────────────────────────────
@@ -58,10 +59,11 @@ class ClassifiedIntent(BaseModel):
 
 class ChatRequest(BaseModel):
     """Входящий запрос к умному ассистенту."""
-    message:  str            = Field(..., min_length=2, description="Сообщение пользователя")
-    user_id:  Optional[int]  = Field(None, description="ID пользователя (для персонализации)")
-    top_k:    int            = Field(5, ge=1, le=10, description="Макс. чанков для RAG")
-    language: Optional[str]  = Field(None, description="Предпочитаемый язык ответа")
+    message:    str            = Field(..., min_length=2, description="Сообщение пользователя")
+    user_id:    Optional[int]  = Field(None, description="ID пользователя (для персонализации)")
+    top_k:      int            = Field(5, ge=1, le=10, description="Макс. чанков для RAG")
+    language:   Optional[str]  = Field(None, description="Предпочитаемый язык ответа")
+    session_id: Optional[str]  = Field(None, description="ID сессии для хранения истории диалога")
 
 
 # ─── Элементы ответа ──────────────────────────────────────────────────────────
@@ -95,6 +97,9 @@ class ChatResponse(BaseModel):
     """Ответ умного ассистента."""
     intent:          IntentType
     answer:          str
+
+    # Эхо session_id (если передан в запросе)
+    session_id:      Optional[str]         = None
 
     # Для BOOK_QUESTION / GENERAL
     sources:         List[BookSource]     = Field(default_factory=list)

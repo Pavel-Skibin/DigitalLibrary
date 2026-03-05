@@ -217,6 +217,7 @@ const isLoading = ref(false);
 const messagesRef = ref(null);
 const inputRef = ref(null);
 const carouselRefs = ref({}); // { [msgId]: HTMLElement }
+const sessionId = ref(null); // Храним session_id из ответа сервера
 
 let msgCounter = 0;
 
@@ -319,7 +320,11 @@ async function sendMessage() {
       message: text,
       userId: getUserId(),
       topK: 6,
+      sessionId: sessionId.value,
     });
+
+    // Сохраняем session_id из ответа для последующих запросов
+    if (response.session_id) sessionId.value = response.session_id;
 
     // Remove loading placeholder
     const idx = messages.value.findIndex((m) => m.id === loadingId);

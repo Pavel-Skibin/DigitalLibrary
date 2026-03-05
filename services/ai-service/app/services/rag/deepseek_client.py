@@ -54,6 +54,7 @@ class DeepSeekClient:
         query: str,
         context_chunks: List[str],
         system_prompt: Optional[str] = None,
+        history: Optional[List[dict]] = None,
     ) -> LLMResponse:
         """
         Генерирует ответ на вопрос с использованием контекстных фрагментов.
@@ -79,7 +80,7 @@ class DeepSeekClient:
             raise RuntimeError(
                 "DEEPSEEK_API_KEY не задан. Укажите ключ в .env."
             )
-        return await self._call_deepseek(system_prompt, user_message)
+        return await self._call_deepseek(system_prompt, user_message, history=history)
 
     def is_available(self) -> bool:
         """Проверяет, задан ли DEEPSEEK_API_KEY."""
@@ -107,9 +108,19 @@ class DeepSeekClient:
 
     # ─── Приватные методы ──────────────────────────────────────────────────────
 
-    async def _call_deepseek(self, system_prompt: str, user_message: str) -> LLMResponse:
-        """Вызов DeepSeek REST API."""
-        logger.debug(f"DeepSeek API call (model={self.model})")
+    async def _call_deepseek(
+        self,
+        system_prompt: str,
+        user_message: str,
+        history: Optional[List[dict]] = None,
+    ) -> LLMResponse:
+        """Вызов DeepSeek REST API (с поддержкой истории диалога)."""
+        logger.debug(f"DeepSeek API call (model={self.model}, history={len(history or [])} msgs)")
+
+        messages: list = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend({"role": h["role"], "content": h["content"]} for h in history)
+        messages.append({"role": "user", "content": user_message})
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
@@ -120,10 +131,7 @@ class DeepSeekClient:
                 },
                 json={
                     "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user",   "content": user_message},
-                    ],
+                    "messages": messages,
                     "temperature": 0.3,         # Низкая для фактичных ответов
                     "max_tokens": 1024,
                 },

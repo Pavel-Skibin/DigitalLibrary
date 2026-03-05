@@ -39,6 +39,9 @@ class RAGQueryRequest(BaseModel):
         False, 
         description="Автоматически найти релевантные книги перед поиском (two-stage retrieval)"
     )
+    history: Optional[List[dict]] = Field(
+        None, description="История диалога [{role, content}, ...] для контекста LLM"
+    )
 
 
 # ─── Элементы ответа ──────────────────────────────────────────────────────────

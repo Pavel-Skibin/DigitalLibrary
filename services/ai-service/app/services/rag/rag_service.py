@@ -115,6 +115,7 @@ class RAGService:
             llm_response = await self.llm.generate_answer(
                 query=request.query,
                 context_chunks=context_texts,
+                history=request.history or None,
             )
         except Exception as exc:
             logger.error(f"LLM generation failed: {exc}")

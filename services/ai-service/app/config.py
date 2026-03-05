@@ -114,6 +114,10 @@ class Settings(BaseSettings):
     # LLM метаданные (генерация summary/themes) — отключено до появления ключа
     RAG_ENABLE_LLM_METADATA: bool = False
 
+    # ─── Conversation History ─────────────────────────────────────────────────────
+    CONVERSATION_HISTORY_TTL: int = 3600       # TTL истории в Redis (сек), default 1h
+    CONVERSATION_MAX_MESSAGES: int = 20        # Максимум сообщений в истории (10 обменов)
+
     # ─── DeepSeek LLM ───────────────────────────────────────────────────────────
     DEEPSEEK_API_KEY: Optional[str] = None          # sk-xxx... (из .env)
     DEEPSEEK_MODEL: str = "deepseek-chat"           # deepseek-chat / deepseek-reasoner

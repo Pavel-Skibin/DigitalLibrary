@@ -15,6 +15,7 @@ from app.services.rag.book_resolver import BookResolverService
 from app.services.recommendations.nl_recommendation_service import NaturalLanguageRecommendationService
 from app.services.smart_assistant import SmartAssistantService
 from app.services.meta_enrichment import MetaEnrichmentService
+from app.services.shared.conversation_history_service import ConversationHistoryService
 from app.utils.task_registry import TaskRegistry, task_registry
 
 
@@ -159,7 +160,14 @@ def get_smart_assistant_service() -> SmartAssistantService:
         rag_service=get_rag_service(),
         nl_rec_service=get_nl_recommendation_service(),
         rec_engine=get_recommendation_engine(),
+        conversation_history=get_conversation_history_service(),
     )
+
+
+@lru_cache()
+def get_conversation_history_service() -> ConversationHistoryService:
+    """Гет ConversationHistoryService — хранение истории диалога в Redis."""
+    return ConversationHistoryService(cache=get_cache_service(), settings=settings)
 
 
 @lru_cache()
