@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     SERVICE_NAME: str = "ai-service"
     SERVICE_PORT: int = 8085
     DEBUG: bool = True
+    # Принудительно использовать CPU (даже если CUDA доступна).
+    # Используется для тестирования перед деплоем на CPU-only серверах.
+    FORCE_CPU: bool = False
     
     # Other Microservices (REST API)
     # AI Service does NOT connect to PostgreSQL directly!
@@ -44,14 +47,14 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_NAME_RAG: str = "deepvk/USER-bge-m3"  # 1024-dim, русский
     EMBEDDING_DIM_RAG: int = 1024
     
-    EMBEDDING_BATCH_SIZE: int = 16
+    EMBEDDING_BATCH_SIZE: int = 10
     
     # Recommendation params
     TOP_K_SIMILAR: int = 50
     FINAL_RECOMMENDATIONS: int = 10
     MMR_DIVERSITY_LAMBDA: float = 0.5
-    MAX_PER_AUTHOR: int = 5
-    MAX_PER_GENRE: int = 7
+    MAX_PER_AUTHOR: int = 2
+    MAX_PER_GENRE: int = 3
     
     # Cache TTL (seconds)
     CACHE_TTL_RECOMMENDATIONS: int = 3600

@@ -156,22 +156,19 @@ async def invalidate_user_cache(
     engine: RecommendationEngine = Depends(get_recommendation_engine)
 ):
     """
-    Сбросить кэш рекомендаций пользователя
-    
-    ⚡ Критична для качества рекомендаций! ⚡
-    
+    Сбросить кэш рекомендаций пользователя.
+
     Вызывается когда пользователь:
-    - Оценивает книгу (любой рейтинг)
+    - Оценивает книгу
     - Добавляет/удаляет из избранного
-    - Завершает чтение книги (progress = 100%)
-    - Добавляет книгу в "прочитанные"
-    
-    Без инвалидации кэша пользователь будет видеть устаревшие рекомендации,
-    которые не учитывают его новые предпочтения.
+    - Завершает чтение (progress = 100%)
+    - Добавляет книгу в «прочитанные»
+
+    Без инвалидации пользователь будет видеть устаревшие рекомендации.
     """
     try:
         await engine.invalidate_cache(user_id)
-        logger.info(f"✓ Cache invalidated for user_id={user_id}")
+        logger.info(f"Cache invalidated for user_id={user_id}")
         return {"status": "success", "message": f"Cache invalidated for user_id={user_id}"}
         
     except Exception as e:

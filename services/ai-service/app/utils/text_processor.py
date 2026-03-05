@@ -28,7 +28,7 @@ def create_book_text_profile(book: BookMetadata) -> str:
           - Authors (~100 chars) → ~25 tokens
           - Series (~100 chars) → ~25 tokens
           ──────────────────────────────────
-          TOTAL: ~400 tokens out of 512 ✓
+          TOTAL: ~400 tokens out of 512
           
           This leaves 20% safety margin while preserving full book descriptions.
     """

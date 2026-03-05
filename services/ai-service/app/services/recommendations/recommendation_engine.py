@@ -479,10 +479,14 @@ class RecommendationEngine:
         
         return combined
     
-    async def generate_and_store_embedding(self, book_id: int) -> bool:
+    async def generate_and_store_embedding(self, book_id: int, force_update: bool = False) -> bool:
         """
         Generate embedding for a book and store in Qdrant.
-        
+
+        Args:
+            book_id:      ID книги.
+            force_update: Если True — игнорировать кэш эмбеддинга и пересчитать.
+
         Returns:
             bool: True if successful, False otherwise
         """
@@ -500,8 +504,8 @@ class RecommendationEngine:
             # Create text profile
             text_profile = create_book_text_profile(book)
             
-            # Check cache
-            cached_embedding = await self.cache.get_cached_embedding(text_profile)
+            # Check cache (skip if force_update)
+            cached_embedding = None if force_update else await self.cache.get_cached_embedding(text_profile)
             if cached_embedding is not None:
                 embedding = cached_embedding
                 logger.debug(f"Using cached embedding for book_id={book_id}")

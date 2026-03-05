@@ -72,6 +72,15 @@ class FB2Parser:
 
         body = root.find(f".//{{{_NS}}}body")
         if body is not None:
+            # Эпиграфы на уровне <body> (ко всей книге) — добавляем как отдельную главу
+            body_epigraphs = self._collect_epigraphs(body)
+            if body_epigraphs:
+                chapters.append(BookChapter(
+                    title="Эпиграф к книге",
+                    text="\n\n".join(body_epigraphs),
+                    chapter_index=0,
+                    depth=0,
+                ))
             self._parse_sections(body, chapters, depth=1)
         else:
             logger.warning("FB2: <body> not found — книга пуста?")
@@ -104,15 +113,35 @@ class FB2Parser:
             title_elem = section.find(f"{{{_NS}}}title")
             title = self._extract_text(title_elem) if title_elem is not None else f"Раздел {idx + 1}"
 
+            # Эпиграфы секции (могут быть несколько)
+            epigraph_parts: List[str] = []
+            for epigraph in section.findall(f"{{{_NS}}}epigraph"):
+                ep_lines = [
+                    self._extract_text(p)
+                    for p in epigraph.findall(f"{{{_NS}}}p")
+                    if self._extract_text(p)
+                ]
+                author_elem = epigraph.find(f"{{{_NS}}}text-author")
+                author_text = self._extract_text(author_elem)
+                ep_body = "\n".join(ep_lines)
+                if ep_body:
+                    ep_str = f"[Эпиграф] {ep_body}"
+                    if author_text:
+                        ep_str += f" — {author_text}"
+                    epigraph_parts.append(ep_str)
+
             # Текст из прямых дочерних <p> этой секции (без вложенных <section>)
             paragraphs = [
                 self._extract_text(p)
                 for p in section.findall(f"{{{_NS}}}p")
                 if self._extract_text(p)
             ]
-            text = "\n\n".join(paragraphs)
 
-            # Добавляем главу только если в ней есть текст
+            # Объединяем: сначала эпиграфы, затем текст
+            all_parts = epigraph_parts + paragraphs
+            text = "\n\n".join(all_parts)
+
+            # Добавляем главу если есть хоть что-то (текст или эпиграф)
             if text.strip():
                 chapters.append(
                     BookChapter(
@@ -132,6 +161,28 @@ class FB2Parser:
         if elem is None:
             return ""
         return "".join(elem.itertext()).strip()
+
+    def _collect_epigraphs(self, parent: ET.Element) -> List[str]:
+        """
+        Собирает только ПРЯМЫЕ дочерние <epigraph> элемента parent
+        (не вложенные в <section>), форматируя каждый как строку.
+        """
+        result: List[str] = []
+        for epigraph in parent.findall(f"{{{_NS}}}epigraph"):
+            lines = [
+                self._extract_text(p)
+                for p in epigraph.findall(f"{{{_NS}}}p")
+                if self._extract_text(p)
+            ]
+            author_elem = epigraph.find(f"{{{_NS}}}text-author")
+            author_text = self._extract_text(author_elem)
+            body = "\n".join(lines)
+            if body:
+                ep_str = f"[Эпиграф] {body}"
+                if author_text:
+                    ep_str += f" — {author_text}"
+                result.append(ep_str)
+        return result
 
     def _extract_metadata(self, root: ET.Element) -> dict:
         """Извлекает метаданные из <description/title-info>."""

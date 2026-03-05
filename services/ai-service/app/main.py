@@ -6,7 +6,7 @@ from loguru import logger
 import time
 
 from app.config import settings
-from app.api import recommendations, embeddings, rag, chat
+from app.api import recommendations, embeddings, rag, chat, meta, tasks
 from app.dependencies import (
     get_qdrant_service,
     get_rest_client_service,
@@ -137,6 +137,8 @@ app.include_router(recommendations.router, prefix="/api")
 app.include_router(embeddings.router, prefix="/api")
 app.include_router(rag.router, prefix="/api")
 app.include_router(chat.router, prefix="/api/ai")
+app.include_router(meta.router, prefix="/api/ai")
+app.include_router(tasks.router, prefix="/api/ai")
 
 
 # Health check endpoints

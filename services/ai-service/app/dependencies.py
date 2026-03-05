@@ -14,6 +14,8 @@ from app.services.rag.intent_classifier import IntentClassifierService
 from app.services.rag.book_resolver import BookResolverService
 from app.services.recommendations.nl_recommendation_service import NaturalLanguageRecommendationService
 from app.services.smart_assistant import SmartAssistantService
+from app.services.meta_enrichment import MetaEnrichmentService
+from app.utils.task_registry import TaskRegistry, task_registry
 
 
 @lru_cache()
@@ -158,3 +160,14 @@ def get_smart_assistant_service() -> SmartAssistantService:
         nl_rec_service=get_nl_recommendation_service(),
         rec_engine=get_recommendation_engine(),
     )
+
+
+@lru_cache()
+def get_meta_enrichment_service() -> MetaEnrichmentService:
+    """Get cached MetaEnrichmentService (автозаполнение метаданных через DeepSeek)."""
+    return MetaEnrichmentService(settings=settings)
+
+
+def get_task_registry() -> TaskRegistry:
+    """Get shared TaskRegistry singleton."""
+    return task_registry

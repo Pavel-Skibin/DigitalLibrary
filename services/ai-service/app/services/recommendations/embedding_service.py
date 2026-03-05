@@ -4,7 +4,7 @@ from typing import List, Optional
 from loguru import logger
 from sentence_transformers import SentenceTransformer
 
-from app.config import Settings
+from app.config import Settings, settings
 
 
 class EmbeddingService:
@@ -29,7 +29,10 @@ class EmbeddingService:
         self.batch_size = batch_size
         self.use_prefix = use_prefix  # Для RoSBERTa = True
         self.prefix = prefix  # "clustering" для recommendations
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if settings.FORCE_CPU:
+            self.device = "cpu"
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self._model: Optional[SentenceTransformer] = None
         self.initialized = False
 
@@ -41,6 +44,8 @@ class EmbeddingService:
                 gpu_name = torch.cuda.get_device_name(0)
                 vram_gb  = torch.cuda.get_device_properties(0).total_memory / 1024**3
                 logger.info(f"GPU: {gpu_name} ({vram_gb:.1f} GB VRAM)")
+            elif settings.FORCE_CPU:
+                logger.info("FORCE_CPU=true — running on CPU (GPU disabled for testing)")
             else:
                 logger.warning(
                     "CUDA not available, running on CPU. "
@@ -171,7 +176,7 @@ class EmbeddingService:
         if self._model is not None:
             del self._model
             self._model = None
-            if torch.cuda.is_available():
+            if self.device == "cuda":
                 torch.cuda.empty_cache()
             logger.info("Model unloaded from memory")
             self.initialized = False

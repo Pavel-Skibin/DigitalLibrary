@@ -4,8 +4,6 @@ Reranker Service — переранжирование результатов п�
 Cross-encoder оценивает релевантность (query, document) напрямую, в отличие от
 bi-encoder (embedding модели), который сравнивает векторы. Cross-encoder точнее,
 но медленнее, поэтому используем его для reranking топ-N результатов.
-
-Phase 8: +60-70% Context Precision через переранжирование найденных чанков.
 """
 
 import torch
@@ -14,7 +12,7 @@ from typing import List, Tuple
 from loguru import logger
 from sentence_transformers import CrossEncoder
 
-from app.config import Settings
+from app.config import Settings, settings as _settings
 
 
 class RerankerService:
@@ -28,7 +26,10 @@ class RerankerService:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.model_name = settings.RERANKER_MODEL_NAME
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if _settings.FORCE_CPU:
+            self.device = "cpu"
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self._model: CrossEncoder = None
         self.initialized = False
 
