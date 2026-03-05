@@ -214,3 +214,99 @@ class BookResolverService:
         for old, new in replacements.items():
             result = result.replace(old, new)
         return result
+
+    # ─── Методы для работы с сериями ─────────────────────────────────────────
+
+    def get_series_for_book(self, book_id: int) -> Optional[str]:
+        """
+        Возвращает series_name для указанного book_id, или None.
+
+        Используется для определения серии после резолва конкретной книги,
+        чтобы потом найти все книги серии через find_series_ids().
+        """
+        try:
+            points = self.qdrant.client.retrieve(
+                collection_name=self.qdrant.collection_recommendations,
+                ids=[book_id],
+                with_payload=True,
+            )
+            if points:
+                return points[0].payload.get("series_name") or None
+        except Exception as exc:
+            logger.error(f"BookResolver.get_series_for_book error: {exc}")
+        return None
+
+    def find_series_ids(self, series_name: str) -> List[int]:
+        """
+        Возвращает все book_ids книг из указанной серии.
+
+        Использует scroll по payload.series_name — полный скан за ~1 мс
+        при библиотеке до 10к книг.
+
+        Returns:
+            Список book_id всех книг серии (пустой при ошибке).
+        """
+        try:
+            scroll_filter = Filter(
+                must=[
+                    FieldCondition(
+                        key="series_name",
+                        match=MatchValue(value=series_name),
+                    )
+                ]
+            )
+            all_ids: List[int] = []
+            offset = None
+            while True:
+                points, next_offset = self.qdrant.client.scroll(
+                    collection_name=self.qdrant.collection_recommendations,
+                    scroll_filter=scroll_filter,
+                    limit=100,
+                    offset=offset,
+                    with_payload=True,
+                )
+                for p in points:
+                    bid = p.payload.get("book_id")
+                    if bid:
+                        all_ids.append(bid)
+                if next_offset is None:
+                    break
+                offset = next_offset
+
+            if all_ids:
+                logger.info(
+                    f"BookResolver: series={series_name!r} → {len(all_ids)} книг: {all_ids}"
+                )
+            return all_ids
+
+        except Exception as exc:
+            logger.error(f"BookResolver.find_series_ids error: {exc}")
+            return []
+
+    def find_books_by_author(self, author: str, limit: int = 20) -> List[int]:
+        """
+        Возвращает до `limit` book_id книг указанного автора через BM25.
+
+        Используется как фоллбек для scope="series" когда у книги нет серии
+        (например, у автора одиночные романы).
+        """
+        if not author:
+            return []
+        try:
+            sparse_vec = self.qdrant._generate_bm25_sparse_vector(author)
+            results = self.qdrant.client.query_points(
+                collection_name=self.qdrant.collection_recommendations,
+                query=sparse_vec,
+                using="bm25",
+                limit=limit,
+                with_payload=True,
+            ).points
+            ids = [r.payload["book_id"] for r in results if r.payload.get("book_id")]
+            if ids:
+                logger.info(
+                    f"BookResolver.find_books_by_author: author={author!r} → {len(ids)} книг"
+                )
+            return ids
+        except Exception as exc:
+            logger.error(f"BookResolver.find_books_by_author error: {exc}")
+            return []

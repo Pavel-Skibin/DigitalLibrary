@@ -60,6 +60,12 @@ _SYSTEM_PROMPT = """\
              «как зовут главных героев»;
      пример с контекстом: «кем он был?» когда «он» = персонаж книги из контекста →
              «кем был [имя персонажа]»)
+  - Заполни "scope" — область поиска:
+    "book"   — пользователь ЯВНО назвал конкретную книгу (Владычица озера, 1984, Хоббит)
+               Признаки: есть title конкретной книги («во Владычице озера», «в этой книге»)
+    "series" — пользователь назвал ТОЛЬКО автора, серию целиком или персонажа без конкретной книги
+               Признаки: только author без title, серию («у Сапковского», «в Ведьмаке»,
+               «про Цири», «у Толкина», «в цикле о Гарри Поттере»)
 
 Если intent = "recommendation":
   - Извлеки "genres": список жанров ([], если не упомянуты)
@@ -137,7 +143,7 @@ _FEW_SHOT = """\
 Примеры:
 
 Запрос: «как зовут главных героев в произведении Ремарка Три товарища»
-Ответ: {"intent":"book_question","title":"Три товарища","author":"Эрих Мария Ремарк","clean_query":"как зовут главных героев"}
+Ответ: {"intent":"book_question","title":"Три товарища","author":"Эрих Мария Ремарк","scope":"book","clean_query":"как зовут главных героев"}
 
 Запрос: «посоветуй что-нибудь из фантастики на вечер»
 Ответ: {"intent":"recommendation","genres":["Научная фантастика"],"keywords":[],"author_filter":null,"min_word_count":20,"max_word_count":80,"mood":null,"language":null,"min_rating":null,"era":null,"clean_query":"посоветуй что-нибудь из фантастики на вечер"}
@@ -158,7 +164,7 @@ _FEW_SHOT = """\
 Ответ: {"intent":"quote_search","title":null,"author":"Эрих Мария Ремарк","clean_query":"цитата про одиночество"}
 
 Запрос: «что происходит в конце Мастера и Маргариты»
-Ответ: {"intent":"book_question","title":"Мастер и Маргарита","author":"Михаил Булгаков","clean_query":"что происходит в конце"}
+Ответ: {"intent":"book_question","title":"Мастер и Маргарита","author":"Михаил Булгаков","scope":"book","clean_query":"что происходит в конце"}
 
 Запрос: «посоветуй советскую классику с высоким рейтингом»
 Ответ: {"intent":"recommendation","genres":["Классическая литература"],"keywords":[],"author_filter":null,"min_word_count":null,"max_word_count":null,"mood":null,"language":"ru","min_rating":4.0,"era":"советская","clean_query":"посоветуй советскую классику с высоким рейтингом"}
@@ -188,13 +194,25 @@ _FEW_SHOT = """\
 Пользователь: Как погиб Менно Коегорн во Владычице озера Сапковского?
 Ассистент: Менно Коегорн погиб в осаде Нильфгаарда...
 Запрос: «кем он был?»
-Ответ: {"intent":"book_question","title":"Владычица озера","author":"Анджей Сапковский","clean_query":"кем был Менно Коегорн"}
+Ответ: {"intent":"book_question","title":"Владычица озера","author":"Анджей Сапковский","scope":"book","clean_query":"кем был Менно Коегорн"}
 
 Предыдущий контекст диалога:
 Пользователь: Расскажи про главных героев Трёх товарищей Ремарка
 Ассистент: Главные герои — Роберт Локамп, Отто Кирстер и Пат...
 Запрос: «а что с ней случилось в конце?»
-Ответ: {"intent":"book_question","title":"Три товарища","author":"Эрих Мария Ремарк","clean_query":"что случилось с Пат в конце"}
+Ответ: {"intent":"book_question","title":"Три товарища","author":"Эрих Мария Ремарк","scope":"book","clean_query":"что случилось с Пат в конце"}
+
+Запрос: «какого цвета волосы у Цири у Сапковского?»
+Ответ: {"intent":"book_question","title":null,"author":"Анджей Сапковский","scope":"series","clean_query":"какого цвета волосы у Цири"}
+
+Запрос: «где впервые появляется Цири в цикле Ведьмак?»
+Ответ: {"intent":"book_question","title":null,"author":"Анджей Сапковский","scope":"series","clean_query":"где впервые появляется Цири"}
+
+Запрос: «как закончилась битва при Бренне во Владычице озера?»
+Ответ: {"intent":"book_question","title":"Владычица озера","author":"Анджей Сапковский","scope":"book","clean_query":"как закончилась битва при Бренне"}
+
+Запрос: «какие книги у Ремарка о войне?»
+Ответ: {"intent":"book_question","title":null,"author":"Эрих Мария Ремарк","scope":"series","clean_query":"книги о войне"}
 
 Теперь классифицируй:
 """
@@ -283,6 +301,7 @@ class IntentClassifierService:
                 title=data.get("title") or None,
                 author=data.get("author") or None,
                 clean_query=clean_query,
+                scope=data.get("scope", "book"),
             )
             return ClassifiedIntent(
                 intent=intent,
@@ -295,6 +314,7 @@ class IntentClassifierService:
                 title=data.get("title") or None,
                 author=data.get("author") or None,
                 clean_query=clean_query,
+                scope=data.get("scope", "book"),
             )
             return ClassifiedIntent(
                 intent=IntentType.QUOTE_SEARCH,

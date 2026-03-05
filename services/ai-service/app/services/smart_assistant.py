@@ -159,8 +159,12 @@ class SmartAssistantService:
         elif intent.intent == IntentType.RECOMMENDATION:
             response = await self._handle_recommendation(request, intent, debug)
         else:
-            # GENERAL — если есть активная книга, ищем внутри неё
-            general_book_ids = active_context.get("book_ids") if active_context else None
+            # GENERAL — если есть активный контекст, ищем внутри серии (или книги)
+            if active_context:
+                series_ids = active_context.get("series_ids") or []
+                general_book_ids = series_ids if series_ids else active_context.get("book_ids")
+            else:
+                general_book_ids = None
             response = await self._handle_general(request, intent, debug, history, general_book_ids)
 
         # ── Шаг 3: Сохранение истории ─────────────────────────────────────────
@@ -182,55 +186,108 @@ class SmartAssistantService:
         session_id:     Optional[str],
     ) -> tuple:
         """
-        Основная логика «прилипания» к книге в рамках сессии.
+        Series-aware логика «прилипания» к книге/серии в рамках сессии.
 
-        Правила:
-        1. Если в intent явно указан title/author → резолвим book_ids,
-           обновляем active_context (пользователь переключился или это первый запрос).
-        2. Если в intent НЕТ title/author, НО active_context установлен →
-           используем сохранённые book_ids (вопрос о той же книге).
-        3. Если нет ни того, ни другого → book_ids=[] (поиск по всей библиотеке).
+        Поведение по полю scope (BookEntity.scope):
+          scope="book"   — искать только в указанной конкретной книге
+          scope="series" — искать по всем книгам серии (или всем книгам автора
+                           если серии нет / не заполнена)
+
+        Для follow-up запросов (нет явного title/author):
+          — если в active_context есть series_ids → ищем по всей серии
+          — иначе используем book_ids (одна книга)
 
         Returns:
-            (intent, active_context, resolved_book_ids: List[int])
+            (intent, active_context, search_book_ids: List[int])
         """
         entity = intent.book_entity
         has_explicit_book = bool(entity and (entity.title or entity.author))
 
         if has_explicit_book:
-            book_ids: List[int] = self.book_resolver.find_book_ids(
+            # Шаг А: резолвим конкретную книгу (даже для scope="series" нам нужен
+            # book_id чтобы получить series_name)
+            raw_ids: List[int] = self.book_resolver.find_book_ids(
                 title=entity.title,
                 author=entity.author,
                 limit=2,
             )
-            if book_ids:
+
+            # Шаг Б: получаем серию (lazy — только если книга нашлась)
+            series_name: Optional[str] = None
+            series_ids:  List[int]     = []
+            if raw_ids:
+                series_name = self.book_resolver.get_series_for_book(raw_ids[0])
+                if series_name:
+                    series_ids = self.book_resolver.find_series_ids(series_name)
+
+            # Шаг В: определяем scope поиска
+            scope = entity.scope if entity else "book"
+
+            if scope == "series":
+                if series_ids:
+                    search_ids = series_ids
+                    logger.info(
+                        f"scope=series: ищем в {len(series_ids)} книгах серии "
+                        f"{series_name!r}: {series_ids}"
+                    )
+                elif raw_ids:
+                    # Серии нет — ищем по всем книгам автора
+                    search_ids = self.book_resolver.find_books_by_author(
+                        entity.author, limit=20
+                    ) if entity.author else raw_ids
+                    logger.info(
+                        f"scope=series: серии нет, ищем по автору "
+                        f"{entity.author!r} → {len(search_ids)} книг"
+                    )
+                else:
+                    search_ids = []
+            else:  # scope="book"
+                search_ids = raw_ids
+
+            # Шаг Г: обновляем active_context (сохраняем ВСЮ информацию о серии)
+            if raw_ids:
                 new_ctx = {
-                    "title":    entity.title,
-                    "author":   entity.author,
-                    "book_ids": book_ids,
+                    "title":       entity.title,
+                    "author":      entity.author,
+                    "book_ids":    raw_ids,       # конкретные книги
+                    "series_name": series_name,   # None если нет серии
+                    "series_ids":  series_ids,    # [] если нет серии
                 }
                 if session_id and self.conversation_history:
                     await self.conversation_history.set_active_context(session_id, new_ctx)
                 active_context = new_ctx
                 logger.info(
-                    f"Active context updated: book={entity.title!r} ids={book_ids}"
+                    f"Active context: book={entity.title!r} ids={raw_ids} "
+                    f"series={series_name!r} series_ids={series_ids}"
                 )
-            return intent, active_context, book_ids
 
-        # Нет явной книги — используем active context
+            return intent, active_context, search_ids
+
+        # ── Follow-up запрос (нет явного title/author) ──────────────────────
         if active_context and active_context.get("book_ids"):
-            cached_ids: List[int] = active_context["book_ids"]
-            logger.info(
-                f"No book in query → sticky context: "
-                f"{active_context.get('title')!r} ids={cached_ids}"
-            )
-            # Инжектируем данные книги в intent для корректного debug/answer
+            # По умолчанию — серия (если есть), иначе конкретная книга
+            series_ids = active_context.get("series_ids") or []
+            if series_ids:
+                search_ids = series_ids
+                logger.info(
+                    f"Follow-up → sticky series: "
+                    f"{active_context.get('series_name')!r} "
+                    f"ids={series_ids}"
+                )
+            else:
+                search_ids = active_context["book_ids"]
+                logger.info(
+                    f"Follow-up → sticky book: "
+                    f"{active_context.get('title')!r} ids={search_ids}"
+                )
+            # Инжектируем данные книги в intent
             intent.book_entity = BookEntity(
                 title=active_context.get("title"),
                 author=active_context.get("author"),
                 clean_query=intent.clean_query,
+                scope="series" if series_ids else "book",
             )
-            return intent, active_context, cached_ids
+            return intent, active_context, search_ids
 
         return intent, active_context, []
 

@@ -31,6 +31,10 @@ class BookEntity(BaseModel):
     title:       Optional[str] = None   # «Три товарища»
     author:      Optional[str] = None   # «Эрих Мария Ремарк»
     clean_query: str                    # вопрос без упоминания книги/автора
+    # scope определяет область поиска:
+    #   "book"   — искать только в конкретной книге (title явно назван)
+    #   "series" — искать по всей серии/всем книгам автора (без конкретной книги)
+    scope:       str = "book"
 
 
 class RecommendationFilters(BaseModel):
