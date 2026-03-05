@@ -6,6 +6,7 @@ import org.nahap.bookcatalogservice.dto.response.BookResponse;
 import org.nahap.bookcatalogservice.entity.*;
 import org.nahap.bookcatalogservice.repository.BookAuthorRepository;
 import org.nahap.bookcatalogservice.repository.BookGenreRepository;
+import org.nahap.bookcatalogservice.repository.BookTagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -25,6 +26,9 @@ public abstract class BookMapper {
     @Autowired
     protected BookGenreRepository bookGenreRepository;
 
+    @Autowired
+    protected BookTagRepository bookTagRepository;
+
     /**
      * Преобразует Book в BookResponse БЕЗ обложки (для StatisticsService)
      */
@@ -35,6 +39,7 @@ public abstract class BookMapper {
 
         List<String> authors = getAuthorNames(book);
         List<String> genres = getGenreNames(book);
+        List<String> tags = getTagNames(book);
 
         return new BookResponse(
                 book.getId(),
@@ -50,7 +55,8 @@ public abstract class BookMapper {
                 book.getPublicationYear(),
                 book.getAgeRating(),
                 book.getSeriesName(),
-                book.getSeriesNumber()
+                book.getSeriesNumber(),
+                tags
         );
     }
 
@@ -65,6 +71,7 @@ public abstract class BookMapper {
         List<Integer> bookIds = Collections.singletonList(book.getId());
         Map<Integer, List<String>> authorsByBookId = loadAuthorNamesByBookId(bookIds);
         Map<Integer, List<String>> genresByBookId = loadGenreNamesByBookId(bookIds);
+        Map<Integer, List<String>> tagsByBookId = loadTagNamesByBookId(bookIds);
 
         String coverUrl = book.getCoverImagePath() != null
                 ? "/api/books/" + book.getId() + "/cover"
@@ -84,7 +91,8 @@ public abstract class BookMapper {
                 book.getPublicationYear(),
                 book.getAgeRating(),
                 book.getSeriesName(),
-                book.getSeriesNumber()
+                book.getSeriesNumber(),
+                tagsByBookId.getOrDefault(book.getId(), Collections.emptyList())
         );
     }
 
@@ -102,6 +110,7 @@ public abstract class BookMapper {
 
         Map<Integer, List<String>> authorsByBookId = loadAuthorNamesByBookId(bookIds);
         Map<Integer, List<String>> genresByBookId = loadGenreNamesByBookId(bookIds);
+        Map<Integer, List<String>> tagsByBookId = loadTagNamesByBookId(bookIds);
 
         List<BookResponse> responses = bookPage.getContent().stream()
                 .map(book -> {
@@ -123,7 +132,8 @@ public abstract class BookMapper {
                             book.getPublicationYear(),
                             book.getAgeRating(),
                             book.getSeriesName(),
-                            book.getSeriesNumber()
+                            book.getSeriesNumber(),
+                            tagsByBookId.getOrDefault(book.getId(), Collections.emptyList())
                     );
                 })
                 .collect(Collectors.toList());
@@ -143,6 +153,7 @@ public abstract class BookMapper {
 
         Map<Integer, List<String>> authorsByBookId = loadAuthorNamesByBookId(bookIds);
         Map<Integer, List<String>> genresByBookId = loadGenreNamesByBookId(bookIds);
+        Map<Integer, List<String>> tagsByBookId = loadTagNamesByBookId(bookIds);
 
         return books.stream()
                 .map(book -> {
@@ -164,7 +175,8 @@ public abstract class BookMapper {
                             book.getPublicationYear(),
                             book.getAgeRating(),
                             book.getSeriesName(),
-                            book.getSeriesNumber()
+                            book.getSeriesNumber(),
+                            tagsByBookId.getOrDefault(book.getId(), Collections.emptyList())
                     );
                 })
                 .toList();
@@ -245,6 +257,18 @@ public abstract class BookMapper {
                         bg -> bg.getBook().getId(),
                         Collectors.mapping(
                                 bg -> bg.getGenre().getName(),
+                                Collectors.toList()
+                        )
+                ));
+    }
+
+    protected Map<Integer, List<String>> loadTagNamesByBookId(List<Integer> bookIds) {
+        List<BookTag> bookTags = bookTagRepository.findByBookIdIn(bookIds);
+        return bookTags.stream()
+                .collect(Collectors.groupingBy(
+                        bt -> bt.getBook().getId(),
+                        Collectors.mapping(
+                                bt -> bt.getTag().getName(),
                                 Collectors.toList()
                         )
                 ));

@@ -16,5 +16,6 @@ public record BookResponse(
         Integer publicationYear,
         String ageRating,
         String seriesName,
-        Integer seriesNumber
+        Integer seriesNumber,
+        List<String> tags
 ) {}

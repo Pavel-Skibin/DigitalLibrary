@@ -31,10 +31,16 @@ public class BookCoverServiceImpl implements BookCoverService {
     @Override
     public String extractAndSaveCover(String fb2Content) {
         try {
+            // fb2Content — уже корректная Java-строка (Unicode).
+            // Убираем объявление encoding из XML-декларации, чтобы парсер не пытался
+            // переинтерпретировать UTF-8-байты с другой кодировкой (напр. windows-1251).
+            String normalized = fb2Content.replaceFirst(
+                    "(<\\?xml[^?]*?)\\s+encoding\\s*=\\s*['\"][^'\"]*['\"]", "$1");
+
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(new ByteArrayInputStream(fb2Content.getBytes(StandardCharsets.UTF_8)));
+            Document doc = builder.parse(new ByteArrayInputStream(normalized.getBytes(StandardCharsets.UTF_8)));
 
             NodeList coverPageNodes = doc.getElementsByTagName("coverpage");
             if (coverPageNodes.getLength() == 0) {

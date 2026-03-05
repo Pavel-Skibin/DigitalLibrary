@@ -40,8 +40,10 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
     private final GenreRepository genreRepository;
+    private final TagRepository tagRepository;
     private final BookAuthorRepository bookAuthorRepository;
     private final BookGenreRepository bookGenreRepository;
+    private final BookTagRepository bookTagRepository;
     private final BookMapper bookMapper;
     private final BookStorageProperties storageProperties;
     private final BookCoverService bookCoverService;
@@ -55,12 +57,24 @@ public class BookServiceImpl implements BookService {
             throw new BookStorageException("Файл книги не найден или недоступен: " + fullPath);
         }
 
-        try {
-            return Files.readString(fullPath, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            log.error("Ошибка чтения FB2-файла книги ID {}", bookId, e);
-            throw new BookStorageException("Не удалось прочитать файл книги: " + e.getMessage());
+        // Пробуем кодировки: UTF-8 → Windows-1251 → ISO-8859-1 (старые русские FB2)
+        java.nio.charset.Charset[] charsets = {
+                StandardCharsets.UTF_8,
+                java.nio.charset.Charset.forName("Windows-1251"),
+                StandardCharsets.ISO_8859_1
+        };
+        for (java.nio.charset.Charset cs : charsets) {
+            try {
+                return Files.readString(fullPath, cs);
+            } catch (java.nio.charset.MalformedInputException ignored) {
+                // попробуем следующую кодировку
+            } catch (Exception e) {
+                log.error("Ошибка чтения FB2-файла книги ID {}", bookId, e);
+                throw new BookStorageException("Не удалось прочитать файл книги: " + e.getMessage());
+            }
         }
+        log.error("Не удалось определить кодировку FB2-файла книги ID {}", bookId);
+        throw new BookStorageException("Не удалось определить кодировку файла книги ID " + bookId);
     }
 
     @Override
@@ -83,12 +97,21 @@ public class BookServiceImpl implements BookService {
         book.setTitle(request.title());
         book.setDescription(request.description());
         book.setFilePath(request.filePath());
+        if (request.publicationYear() != null) book.setPublicationYear(request.publicationYear());
+        if (request.language()        != null) book.setLanguage(request.language());
+        if (request.ageRating()       != null) book.setAgeRating(request.ageRating());
+        if (request.seriesName()      != null) book.setSeriesName(request.seriesName());
+        if (request.seriesNumber()    != null) book.setSeriesNumber(request.seriesNumber());
+        if (request.wordCount()       != null) book.setWordCount(request.wordCount());
         book = bookRepository.save(book);
 
         extractAndSaveCoverIfPossible(book);
 
         saveBookAuthors(book, request.authorIds());
         saveBookGenres(book, request.genreIds());
+        if (request.tagIds() != null && !request.tagIds().isEmpty()) {
+            saveBookTags(book, request.tagIds());
+        }
 
         return bookMapper.toResponseWithCover(book);
     }
@@ -107,6 +130,17 @@ public class BookServiceImpl implements BookService {
                 throw new BookStorageException("Путь к файлу книги не может быть пустым");
             }
             book.setFilePath(request.filePath());
+        }
+        if (request.publicationYear() != null) book.setPublicationYear(request.publicationYear());
+        if (request.language()        != null) book.setLanguage(request.language());
+        if (request.ageRating()       != null) book.setAgeRating(request.ageRating());
+        if (request.seriesName()      != null) book.setSeriesName(request.seriesName());
+        if (request.seriesNumber()    != null) book.setSeriesNumber(request.seriesNumber());
+        if (request.tagIds() != null) {
+            bookTagRepository.deleteByBookId(bookId);
+            if (!request.tagIds().isEmpty()) {
+                saveBookTags(book, request.tagIds());
+            }
         }
         if (request.authorIds() != null) {
             bookAuthorRepository.deleteByBookId(bookId);
@@ -243,15 +277,16 @@ public class BookServiceImpl implements BookService {
     private void extractAndSaveCoverIfPossible(Book book) {
         try {
             Path bookPath = buildSafePath(resolveFilePath(book.getFilePath()));
-            if (Files.exists(bookPath)) {
-                String fb2Content = Files.readString(bookPath, StandardCharsets.UTF_8);
-                String coverPath = bookCoverService.extractAndSaveCover(fb2Content);
+            if (!Files.exists(bookPath)) return;
 
-                if (coverPath != null) {
-                    book.setCoverImagePath(coverPath);
-                    bookRepository.save(book);
-                    log.info("Обложка извлечена и сохранена для книги ID {}", book.getId());
-                }
+            // Используем getBookFb2Content для поддержки fallback-кодировок (UTF-8, Win-1251, ISO-8859-1)
+            String fb2Content = getBookFb2Content(book.getId());
+            String coverPath = bookCoverService.extractAndSaveCover(fb2Content);
+
+            if (coverPath != null) {
+                book.setCoverImagePath(coverPath);
+                bookRepository.save(book);
+                log.info("Обложка извлечена и сохранена для книги ID {}", book.getId());
             }
         } catch (Exception e) {
             log.error("Ошибка извлечения обложки для книги ID {}", book.getId(), e);
@@ -292,6 +327,23 @@ public class BookServiceImpl implements BookService {
         }
     }
 
+    private void saveBookTags(Book book, List<Integer> tagIds) {
+        List<Tag> tags = tagRepository.findAllById(tagIds);
+        List<BookTag> bookTags = tags.stream()
+                .map(tag -> {
+                    BookTag bt = new BookTag();
+                    bt.setBook(book);
+                    bt.setTag(tag);
+                    return bt;
+                })
+                .toList();
+        bookTagRepository.saveAll(bookTags);
+
+        if (book.getBookTags() != null) {
+            book.getBookTags().addAll(bookTags);
+        }
+    }
+
     private void initializeBookRelations(Book book) {
         if (book.getBookAuthors() != null) {
             Hibernate.initialize(book.getBookAuthors());
@@ -300,6 +352,10 @@ public class BookServiceImpl implements BookService {
         if (book.getBookGenres() != null) {
             Hibernate.initialize(book.getBookGenres());
             book.getBookGenres().forEach(bg -> Hibernate.initialize(bg.getGenre()));
+        }
+        if (book.getBookTags() != null) {
+            Hibernate.initialize(book.getBookTags());
+            book.getBookTags().forEach(bt -> Hibernate.initialize(bt.getTag()));
         }
     }
 

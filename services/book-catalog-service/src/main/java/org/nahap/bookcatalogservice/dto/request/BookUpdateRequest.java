@@ -14,5 +14,15 @@ public record BookUpdateRequest(
 
         List<@NotNull Integer> authorIds,
 
-        List<@NotNull Integer> genreIds
+        List<@NotNull Integer> genreIds,
+
+        // Метаданные (необязательные)
+        Integer publicationYear,
+        String  language,
+        String  ageRating,
+        String  seriesName,
+        Integer seriesNumber,
+
+        // Теги
+        List<Integer> tagIds
 ) {}

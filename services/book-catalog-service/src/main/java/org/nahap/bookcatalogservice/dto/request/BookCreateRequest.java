@@ -20,5 +20,18 @@ public record BookCreateRequest(
 
         @NotNull(message = "Список ID жанров не может быть null")
         @NotEmpty(message = "Должен быть указан хотя бы один жанр")
-        List<@NotNull Integer> genreIds
+        List<@NotNull Integer> genreIds,
+
+        // Метаданные от DeepSeek (необязательные)
+        Integer publicationYear,
+        String  language,
+        String  ageRating,
+        String  seriesName,
+        Integer seriesNumber,
+
+        // Кол-во слов (вычисляется клиентом при парсинге FB2)
+        Integer wordCount,
+
+        // Теги (ID уже существующих тегов)
+        List<@NotNull Integer> tagIds
 ) {}
