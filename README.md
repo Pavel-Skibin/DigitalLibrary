@@ -1,133 +1,157 @@
+# Digital Library
 
+Цифровая библиотека — веб-приложение для хранения, поиска, чтения и обсуждения книг с AI-ассистентом, системой рекомендаций и встроенной онлайн-читалкой FB2.
 
-#  Digital Library
-
-Цифровая библиотека — полноценное веб-приложение для хранения, поиска, чтения и обсуждения книг с поддержкой рейтингов, комментариев, закладок и административной панели.
-
-## 📁 Структура проекта
-
-- [`digital-library-backend/`](digital-library-backend/) — Spring Boot 3 (Java) API
-- [`digital-library-frontend/`](digital-library-frontend/) — Vue 3 + Vite клиент
-- [`docker/`](old_docker/) — Docker Compose, мониторинг (Prometheus + Grafana), нагрузочные тесты (k6)
-
-
-
+![Java](https://img.shields.io/badge/Java-20-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-green?logo=springboot)
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109-teal?logo=fastapi)
+![Vue.js](https://img.shields.io/badge/Vue.js-3-brightgreen?logo=vue.js)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?logo=postgresql)
+![Qdrant](https://img.shields.io/badge/Qdrant-vector--db-red)
+![Redis](https://img.shields.io/badge/Redis-cache-red?logo=redis)
+![Docker](https://img.shields.io/badge/Docker-compose-blue?logo=docker)
 
 ---
 
-## 🚀 Быстрый старт
+## Что умеет система
 
-### Требования
-- Docker и Docker Compose
+- **Читалка** — встроенный FB2-ридер прямо в браузере, сохранение позиции чтения
+- **AI-чат** — диалог с ассистентом по содержанию конкретной книги или по всей библиотеке; понимает контекст серий (Ведьмак, Гарри Поттер и т.п.)
+- **Умные рекомендации** — персональные и на основе истории чтения; поиск похожих книг по векторному сходству
+- **Каталог** — поиск по названию, автору, жанру, тегам; обложки, метаданные, рейтинги
+- **Комментарии и рейтинги** — отзывы на книги с soft-delete и модерацией
+- **Закладки** — сохранение позиции в тексте с привязкой к главе
+- **Администрирование** — загрузка книг, управление пользователями, ролевой доступ
+- **Мониторинг** — Prometheus метрики, Grafana дашборды
 
-> 💡 **Примечание:** Этот `docker-compose.yml` предназначен для **обычного развёртывания приложения**, а не для нагрузочного тестирования. Ограничения ресурсов (CPU/память) **не заданы**.
+---
 
-### Подготовка базы данных
+## Архитектура
 
-Приложение использует **Flyway** для управления миграциями и **JPA/Hibernate** для генерации схемы. Чтобы корректно инициализировать БД с тестовыми данными, выполните следующие шаги:
+Система построена как набор независимых микросервисов, взаимодействующих через REST. Единая точка входа — API Gateway.
 
-1. **Первый запуск (создание схемы):**  
-   Во время первого запуска **отключите Flyway** и разрешите Hibernate создать таблицы:  
-   [`docker/application-docker.properties`](old_docker/application-docker.properties)
-   ```properties
-   # docker/application-docker.properties
-   spring.jpa.hibernate.ddl-auto=create
-   spring.flyway.enabled=false
-   ```
-   Запустите контейнеры:
-   ```bash
-   cd docker
-   docker compose up --build
-   ```
-   После того как приложение запустится и создаст таблицы — **остановите** контейнеры (`Ctrl+C`).
-
-2. **Включение миграций и загрузка данных:**  
-   Измените конфигурацию:
-   ```properties
-   # docker/application-docker.properties
-   spring.jpa.hibernate.ddl-auto=none
-   spring.flyway.enabled=true
-   spring.flyway.baseline-on-migrate=true
-   ```
-   Поместите SQL-файл с тестовыми данными (например, `init-data.sql`) в папку `docker/postgres/`. Он автоматически выполнится при следующем запуске, так как PostgreSQL запускает все `.sql`-файлы из `/docker-entrypoint-initdb.d/`.
-
-3. **Финальный запуск:**
-   ```bash
-   docker compose up --build
-   ```
-
-> 📌 **Важно:** Файл `init-data.sql` должен содержать **только данные** (INSERT), а не DDL (CREATE TABLE), так как таблицы уже созданы либо Hibernate’ом, либо Flyway-миграциями.
-> 
-> тестовый админ если решили оставить данные из примера: Pedro/qwerty
-
-### Запуск приложения
-
-```bash
-cd docker
-docker compose up --build
+```
+                          ┌─────────────────┐
+                          │   Vue 3 (Nginx)  │  :80
+                          └────────┬────────┘
+                                   │
+                          ┌────────▼────────┐
+                          │   API Gateway    │  :8080  Spring Cloud Gateway
+                          └──┬──┬──┬──┬────┘
+                             │  │  │  │
+               ┌─────────────┘  │  │  └──────────────┐
+               │                │  │                  │
+    ┌──────────▼───┐  ┌─────────▼──┴──┐  ┌───────────▼──┐  ┌──────────────┐
+    │ user-service  │  │book-catalog-  │  │comment-rating│  │storage-      │
+    │  :8081  Java  │  │service :8084  │  │service :8082 │  │service :8083 │
+    └──────────────┘  └───────────────┘  └──────────────┘  └──────────────┘
+                                                         ┌──────────────────┐
+                                                         │   ai-service      │
+                                                         │   :8085  Python   │
+                                                         │  FastAPI + Qdrant │
+                                                         └──────────────────┘
+    ┌──────────────────────────────────────────────────────────────────────┐
+    │              PostgreSQL :5432  |  Redis :6379  |  Qdrant :6333       │
+    └──────────────────────────────────────────────────────────────────────┘
 ```
 
-После запуска:
-
-- **Frontend (Vue)**: http://localhost
-- **Backend API**: http://localhost/api
-- **Grafana (мониторинг)**: http://localhost:3000 (`admin` / `admin`)
-- **Prometheus**: http://localhost:9090
-
-> 🔐 **JWT и пароли:**  
-> Убедитесь, что в корне папки `docker/` создан файл `.env` с переменными:
-> ```env
-> DB_PASSWORD=your_secure_db_password
-> JWT_SECRET=your_strong_jwt_secret
-> ```
-
-
-
-## 🧩 Архитектура
-
-![Архитектурная диаграмма](docs/architecture_w.png)
-
-## 🗃️ База данных
-
-Полная физическая схема:
-
-![Схема БД](docs/db-schema_w.png)
-
-> Подробное описание бизнес-логики — в [backend README](digital-library-backend/README.md).
-
-
-## 📊 Нагрузочное тестирование
-
-Результаты нагрузочного тестирования, проведенного с помощью k6 и визуализированные в Grafana
-### 🧪 Тестовые параметры
-*   **Инструмент:** [k6](https://k6.io/)
-*   **Продолжительность:** 10 минут (разогрев → рост → плато → спад)
-*   **Пиковая нагрузка:** 50 виртуальных пользователей (VUs)
-*   **Цель:** Моделирование реального трафика: 70% гостей, 30% авторизованных пользователей, сценарии просмотра книг, поиска, комментариев и профиля.
-*   **Инфраструктура:** Docker Compose с явным ограничением ресурсов:
-    *   **Backend:** 2 ядра CPU, 1 ГБ памяти.
-    *   **PostgreSQL:** 1 ядро CPU, 512 МБ памяти.
-
-### 📈 Ключевые результаты (при ограничении ресурсов)
-
-| Метрика | Результат | Комментарий |
-| :--- | :--- | :--- |
-| **Макс. RPS (запросов в секунду)** | **~7-8 RPS** | Система стабильно обрабатывает до 8 запросов в секунду. Это **реальный предел** для текущей конфигурации. |
-| **Время отклика (p95)** | **< 1.5 секунд** (в среднем) / **до 2.5 секунд** (на пике) | 95% запросов выполняются менее чем за 1.5 секунды. На пиковой нагрузке время отклика растет — это ожидаемое поведение при достижении лимита ресурсов. |
-| **Загрузка CPU (Backend)** | **До 60%** | Процессор не был узким местом, но работал на высокой загрузке. Запас мощности небольшой. |
-| **Использование памяти (JVM)** | **Около 128 MiB** | Память использовалась очень экономно. Лимит в 1 ГБ не был достигнут, что говорит о хорошем управлении памятью. |
-| **Соединения с БД** | **До 20 активных** | Соединения распределены равномерно. Нет перегрузки БД. |
-
-
-
-
-> 📌 **Графики нагрузочного теста доступны в Grafana после запуска `docker-compose up`.**
-
-![График нагрузочного теста](docs/k6-load-test.png)
+Подробнее: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ---
 
-## 📖 Документация по компонентам
+## Стек технологий
 
-- [Backend README](digital-library-backend/README.md)
-- [Frontend README](digital-library-frontend/README.md)
+| Сервис                 | Язык / Фреймворк                        | БД / Хранилище            | Порт |
+| ---------------------- | --------------------------------------- | ------------------------- | ---- |
+| api-gateway            | Java 20, Spring Cloud Gateway 2024      | —                         | 8080 |
+| user-service           | Java 20, Spring Boot 3.4, JPA, Security | PostgreSQL                | 8081 |
+| comment-rating-service | Java 20, Spring Boot 3.4, OpenFeign     | PostgreSQL                | 8082 |
+| storage-service        | Java 20, Spring Boot 3.4, JJWT          | Файловая система          | 8083 |
+| book-catalog-service   | Java 20, Spring Boot 3.4, OpenFeign     | PostgreSQL                | 8084 |
+| ai-service             | Python 3.11, FastAPI, PyTorch           | Qdrant, Redis, PostgreSQL | 8085 |
+| frontend               | Vue 3, Vite 7, Axios                    | —                         | 80   |
+
+AI-стек: `sentence-transformers` (модели `ru-en-RoSBERTa` для рекомендаций, `USER-bge-m3` для RAG), `Qdrant` (векторный поиск), `DeepSeek API` (генерация ответов), `Redis` (история диалогов, кэш).
+
+---
+
+## Быстрый старт
+
+### Требования
+
+- Docker и Docker Compose
+- Папка с FB2-книгами (укажите путь в `docker-compose-microservices.yml`)
+
+### Запуск
+
+```bash
+git clone <repo>
+cd DigitalLibrary
+
+# Укажите путь к папке с книгами в docker-compose-microservices.yml:
+#   volumes:
+#     - /ваш/путь/к/книгам:/app/books
+
+docker compose -f docker-compose-microservices.yml up --build
+```
+
+После старта:
+
+| Сервис             | URL                                 |
+| ------------------ | ----------------------------------- |
+| Приложение         | http://localhost                    |
+| API Gateway        | http://localhost:8080               |
+| Grafana            | http://localhost:3001 (admin/admin) |
+| Prometheus         | http://localhost:9090               |
+| AI Service Swagger | http://localhost:8085/docs          |
+
+### Переменные окружения
+
+Ключевые переменные для production (передаются через `docker-compose` или `.env`):
+
+| Переменная              | Описание                                | Дефолт (dev)                                      |
+| ----------------------- | --------------------------------------- | ------------------------------------------------- |
+| `JWT_SECRET`            | Секрет для подписи JWT, минимум 256 бит | `your-secret-key-...`                             |
+| `SPRING_DATASOURCE_URL` | JDBC URL PostgreSQL                     | `jdbc:postgresql://postgres:5432/digital_library` |
+| `DEEPSEEK_API_KEY`      | Ключ DeepSeek API (ai-service)          | —                                                 |
+| `REDIS_URL`             | URL Redis (ai-service)                  | `redis://localhost:6379`                          |
+| `QDRANT_URL`            | URL Qdrant (ai-service)                 | `http://localhost:6333`                           |
+
+---
+
+## Документация
+
+| Раздел                               | Файл                                         |
+| ------------------------------------ | -------------------------------------------- |
+| Бэкенд — обзор сервисов              | [docs/BACKEND.md](docs/BACKEND.md)           |
+| Фронтенд                             | [docs/FRONTEND.md](docs/FRONTEND.md)         |
+| Архитектурные решения                | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Алгоритмы (RAG, рекомендации, поиск) | [docs/ALGORITHMS.md](docs/ALGORITHMS.md)     |
+| Схема базы данных                    | [docs/DATABASE.md](docs/DATABASE.md)         |
+| Сценарии использования               | [docs/USE_CASES.md](docs/USE_CASES.md)       |
+| API Reference                        | [docs/api/](docs/api/)                       |
+| Описание сервисов                    | [docs/services/](docs/services/)             |
+
+---
+
+## Структура репозитория
+
+```
+digital-library-frontend/   Vue 3 приложение
+services/
+  api-gateway/              Spring Cloud Gateway
+  user-service/             Аутентификация, профили, история чтения
+  book-catalog-service/     Каталог книг, авторы, жанры
+  comment-rating-service/   Комментарии, рейтинги, закладки
+  storage-service/          Хранение и раздача файлов (.fb2, обложки)
+  ai-service/               RAG-чат, рекомендации, векторизация
+shared/
+  common-models/            Общие классы (JWT, исключения, security)
+docs/                       Документация
+docker-compose-microservices.yml
+```
+
+---
+
+
