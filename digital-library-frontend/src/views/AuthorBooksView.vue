@@ -95,6 +95,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getCookie } from "@/utils/cookies";
+import { getReadingStatus } from "@/api/admin";
 
 import Header from "@/components/layout/Header.vue";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
@@ -292,8 +293,19 @@ async function loadBookDetails(bookId) {
   }
 }
 
-function openBookInReader() {
+async function openBookInReader() {
   if (!selectedBook.value) return;
+
+  try {
+    const { readingEnabled } = await getReadingStatus();
+    if (!readingEnabled) {
+      alert("📖 Чтение книг временно отключено администратором.");
+      return;
+    }
+  } catch (e) {
+    alert("Не удалось проверить доступность чтения. Попробуйте позже.");
+    return;
+  }
 
   const jwt = getCookie("jwt");
   if (!jwt) {
@@ -333,8 +345,6 @@ async function handleSubmitRating() {
           "userId=",
           userId.value,
         );
-        // Уведомить другие компоненты об обновлении
-        window.dispatchEvent(new CustomEvent('recommendations-invalidated'));
       } catch (error) {
         console.error("Ошибка инвалидации кеша:", error);
       }

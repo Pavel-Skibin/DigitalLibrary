@@ -132,6 +132,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { getCookie } from "@/utils/cookies";
+import { getReadingStatus } from "@/api/admin";
 import { useRouter } from "vue-router";
 
 import Header from "@/components/layout/Header.vue";
@@ -257,8 +258,6 @@ async function handleSubmitRating() {
           "userId=",
           userId.value,
         );
-        // Уведомить другие компоненты об обновлении
-        window.dispatchEvent(new CustomEvent('recommendations-invalidated'));
       } catch (error) {
         console.error("Ошибка инвалидации кеша:", error);
       }
@@ -441,8 +440,19 @@ async function loadBookDetails(bookId) {
 }
 
 // Открытие читалки
-function openBookInReader() {
+async function openBookInReader() {
   if (!selectedBook.value) return;
+
+  try {
+    const { readingEnabled } = await getReadingStatus();
+    if (!readingEnabled) {
+      alert("📖 Чтение книг временно отключено администратором.");
+      return;
+    }
+  } catch (e) {
+    alert("Не удалось проверить доступность чтения. Попробуйте позже.");
+    return;
+  }
 
   const jwt = getCookie("jwt");
   if (!jwt) {

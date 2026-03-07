@@ -39,6 +39,13 @@ application-local.yml
 
 
 *.sql
+# Flyway миграции нужны в git
+!**/db/migration/*.sql
+# Docker init скрипты и migration-scripts нужны в git
+!docker/postgres/init.sql
+!migration-scripts/*.sql
+# Бэкапные файлы редактора
+*.java~
  digital-library-frontend/src/foliate-js/
 old_docker/k6/utils/config.js
 

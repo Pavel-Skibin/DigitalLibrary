@@ -21,6 +21,9 @@ FROM nginx:1.25-alpine
 # Копируем собранные файлы из Stage 1
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Копируем статические библиотеки (foliate-js и др.) — Vite их не обрабатывает
+COPY --from=build /app/libs /usr/share/nginx/html/libs
+
 # Копируем конфигурацию Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

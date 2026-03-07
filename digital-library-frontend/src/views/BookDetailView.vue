@@ -208,6 +208,7 @@
 import { ref, onMounted, computed, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getCookie } from "@/utils/cookies";
+import { getReadingStatus } from "@/api/admin";
 
 import Header from "@/components/layout/Header.vue";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
@@ -320,8 +321,22 @@ async function loadBookDetails() {
   }
 }
 
-function openBookInReader() {
+async function openBookInReader() {
   if (!book.value) return;
+
+  try {
+    const { readingEnabled } = await getReadingStatus();
+    if (!readingEnabled) {
+      alert(
+        "📖 Чтение книг временно отключено администратором.\nВы можете просматривать описания и метаданные книг.",
+      );
+      return;
+    }
+  } catch (e) {
+    console.warn("Не удалось проверить статус читалки:", e);
+    alert("Не удалось проверить доступность чтения. Попробуйте позже.");
+    return;
+  }
 
   const jwt = getCookie("jwt");
   if (!jwt) {

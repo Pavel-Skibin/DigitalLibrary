@@ -15,9 +15,9 @@
     <description>User Service - Authentication and user management</description>
 
     <properties>
-        <java.version>20</java.version>
-        <maven.compiler.source>20</maven.compiler.source>
-        <maven.compiler.target>20</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <spring-cloud.version>2024.0.0</spring-cloud.version>
         <openapi-generator.version>7.0.1</openapi-generator.version>
     </properties>

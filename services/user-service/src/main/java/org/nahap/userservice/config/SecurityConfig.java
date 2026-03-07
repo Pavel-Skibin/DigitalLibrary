@@ -82,7 +82,9 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // Allow all localhost ports (nginx :80, dev :5173, :3000, etc)
         configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost",
                 "http://localhost:*",
+                "http://127.0.0.1",
                 "http://127.0.0.1:*"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

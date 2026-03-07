@@ -137,6 +137,8 @@ import { useViewHistory } from "@/composables/useViewHistory";
 import { api } from "@/api/index";
 import { useUser } from "@/composables/useUser";
 import { useAdminAuth } from "@/composables/useAdminAuth";
+import { getCookie } from "@/utils/cookies";
+import { getReadingStatus } from "@/api/admin";
 import Header from "@/components/layout/Header.vue";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
 import BookCard from "@/components/books/BookCard.vue";
@@ -347,10 +349,25 @@ function selectBook(book) {
 }
 
 // Открыть читалку
-function openReader() {
-  if (selectedBook.value) {
-    window.open(`/reader.html?bookId=${selectedBook.value.id}`, "_blank");
+async function openReader() {
+  if (!selectedBook.value) return;
+
+  try {
+    const { readingEnabled } = await getReadingStatus();
+    if (!readingEnabled) {
+      alert("📖 Чтение книг временно отключено администратором.");
+      return;
+    }
+  } catch (e) {
+    alert("Не удалось проверить доступность чтения. Попробуйте позже.");
+    return;
   }
+
+  const jwt = getCookie("jwt");
+  window.open(
+    `/reader.html?bookId=${selectedBook.value.id}${jwt ? "&token=" + jwt : ""}`,
+    "_blank",
+  );
 }
 </script>
 

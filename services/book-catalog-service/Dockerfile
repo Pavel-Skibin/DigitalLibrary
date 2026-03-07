@@ -1,35 +1,39 @@
 # ========== Stage 1: Build ==========
+# Context: project root (needed for shared/common-models dependency)
 FROM maven:3.9.6-eclipse-temurin-21 AS build
-WORKDIR /app
+WORKDIR /build
 
-# Копируем pom.xml и скачиваем зависимости (кэширование слоёв)
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# Build shared common-models first (book-catalog-service depends on it)
+COPY shared/common-models ./common-models
+WORKDIR /build/common-models
+RUN mvn clean install -DskipTests -q
 
-# Копируем исходники и собираем JAR
-COPY src ./src
-RUN mvn clean package -DskipTests
+# Build book-catalog-service
+WORKDIR /build/book-catalog-service
+COPY services/book-catalog-service/pom.xml .
+RUN mvn dependency:go-offline -B -q
+
+# Copy OpenAPI specs from sibling services (required by openapi-generator-maven-plugin)
+# pom.xml references: ${project.basedir}/../comment-rating-service/... and ../user-service/...
+COPY services/comment-rating-service/src/main/resources/openapi /build/comment-rating-service/src/main/resources/openapi
+COPY services/user-service/src/main/resources/openapi /build/user-service/src/main/resources/openapi
+
+COPY services/book-catalog-service/src ./src
+RUN mvn clean package -DskipTests -q
 
 # ========== Stage 2: Runtime ==========
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Создаём непривилегированного пользователя
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Копируем JAR из build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /build/book-catalog-service/target/*.jar app.jar
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8091/actuator/health || exit 1
 
-# Порт
-EXPOSE 8080
+EXPOSE 8091
 
-# JVM параметры (можно переопределить через ENV)
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-
-# Запуск
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
