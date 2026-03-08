@@ -3,8 +3,8 @@
 # Что делает:
 #   1. Собирает все Java-модули через Maven (multi-module)
 #   2. Запускает unit-тесты
-#   3. Собирает frontend (npm build)
-# Если что-то упало — деплой не происходит (CD workflow не запустится)
+# Фронтенд НЕ собирается в CI — src/foliate-js/ не хранится в git.
+# Сборка фронтенда происходит на сервере через docker compose build frontend.
 # ──────────────────────────────────────────────────────────────────────────────
 
 name: CI — Build & Test
@@ -22,53 +22,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Скачиваем код репозитория
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Устанавливаем JDK 21 (соответствует java.version в pom.xml)
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: "21"
           distribution: "temurin"
-          # Кэшируем Maven-зависимости — ускоряет повторные запуски
           cache: maven
 
-      # 3. Собираем весь multi-module проект и запускаем тесты
-      # -B = batch mode (без интерактивных вопросов)
-      # Тесты запускаются автоматически, если упадут — весь шаг провалится
       - name: Build and test with Maven
         run: mvn -B clean verify
 
-      # 4. (Опционально) Публикуем отчёт о тестах прямо в GitHub UI
       - name: Publish test report
         uses: mikepenz/action-junit-report@v4
-        if: always() # Показываем даже если тесты упали
+        if: always()
         with:
           report_paths: "**/target/surefire-reports/TEST-*.xml"
-
-  # ─── Frontend: сборка ───────────────────────────────────────────────────────
-  build-frontend:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-          cache: "npm"
-          cache-dependency-path: digital-library-frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: digital-library-frontend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: digital-library-frontend
-        run: npm run build
