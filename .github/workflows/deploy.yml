@@ -38,10 +38,9 @@ jobs:
 
             git fetch origin main
 
-            # Безопасный fast-forward: упадёт если есть незакоммиченные изменения.
-            # Это НАМЕРЕННО — конфиги на сервере не должны меняться вручную.
-            # Все правки делай в git и пушь через этот pipeline.
-            git merge --ff-only origin/main
+            # Сбрасываем любые локальные изменения (файлы скопированные вручную через scp и т.п.)
+            # В production конфиги должны меняться только через git.
+            git reset --hard origin/main
 
             echo "=== Rebuilding services (with cache) ==="
             # Без --no-cache: Docker использует слои из кэша — сборка 1-2 мин вместо 10.
