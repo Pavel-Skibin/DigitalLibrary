@@ -8,7 +8,7 @@ import org.springframework.cloud.openfeign.FeignClient;
  */
 @FeignClient(
         name = "user-service-data",
-        url = "${services.user.url}"
+        url = "${USER_SERVICE_URL:http://localhost:8081}"
 )
 public interface UserDataInternalClient extends InternalUserApiApi {
     // Methods inherited from InternalUserApiApi:

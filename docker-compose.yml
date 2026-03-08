@@ -69,6 +69,9 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/users_db
       DB_USERNAME: ${DB_USERNAME:-digital_library_user}
       DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/users_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-digital_library_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       COOKIE_SECURE: "false"
     depends_on:
@@ -84,9 +87,13 @@ services:
     ports:
       - "8091:8091"
     environment:
+      SERVER_PORT: "8091"
       DB_URL: jdbc:postgresql://postgres:5432/books_db
       DB_USERNAME: ${DB_USERNAME:-digital_library_user}
       DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/books_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-digital_library_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       APP_BOOKS_STORAGE_PATH: /app/books
       COMMENT_RATING_SERVICE_URL: http://comment-rating-service:8082
@@ -109,6 +116,9 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/comments_ratings_db
       DB_USERNAME: ${DB_USERNAME:-digital_library_user}
       DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/comments_ratings_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-digital_library_user}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       USER_SERVICE_URL: http://user-service:8081
       BOOK_SERVICE_URL: http://book-catalog-service:8091

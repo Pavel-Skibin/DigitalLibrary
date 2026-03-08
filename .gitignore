@@ -50,3 +50,4 @@ application-local.yml
 old_docker/k6/utils/config.js
 
 *.json
+!**/package-lock.json

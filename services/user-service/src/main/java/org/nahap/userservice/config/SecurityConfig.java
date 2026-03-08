@@ -31,6 +31,9 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed.origin:http://localhost}")
+    private String corsAllowedOrigin;
+
     public SecurityConfig(CustomUserDetailsService userDetailsService,
                           JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.userDetailsService = userDetailsService;
@@ -85,7 +88,8 @@ public class SecurityConfig {
                 "http://localhost",
                 "http://localhost:*",
                 "http://127.0.0.1",
-                "http://127.0.0.1:*"
+                "http://127.0.0.1:*",
+                corsAllowedOrigin
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

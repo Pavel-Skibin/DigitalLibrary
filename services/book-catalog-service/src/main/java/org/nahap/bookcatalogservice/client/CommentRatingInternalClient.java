@@ -8,7 +8,7 @@ import org.springframework.cloud.openfeign.FeignClient;
  */
 @FeignClient(
         name = "comment-rating-service",
-        url = "${services.comment-rating.url}"
+        url = "${COMMENT_RATING_SERVICE_URL:http://localhost:8082}"
 )
 public interface CommentRatingInternalClient extends InternalStatisticsApiApi {
     // Methods inherited from InternalStatisticsApiApi:
