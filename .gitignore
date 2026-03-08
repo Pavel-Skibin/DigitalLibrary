@@ -28,14 +28,26 @@ build/
 
 # Environment files
 .env
-.local
+.env.local
+*.env
+!.env.example
+application-local.properties
+application-local.yml
 
 # Logs
 *.log
 
 
 *.sql
+# Flyway миграции нужны в git
+!**/db/migration/*.sql
+# Docker init скрипты и migration-scripts нужны в git
+!docker/postgres/init.sql
+!migration-scripts/*.sql
+# Бэкапные файлы редактора
+*.java~
  digital-library-frontend/src/foliate-js/
-docker/k6/utils/config.js
+old_docker/k6/utils/config.js
 
 *.json
+!**/package-lock.json

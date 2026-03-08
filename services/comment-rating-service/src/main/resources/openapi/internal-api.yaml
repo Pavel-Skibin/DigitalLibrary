@@ -1,0 +1,361 @@
+openapi: 3.0.3
+info:
+  title: Comment Rating Service Internal API
+  description: Internal API for inter-service communication (not exposed via API Gateway)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8083
+    description: Local development
+
+paths:
+  /api/internal/ratings/books/{bookId}/average:
+    get:
+      summary: Get average rating for a book
+      operationId: getAverageRating
+      tags:
+        - Internal Rating API
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Average rating
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+                nullable: true
+
+  /api/internal/ratings/books/{bookId}/count:
+    get:
+      summary: Get count of ratings for a book
+      operationId: getRatingsCount
+      tags:
+        - Internal Rating API
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Ratings count
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /api/internal/users/{userId}/ratings:
+    get:
+      summary: Get user ratings
+      description: Returns list of all ratings given by the user for AI recommendation service
+      operationId: getUserRatings
+      tags:
+        - Internal Rating API
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: List of user ratings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserRatingResponse"
+
+  /api/internal/comments/books/{bookId}/count:
+    get:
+      summary: Get count of comments for a book
+      operationId: getCommentsCount
+      tags:
+        - Internal Comment API
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Comments count
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /api/internal/bookmarks/books/{bookId}/count:
+    get:
+      summary: Get count of bookmarks for a book
+      operationId: getBookmarksCount
+      tags:
+        - Internal Bookmark API
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Bookmarks count
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /api/internal/books/{bookId}/statistics:
+    get:
+      summary: Get aggregated statistics for a book
+      operationId: getBookStatistics
+      tags:
+        - Internal Statistics API
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Book statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookStatistics"
+
+  /api/internal/books/statistics/all:
+    get:
+      summary: Get statistics for all books with ratings
+      description: Returns rating statistics for all books that have at least one rating. Used for cache synchronization.
+      operationId: getAllBooksStatistics
+      tags:
+        - Internal Statistics API
+      responses:
+        "200":
+          description: List of book statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookStatistics"
+
+  /api/internal/statistics/ratings/count:
+    get:
+      summary: Get total ratings count
+      operationId: getTotalRatingsCount
+      tags:
+        - Internal Statistics API
+      responses:
+        "200":
+          description: Total ratings count
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /api/internal/statistics/comments/count:
+    get:
+      summary: Get total comments count
+      operationId: getTotalCommentsCount
+      tags:
+        - Internal Statistics API
+      responses:
+        "200":
+          description: Total comments count
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+
+  /api/internal/statistics/comments/deleted-percentage:
+    get:
+      summary: Get deleted comments percentage
+      operationId: getDeletedCommentsPercentage
+      tags:
+        - Internal Statistics API
+      responses:
+        "200":
+          description: Percentage of deleted comments
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+
+  /api/internal/statistics/ratings/distribution:
+    get:
+      summary: Get rating distribution (1-5 stars)
+      operationId: getRatingDistribution
+      tags:
+        - Internal Statistics API
+      responses:
+        "200":
+          description: Rating distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RatingDistribution"
+
+  /api/internal/statistics/users/most-active-commenters:
+    get:
+      summary: Get most active commenters
+      operationId: getMostActiveCommenters
+      tags:
+        - Internal Statistics API
+      parameters:
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: List of most active commenters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActiveCommenter"
+
+  /api/internal/statistics/comments/recent:
+    get:
+      summary: Get recent comments
+      operationId: getRecentComments
+      tags:
+        - Internal Statistics API
+      parameters:
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: List of recent comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecentComment"
+
+  /api/internal/statistics/global-average-rating:
+    get:
+      summary: Get global average rating across all books
+      operationId: getGlobalAverageRating
+      tags:
+        - Internal Statistics API
+      responses:
+        "200":
+          description: Global average rating
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+
+components:
+  schemas:
+    BookStatistics:
+      type: object
+      properties:
+        bookId:
+          type: integer
+          format: int32
+        averageRating:
+          type: number
+          format: double
+        ratingsCount:
+          type: integer
+          format: int64
+        commentsCount:
+          type: integer
+          format: int64
+        bookmarksCount:
+          type: integer
+          format: int64
+
+    RatingDistribution:
+      type: object
+      properties:
+        ratingValue:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+        count:
+          type: integer
+          format: int64
+
+    ActiveCommenter:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int32
+        username:
+          type: string
+        commentCount:
+          type: integer
+          format: int64
+
+    UserRatingResponse:
+      type: object
+      properties:
+        bookId:
+          type: integer
+          format: int32
+        ratingValue:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+        createdAt:
+          type: string
+          format: date-time
+    RecentComment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        bookId:
+          type: integer
+          format: int32
+        userId:
+          type: integer
+          format: int32
+        username:
+          type: string
+        commentText:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

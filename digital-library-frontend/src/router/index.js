@@ -1,49 +1,67 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import BooksView from '../views/BooksView.vue';
-import AuthorsView from '../views/AuthorsView.vue';
-import AuthorBooksView from '../views/AuthorBooksView.vue';
-import HomeView from '../views/HomeView.vue';
-import LoginRegisterView from '../views/LoginRegisterView.vue';
-import AdminPanelView from '../views/AdminPanelView.vue';
+import { createRouter, createWebHistory } from "vue-router";
+import BooksView from "../views/BooksView.vue";
+import BookDetailView from "../views/BookDetailView.vue";
+import AuthorsView from "../views/AuthorsView.vue";
+import AuthorBooksView from "../views/AuthorBooksView.vue";
+import HomeView from "../views/HomeView.vue";
+import LoginRegisterView from "../views/LoginRegisterView.vue";
+import AdminPanelView from "../views/AdminPanelView.vue";
+import UserProfileView from "../views/UserProfileView.vue";
 
 const routes = [
   {
-    path: '/',
-    name: 'Home',
+    path: "/",
+    name: "Home",
     component: HomeView,
-    meta: { requiresAuth: false } // ← Гостям разрешён доступ
+    meta: { requiresAuth: false }, // ← Гостям разрешён доступ
   },
   {
-    path: '/books',
-    name: 'Books',
+    path: "/books",
+    name: "Books",
     component: BooksView,
-    meta: { requiresAuth: false } // ← Гостям разрешён доступ
+    meta: { requiresAuth: false }, // ← Гостям разрешён доступ
   },
   {
-    path: '/authors',
-    name: 'Authors',
+    path: "/books/:id",
+    name: "BookDetail",
+    component: BookDetailView,
+    props: true,
+    meta: { requiresAuth: false }, // ← Гостям разрешён доступ
+  },
+  {
+    path: "/authors",
+    name: "Authors",
     component: AuthorsView,
-    meta: { requiresAuth: false } // ← Гостям разрешён доступ
+    meta: { requiresAuth: false }, // ← Гостям разрешён доступ
   },
   {
-    path: '/authors/:authorId/books',
-    name: 'AuthorBooks',
+    path: "/authors/:authorId/books",
+    name: "AuthorBooks",
     component: AuthorBooksView,
     props: true,
-    meta: { requiresAuth: false } // ← Гостям разрешён доступ
+    meta: { requiresAuth: false }, // ← Гостям разрешён доступ
   },
   {
-    path: '/login',
-    name: 'login',
+    path: "/login",
+    name: "login",
     component: LoginRegisterView,
-    meta: { requiresAuth: false, guestOnly: true } // ← Только для неавторизованных
+    meta: { requiresAuth: false, guestOnly: true }, // ← Только для неавторизованных
   },
   {
-    path: '/admin',
-    name: 'AdminPanel',
+    path: "/profile",
+    name: "Profile",
+    component: UserProfileView,
+    meta: { requiresAuth: true }, // ← Требуется авторизация
+  },
+  {
+    path: "/admin",
+    name: "AdminPanel",
     component: AdminPanelView,
-    meta: { requiresAuth: true, requiresRole: ['ROLE_MODERATOR', 'ROLE_ADMIN'] }
-  }
+    meta: {
+      requiresAuth: true,
+      requiresRole: ["ROLE_MODERATOR", "ROLE_ADMIN"],
+    },
+  },
 ];
 
 const router = createRouter({
@@ -51,20 +69,19 @@ const router = createRouter({
   routes,
 });
 
-
 router.beforeEach((to, from, next) => {
-  const jwt = getCookie('jwt');
+  const jwt = getCookie("jwt");
   const isAuthenticated = !!jwt;
 
   // Если страница требует авторизации
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login');
+    next("/login");
     return;
   }
 
   // Если авторизованный пользователь пытается зайти на страницу логина
   if (to.meta.guestOnly && isAuthenticated) {
-    next('/');
+    next("/");
     return;
   }
 
@@ -74,7 +91,7 @@ router.beforeEach((to, from, next) => {
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
+  if (parts.length === 2) return parts.pop().split(";").shift();
   return null;
 }
 

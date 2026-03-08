@@ -1,8 +1,8 @@
 <template>
   <div class="app-layout">
-    <Header/>
+    <Header />
     <div class="library-container">
-      <AppSidebar :show-admin-link="isModeratorOrAdmin"/>
+      <AppSidebar :show-admin-link="isModeratorOrAdmin" />
 
       <main class="content">
         <h1 class="page-title">📚 Книги</h1>
@@ -10,154 +10,163 @@
         <!-- Поиск -->
         <div class="search-box">
           <SearchInput
-              v-model="searchQuery"
-              placeholder="🔍 Поиск по названию книги"
-              @update:model-value="handleSearchInput"
+            v-model="searchQuery"
+            placeholder="🔍 Поиск по названию книги"
+            @update:model-value="handleSearchInput"
           />
-          <button class="search-button" @click="performSimpleSearch" title="Найти">
+          <button
+            class="search-button"
+            @click="performSimpleSearch"
+            title="Найти"
+          >
             🔍
           </button>
           <button
-              class="settings-button"
-              @click="openExtendedSearch"
-              title="Расширенный поиск"
+            class="settings-button"
+            @click="openExtendedSearch"
+            title="Расширенный поиск"
           >
             ⚙️
           </button>
         </div>
 
         <!-- Список книг -->
-        <div v-if="loading" class="loading-message">
-          Загрузка книг...
-        </div>
+        <div v-if="loading" class="loading-message">Загрузка книг...</div>
 
-        <div v-else-if="books.length === 0 && !searchQuery.trim() && !isSearchMode" class="no-books-message">
+        <div
+          v-else-if="books.length === 0 && !searchQuery.trim() && !isSearchMode"
+          class="no-books-message"
+        >
           Книги не найдены
         </div>
 
-        <div v-else-if="books.length === 0 && (searchQuery.trim() || isSearchMode)" class="no-search-results">
+        <div
+          v-else-if="books.length === 0 && (searchQuery.trim() || isSearchMode)"
+          class="no-search-results"
+        >
           По вашему запросу ничего не найдено
         </div>
 
         <div v-else class="books-list">
           <!-- ✅ ИЗМЕНЕНО: используем book.coverUrl напрямую -->
           <BookCard
-              v-for="book in books"
-              :key="book.id"
-              :book="book"
-              :cover-url="getCoverUrl(book)"
-              @select="selectBook"
+            v-for="book in books"
+            :key="book.id"
+            :book="book"
+            :cover-url="getCoverUrl(book)"
+            @select="selectBook"
           />
         </div>
 
         <!-- Пагинация -->
         <Pagination
-            v-if="totalPages > 1 && books.length > 0"
-            :current-page="currentPage"
-            :total-pages="totalPages"
-            @page-change="handlePageChange"
+          v-if="totalPages > 1 && books.length > 0"
+          :current-page="currentPage"
+          :total-pages="totalPages"
+          @page-change="handlePageChange"
         />
       </main>
 
       <!-- Правая панель с деталями -->
       <aside v-if="selectedBook" class="book-detail-panel">
         <BookDetailPanel
-            :book="selectedBook"
-            :cover-url="getCoverUrl(selectedBook)"
-            :user-rating="userRating"
-            :is-authenticated="isAuthenticated"
-            @open-reader="openBookInReader"
-            @open-rating="showRatingModal = true"
-            @go-to-login="goToLogin"
+          :book="selectedBook"
+          :cover-url="getCoverUrl(selectedBook)"
+          :user-rating="userRating"
+          :is-authenticated="isAuthenticated"
+          @open-reader="openBookInReader"
+          @open-rating="showRatingModal = true"
+          @go-to-login="goToLogin"
         />
 
         <CommentsSection
-            :comments="comments"
-            :loading="loadingComments"
-            :submitting="submittingComment"
-            :is-authenticated="isAuthenticated"
-            :current-user-id="currentUserId"
-            :is-moderator="isModerator"
-            :has-more="hasMoreComments"
-            @submit="handleSubmitComment"
-            @update="handleUpdateComment"
-            @delete="handleDeleteComment"
-            @moderate-delete="handleModerateDeleteComment"
-            @restore="handleRestoreComment"
-            @load-more="handleLoadMoreComments"
-            @go-to-login="goToLogin"
+          :comments="comments"
+          :loading="loadingComments"
+          :submitting="submittingComment"
+          :is-authenticated="isAuthenticated"
+          :current-user-id="currentUserId"
+          :is-moderator="isModerator"
+          :has-more="hasMoreComments"
+          @submit="handleSubmitComment"
+          @update="handleUpdateComment"
+          @delete="handleDeleteComment"
+          @moderate-delete="handleModerateDeleteComment"
+          @restore="handleRestoreComment"
+          @load-more="handleLoadMoreComments"
+          @go-to-login="goToLogin"
         />
       </aside>
     </div>
 
     <!-- Модальное окно рейтинга -->
     <RatingModal
-        v-if="showRatingModal"
-        v-model="selectedRatingValue"
-        :book-title="selectedBook?.title"
-        :loading="submittingRating"
-        @close="closeRatingModal"
-        @submit="handleSubmitRating"
+      v-if="showRatingModal"
+      v-model="selectedRatingValue"
+      :book-title="selectedBook?.title"
+      :loading="submittingRating"
+      @close="closeRatingModal"
+      @submit="handleSubmitRating"
     />
 
     <!-- Модальное окно расширенного поиска -->
     <ExtendedSearchModal
-        v-if="showExtendedSearchModal"
-        :filters="extendedFilters"
-        :authors="extendedAuthors"
-        :genres="extendedGenres"
-        @close="closeExtendedSearch"
-        @search="handleExtendedSearch"
-        @reset="handleResetExtendedSearch"
+      v-if="showExtendedSearchModal"
+      :filters="extendedFilters"
+      :authors="extendedAuthors"
+      :genres="extendedGenres"
+      @close="closeExtendedSearch"
+      @search="handleExtendedSearch"
+      @reset="handleResetExtendedSearch"
     />
 
     <!--  Модальное окно для неавторизованных -->
     <AuthPromptModal
-        v-if="showAuthPrompt"
-        :action-description="authPromptAction"
-        @close="showAuthPrompt = false"
-        @login="goToLogin"
+      v-if="showAuthPrompt"
+      :action-description="authPromptAction"
+      @close="showAuthPrompt = false"
+      @login="goToLogin"
     />
-
   </div>
 </template>
 
 <script setup>
-import {ref, onMounted} from 'vue'
-import {getCookie} from '@/utils/cookies'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from "vue";
+import { getCookie } from "@/utils/cookies";
+import { getReadingStatus } from "@/api/admin";
+import { useRouter } from "vue-router";
 
-import Header from '@/components/layout/Header.vue'
-import AppSidebar from '@/components/layout/AppSidebar.vue'
-import SearchInput from '@/components/ui/SearchInput.vue'
-import Pagination from '@/components/ui/Pagination.vue'
-import BookCard from '@/components/books/BookCard.vue'
-import BookDetailPanel from '@/components/books/BookDetailPanel.vue'
-import CommentsSection from '@/components/books/CommentsSection.vue'
-import RatingModal from '@/components/books/RatingModal.vue'
-import ExtendedSearchModal from '@/components/books/ExtendedSearchModal.vue'
-import AuthPromptModal from '@/components/ui/AuthPromptModal.vue'
+import Header from "@/components/layout/Header.vue";
+import AppSidebar from "@/components/layout/AppSidebar.vue";
+import SearchInput from "@/components/ui/SearchInput.vue";
+import Pagination from "@/components/ui/Pagination.vue";
+import BookCard from "@/components/books/BookCard.vue";
+import BookDetailPanel from "@/components/books/BookDetailPanel.vue";
+import CommentsSection from "@/components/books/CommentsSection.vue";
+import RatingModal from "@/components/books/RatingModal.vue";
+import ExtendedSearchModal from "@/components/books/ExtendedSearchModal.vue";
+import AuthPromptModal from "@/components/ui/AuthPromptModal.vue";
 
-import {useBookComments} from '@/composables/useBookComments'
-import {useBookRating} from '@/composables/useBookRating'
-import {useAdminAuth} from '@/composables/useAdminAuth'
-import {useExtendedSearch} from '@/composables/useExtendedSearch'
+import { useBookComments } from "@/composables/useBookComments";
+import { useBookRating } from "@/composables/useBookRating";
+import { useAdminAuth } from "@/composables/useAdminAuth";
+import { useExtendedSearch } from "@/composables/useExtendedSearch";
+import { useUser } from "@/composables/useUser";
+import { invalidateUserCache } from "@/api/recommendations";
 
 // Состояние книг
-const books = ref([])
-const selectedBook = ref(null)
-const loading = ref(false)
-const currentPage = ref(0)
-const totalPages = ref(0)
-const pageSize = 10
+const books = ref([]);
+const selectedBook = ref(null);
+const loading = ref(false);
+const currentPage = ref(0);
+const totalPages = ref(0);
+const pageSize = 10;
 
 // Поиск
-const searchQuery = ref('')
-const isSearchMode = ref(false)
-let searchTimeout = null
+const searchQuery = ref("");
+const isSearchMode = ref(false);
+let searchTimeout = null;
 
-const router = useRouter()
-
+const router = useRouter();
 
 const {
   comments,
@@ -170,18 +179,20 @@ const {
   deleteComment,
   moderateDeleteComment,
   restoreComment,
-  loadMore: loadMoreComments
-} = useBookComments()
+  loadMore: loadMoreComments,
+} = useBookComments();
 
 const {
   userRating,
   submitting: submittingRating,
   loadUserRating,
-  submitRating
-} = useBookRating()
+  submitRating,
+} = useBookRating();
 
-const {isAdmin, isModerator} = useAdminAuth()
-const isModeratorOrAdmin = ref(false)
+const { isAdmin, isModerator } = useAdminAuth();
+const isModeratorOrAdmin = ref(false);
+
+const { userId, fetchUserProfile } = useUser();
 
 const {
   authors: extendedAuthors,
@@ -195,299 +206,320 @@ const {
   closeModal: closeExtendedSearchModal,
   resetFilters: resetExtendedFilters,
   buildSearchUrl,
-  performSearch: performExtendedSearchFilters
-} = useExtendedSearch()
+  performSearch: performExtendedSearchFilters,
+} = useExtendedSearch();
 
 // Аутентификация
-const isAuthenticated = ref(false)
-const currentUserId = ref(null)
+const isAuthenticated = ref(false);
+const currentUserId = ref(null);
 
 // Рейтинг
-const showRatingModal = ref(false)
-const selectedRatingValue = ref(0)
+const showRatingModal = ref(false);
+const selectedRatingValue = ref(0);
 
-const showAuthPrompt = ref(false)
-const authPromptAction = ref('')
+const showAuthPrompt = ref(false);
+const authPromptAction = ref("");
 
 function getCoverUrl(book) {
-  return book.coverUrl || '/placeholder.jpg'
+  return book.coverUrl || "/placeholder.jpg";
 }
 
 function requireAuth(action) {
   if (!isAuthenticated.value) {
-    authPromptAction.value = action
-    showAuthPrompt.value = true
-    return false
+    authPromptAction.value = action;
+    showAuthPrompt.value = true;
+    return false;
   }
-  return true
+  return true;
 }
 
 function goToLogin() {
-  router.push('/login')
+  router.push("/login");
 }
 
-
 async function handleSubmitRating() {
-  if (!requireAuth('оценить книгу')) return
+  if (!requireAuth("оценить книгу")) return;
 
-  if (!selectedRatingValue.value) return
-  const success = await submitRating(selectedBook.value.id, selectedRatingValue.value)
+  if (!selectedRatingValue.value) return;
+  const success = await submitRating(
+    selectedBook.value.id,
+    selectedRatingValue.value,
+  );
   if (success) {
-    closeRatingModal()
-    await loadBookDetails(selectedBook.value.id)
+    closeRatingModal();
+    await loadBookDetails(selectedBook.value.id);
+
+    // Инвалидация кеша рекомендаций после оценки
+    if (userId.value) {
+      try {
+        await invalidateUserCache(userId.value);
+        console.log(
+          "✓ Кеш рекомендаций обновлен после оценки книги",
+          "userId=",
+          userId.value,
+        );
+      } catch (error) {
+        console.error("Ошибка инвалидации кеша:", error);
+      }
+    } else {
+      console.warn("⚠ userId не найден, кеш не обновлен");
+    }
   }
 }
 
-async function handleSubmitComment(text) {
-  if (!requireAuth('оставить комментарий')) return
-  await submitComment(selectedBook.value.id, text)
-}
-
-async function handleUpdateComment({ id, text }) {
-  if (!requireAuth('редактировать комментарий')) return
-  await updateComment(id, text)
-}
-
 async function handleDeleteComment(id) {
-  if (!requireAuth('удалить комментарий')) return
-  await deleteComment(id)
+  if (!requireAuth("удалить комментарий")) return;
+  await deleteComment(id);
 }
 
 // Загрузка книг
 async function loadBooks(page = 0) {
-  loading.value = true
+  loading.value = true;
   try {
-    const response = await fetch(`/api/books?page=${page}&size=${pageSize}`)
-    if (!response.ok) throw new Error('Ошибка загрузки книг')
-    const data = await response.json()
-    updateBookList(data.content, data.number, data.totalPages)
+    const response = await fetch(`/api/books?page=${page}&size=${pageSize}`);
+    if (!response.ok) throw new Error("Ошибка загрузки книг");
+    const data = await response.json();
+    updateBookList(data.content, data.number, data.totalPages);
   } catch (error) {
-    console.error('Ошибка:', error)
-    alert('Не удалось загрузить книги')
+    console.error("Ошибка:", error);
+    alert("Не удалось загрузить книги");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // Простой поиск
 function handleSearchInput(value) {
-  searchQuery.value = value
-  const query = value.trim()
+  searchQuery.value = value;
+  const query = value.trim();
 
-  if (query === '') {
-    resetToMainList()
-    return
+  if (query === "") {
+    resetToMainList();
+    return;
   }
 
-  if (query.length < 3) return
+  if (query.length < 3) return;
 
-  clearTimeout(searchTimeout)
+  clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    performSimpleSearch()
-  }, 300)
+    performSimpleSearch();
+  }, 300);
 }
 
 function performSimpleSearch() {
-  const query = searchQuery.value.trim()
-  if (query === '') {
-    resetToMainList()
-    return
+  const query = searchQuery.value.trim();
+  if (query === "") {
+    resetToMainList();
+    return;
   }
-  isSearchMode.value = true
-  activeExtendedFilters.value = null
-  currentPage.value = 0
-  loadSimpleSearchResults(0)
+  isSearchMode.value = true;
+  activeExtendedFilters.value = null;
+  currentPage.value = 0;
+  loadSimpleSearchResults(0);
 }
 
 async function loadSimpleSearchResults(page = 0) {
-  loading.value = true
+  loading.value = true;
   try {
-    const query = encodeURIComponent(searchQuery.value.trim())
+    const query = encodeURIComponent(searchQuery.value.trim());
     const response = await fetch(
-        `/api/books/search?title=${query}&page=${page}&size=${pageSize}`
-    )
-    if (!response.ok) throw new Error('Ошибка поиска')
-    const data = await response.json()
-    updateBookList(data.content, data.number, data.totalPages)
+      `/api/books/search?title=${query}&page=${page}&size=${pageSize}`,
+    );
+    if (!response.ok) throw new Error("Ошибка поиска");
+    const data = await response.json();
+    updateBookList(data.content, data.number, data.totalPages);
   } catch (error) {
-    console.error('Ошибка поиска:', error)
-    alert('Поиск не удался')
-    books.value = []
-    selectedBook.value = null
+    console.error("Ошибка поиска:", error);
+    alert("Поиск не удался");
+    books.value = [];
+    selectedBook.value = null;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // Расширенный поиск
 function openExtendedSearch() {
   if (activeExtendedFilters.value) {
-    extendedFilters.value = {...activeExtendedFilters.value}
+    extendedFilters.value = { ...activeExtendedFilters.value };
   } else {
-    extendedFilters.value.title = searchQuery.value
+    extendedFilters.value.title = searchQuery.value;
   }
-  openExtendedSearchModal(searchQuery.value)
+  openExtendedSearchModal(searchQuery.value);
 }
 
 function closeExtendedSearch() {
-  closeExtendedSearchModal()
+  closeExtendedSearchModal();
 }
 
 function handleExtendedSearch(filters) {
-  const activeFilters = performExtendedSearchFilters(filters)
-  searchQuery.value = activeFilters.title
-  isSearchMode.value = true
-  currentPage.value = 0
-  loadExtendedSearchResults(0)
+  const activeFilters = performExtendedSearchFilters(filters);
+  searchQuery.value = activeFilters.title;
+  isSearchMode.value = true;
+  currentPage.value = 0;
+  loadExtendedSearchResults(0);
 }
 
 function handleResetExtendedSearch() {
-  resetExtendedFilters()
-  searchQuery.value = ''
-  resetToMainList()
-  closeExtendedSearch()
+  resetExtendedFilters();
+  searchQuery.value = "";
+  resetToMainList();
+  closeExtendedSearch();
 }
 
 async function loadExtendedSearchResults(page = 0) {
-  if (!activeExtendedFilters.value) return
+  if (!activeExtendedFilters.value) return;
 
-  loading.value = true
+  loading.value = true;
   try {
-    const url = buildSearchUrl(page, pageSize)
-    const response = await fetch(url)
-    if (!response.ok) throw new Error('Ошибка расширенного поиска')
-    const data = await response.json()
-    updateBookList(data.content, data.number, data.totalPages)
+    const url = buildSearchUrl(page, pageSize);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Ошибка расширенного поиска");
+    const data = await response.json();
+    updateBookList(data.content, data.number, data.totalPages);
   } catch (error) {
-    console.error('Ошибка расширенного поиска:', error)
-    alert('Не удалось выполнить расширенный поиск')
+    console.error("Ошибка расширенного поиска:", error);
+    alert("Не удалось выполнить расширенный поиск");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 // Обновление списка книг
 function updateBookList(content, page, totalPagesCount) {
-  books.value = content || []
-  currentPage.value = page
-  totalPages.value = totalPagesCount
-
+  books.value = content || [];
+  currentPage.value = page;
+  totalPages.value = totalPagesCount;
 
   if (books.value.length > 0) {
-    selectBook(books.value[0])
+    selectBook(books.value[0]);
   } else {
-    selectedBook.value = null
+    selectedBook.value = null;
   }
 }
 
 // Сброс к основному списку
 function resetToMainList() {
-  isSearchMode.value = false
-  activeExtendedFilters.value = null
-  searchQuery.value = ''
-  resetExtendedFilters()
-  loadBooks(0)
+  isSearchMode.value = false;
+  activeExtendedFilters.value = null;
+  searchQuery.value = "";
+  resetExtendedFilters();
+  loadBooks(0);
 }
 
 // Пагинация
 function handlePageChange(page) {
   if (isSearchMode.value) {
     if (activeExtendedFilters.value) {
-      loadExtendedSearchResults(page)
+      loadExtendedSearchResults(page);
     } else {
-      loadSimpleSearchResults(page)
+      loadSimpleSearchResults(page);
     }
   } else {
-    loadBooks(page)
+    loadBooks(page);
   }
 }
 
 // Выбор книги
 function selectBook(book) {
-  selectedBook.value = book
-  loadBookDetails(book.id)
-  loadComments(book.id)
-  loadUserRating(book.id)
+  selectedBook.value = book;
+  loadBookDetails(book.id);
+  loadComments(book.id);
+  loadUserRating(book.id);
 }
 
 async function loadBookDetails(bookId) {
   try {
-    const response = await fetch(`/api/books/${bookId}`)
-    if (!response.ok) throw new Error('Ошибка загрузки деталей')
-    const data = await response.json()
-    selectedBook.value = {...selectedBook.value, ...data}
+    const response = await fetch(`/api/books/${bookId}`);
+    if (!response.ok) throw new Error("Ошибка загрузки деталей");
+    const data = await response.json();
+    selectedBook.value = { ...selectedBook.value, ...data };
   } catch (error) {
-    console.error('Ошибка загрузки деталей книги:', error)
+    console.error("Ошибка загрузки деталей книги:", error);
   }
 }
 
 // Открытие читалки
-function openBookInReader() {
-  if (!selectedBook.value) return
+async function openBookInReader() {
+  if (!selectedBook.value) return;
 
-  const jwt = getCookie('jwt')
-  if (!jwt) {
-    window.open(`/reader.html?bookId=${selectedBook.value.id}`, '_blank')
-    return
+  try {
+    const { readingEnabled } = await getReadingStatus();
+    if (!readingEnabled) {
+      alert("📖 Чтение книг временно отключено администратором.");
+      return;
+    }
+  } catch (e) {
+    alert("Не удалось проверить доступность чтения. Попробуйте позже.");
+    return;
   }
 
-  window.open(`/reader.html?bookId=${selectedBook.value.id}&token=${jwt}`, '_blank')
+  const jwt = getCookie("jwt");
+  if (!jwt) {
+    window.open(`/reader.html?bookId=${selectedBook.value.id}`, "_blank");
+    return;
+  }
+
+  window.open(
+    `/reader.html?bookId=${selectedBook.value.id}&token=${jwt}`,
+    "_blank",
+  );
 }
 
 // Рейтинг
 function closeRatingModal() {
-  showRatingModal.value = false
-  selectedRatingValue.value = 0
+  showRatingModal.value = false;
+  selectedRatingValue.value = 0;
 }
 
-
-
-
-
 async function handleModerateDeleteComment(id) {
-  await moderateDeleteComment(id)
+  await moderateDeleteComment(id);
 }
 
 async function handleRestoreComment(id) {
-  await restoreComment(id)
+  await restoreComment(id);
 }
 
 function handleLoadMoreComments() {
-  loadMoreComments(selectedBook.value.id)
+  loadMoreComments(selectedBook.value.id);
 }
 
 // Аутентификация
 async function checkAuthentication() {
-  const jwt = getCookie('jwt')
-  isAuthenticated.value = !!jwt
+  const jwt = getCookie("jwt");
+  isAuthenticated.value = !!jwt;
 
   if (jwt) {
     try {
-      const response = await fetch('/api/users/me', {
-        headers: {'Authorization': `Bearer ${jwt}`}
-      })
+      const response = await fetch("/api/users/me", {
+        headers: { Authorization: `Bearer ${jwt}` },
+      });
 
       if (response.ok) {
-        const userData = await response.json()
-        currentUserId.value = userData.id
-        const isMod = userData.roleName === 'ROLE_MODERATOR' || userData.roleName === 'MODERATOR'
-        const isAdm = userData.roleName === 'ROLE_ADMIN' || userData.roleName === 'ADMIN'
-        isModerator.value = isMod || isAdm
-        isModeratorOrAdmin.value = isMod || isAdm
+        const userData = await response.json();
+        currentUserId.value = userData.id;
+        const isMod =
+          userData.roleName === "ROLE_MODERATOR" ||
+          userData.roleName === "MODERATOR";
+        const isAdm =
+          userData.roleName === "ROLE_ADMIN" || userData.roleName === "ADMIN";
+        isModerator.value = isMod || isAdm;
+        isModeratorOrAdmin.value = isMod || isAdm;
       }
     } catch (error) {
-      console.error('Ошибка аутентификации:', error)
+      console.error("Ошибка аутентификации:", error);
     }
   }
 }
 
 // Lifecycle
 onMounted(async () => {
-  await loadBooks(0)
-  await checkAuthentication()
-  await loadExtendedAuthors()
-  await loadExtendedGenres()
-})
+  await fetchUserProfile(); // Загрузка userId для инвалидации кеша
+  await loadBooks(0);
+  await checkAuthentication();
+  await loadExtendedAuthors();
+  await loadExtendedGenres();
+});
 </script>
 <style scoped src="@/assets/styles/library-common.css"></style>
 <style scoped>
@@ -507,7 +539,6 @@ onMounted(async () => {
   margin-bottom: 24px;
   align-items: stretch;
 }
-
 
 .search-button,
 .settings-button {
@@ -532,9 +563,9 @@ onMounted(async () => {
 }
 
 .search-button:hover {
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
-  border-color: #2196F3;
+  border-color: #2196f3;
 }
 
 .settings-button {
@@ -543,7 +574,7 @@ onMounted(async () => {
 
 .settings-button:hover {
   background-color: #f5f5f5;
-  border-color: #2196F3;
+  border-color: #2196f3;
 }
 
 /* ОБНОВИ СТИЛИ ДЛЯ INPUT */
@@ -559,7 +590,7 @@ onMounted(async () => {
 
 .search-box :deep(input:focus),
 .search-box :deep(.search-input:focus) {
-  border-color: #2196F3 !important;
+  border-color: #2196f3 !important;
   outline: none !important;
 }
 
@@ -623,9 +654,9 @@ onMounted(async () => {
 }
 
 .pagination button:hover:not(:disabled) {
-  background: #2196F3;
+  background: #2196f3;
   color: white;
-  border-color: #2196F3;
+  border-color: #2196f3;
   transform: translateY(-2px);
 }
 
@@ -690,6 +721,4 @@ onMounted(async () => {
     border: 2px solid #e0e0e0 !important;
   }
 }
-
-
 </style>

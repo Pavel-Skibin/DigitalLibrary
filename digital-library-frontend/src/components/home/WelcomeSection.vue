@@ -1,29 +1,19 @@
 <template>
   <div class="welcome-section">
     <div class="welcome-text">
-      <h1 class="page-title">
-        Добро пожаловать<br>
-      </h1>
+      <h1 class="page-title">Добро пожаловать<br /></h1>
       <p class="welcome-description">
-        Исследуйте наш обширный каталог книг,<br>
-        оставляйте отзывы и оценки, создавайте<br>
-        закладки для последующего чтения.<br>
+        Исследуйте наш обширный каталог книг,<br />
+        оставляйте отзывы и оценки, создавайте<br />
+        закладки для последующего чтения.<br />
         <strong>Приятного времяпрепровождения!</strong>
       </p>
-      <div class="quick-actions">
-        <router-link to="/books" class="action-button primary">
-          📚 Смотреть книги
-        </router-link>
-        <router-link to="/authors" class="action-button secondary">
-          👤 Список авторов
-        </router-link>
-      </div>
     </div>
     <div class="welcome-image">
       <img
-          src="@/assets/images/welcome-illustration.png"
-          alt="Иллюстрация библиотеки"
-          class="illustration"
+        src="@/assets/images/welcome-illustration.png"
+        alt="Иллюстрация библиотеки"
+        class="illustration"
       />
     </div>
   </div>
@@ -39,8 +29,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 60px;
-  min-height: calc(100vh - 200px);
-  padding: 40px;
+  min-height: 400px;
+  padding: 60px 40px;
   animation: fadeInUp 0.8s ease-out;
 }
 
@@ -91,57 +81,13 @@
   font-size: 18px;
   line-height: 1.8;
   color: #666;
-  margin: 0 0 32px 0;
+  margin: 0;
   animation: slideInLeft 0.8s ease-out 0.4s both;
 }
 
 .welcome-description strong {
   color: #333;
   font-weight: 600;
-}
-
-.quick-actions {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  animation: slideInLeft 0.8s ease-out 0.6s both;
-}
-
-.action-button {
-  padding: 14px 28px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: all 0.3s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-button.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.action-button.primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.action-button.secondary {
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
-}
-
-.action-button.secondary:hover {
-  background: #667eea;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .welcome-image {
@@ -151,7 +97,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -185,7 +132,7 @@
     flex-direction: column;
     text-align: center;
     gap: 40px;
-    padding: 20px;
+    padding: 40px 20px;
   }
 
   .welcome-text {
@@ -194,15 +141,6 @@
 
   .page-title {
     font-size: 32px;
-  }
-
-  .quick-actions {
-    justify-content: center;
-  }
-
-  .action-button {
-    flex: 1;
-    justify-content: center;
   }
 
   .welcome-image {

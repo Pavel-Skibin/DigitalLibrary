@@ -1,0 +1,84 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# CD: запускается только при push/merge в ветку main
+# Что делает:
+#   1. Подключается к серверу по SSH от имени пользователя deploy (не root!)
+#   2. Делает git pull (безопасный fast-forward)
+#   3. Пересобирает Docker-образы (с кэшем — быстро)
+#   4. Перезапускает контейнеры
+#   5. Проверяет реальный HTTP-ответ от API
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: CD — Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }} # deploy (не root)
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e  # прерывать при любой ошибке
+
+            echo "=== Pulling latest code ==="
+            cd /opt/app
+
+            git fetch origin main
+
+            # Безопасный fast-forward: упадёт если есть незакоммиченные изменения.
+            # Это НАМЕРЕННО — конфиги на сервере не должны меняться вручную.
+            # Все правки делай в git и пушь через этот pipeline.
+            git merge --ff-only origin/main
+
+            echo "=== Rebuilding services (with cache) ==="
+            # Без --no-cache: Docker использует слои из кэша — сборка 1-2 мин вместо 10.
+            # Если нужна чистая сборка (после смены базового образа и т.п.) —
+            # добавь коммит с пустым изменением или запусти вручную с --no-cache.
+            docker compose build \
+              user-service \
+              book-catalog-service \
+              comment-rating-service \
+              storage-service \
+              api-gateway \
+              frontend
+
+            echo "=== Restarting services ==="
+            # Примечание по миграциям БД:
+            # Flyway запускается АВТОМАТИЧЕСКИ при старте каждого Spring Boot сервиса.
+            # Порядок: postgres стартует → сервис стартует → Flyway применяет миграции → приложение готово.
+            # Отдельный шаг миграции не нужен.
+            docker compose up -d \
+              user-service \
+              book-catalog-service \
+              comment-rating-service \
+              storage-service \
+              api-gateway \
+              frontend
+
+            echo "=== Waiting for services to start (30s) ==="
+            sleep 30
+
+            echo "=== Health check ==="
+            # Проверяем реальный HTTP-ответ от API Gateway
+            # -f = fail on HTTP error codes (4xx, 5xx)
+            # --retry 5 = до 5 попыток с паузой
+            curl -f --retry 5 --retry-delay 5 --retry-connrefused \
+              http://localhost:8080/actuator/health \
+              | grep -q '"status":"UP"' \
+              && echo "✅ API Gateway is UP" \
+              || { echo "❌ Health check failed!"; exit 1; }
+
+            echo "=== Deploy complete! ==="

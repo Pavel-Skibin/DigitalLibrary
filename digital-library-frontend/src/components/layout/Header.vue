@@ -6,20 +6,17 @@
         <!-- Для гостей -->
         <template v-if="!isAuthenticated">
           <span class="username guest-label">👤 Гость</span>
-          <button @click="goToLogin" class="login-button">
-            🔑 Войти
-          </button>
+          <button @click="goToLogin" class="login-button">🔑 Войти</button>
         </template>
 
         <!-- Для авторизованных пользователей -->
         <template v-else>
           <span v-if="loading" class="username loading-text">Загрузка...</span>
           <span v-else-if="username" class="username">👤 {{ username }}</span>
-          <button
-              @click="logout"
-              class="logout-button"
-              :disabled="loading"
-          >
+          <button @click="goToProfile" class="profile-button">
+            📂 Мой кабинет
+          </button>
+          <button @click="logout" class="logout-button" :disabled="loading">
             🚪 Выйти
           </button>
         </template>
@@ -29,29 +26,33 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUser } from '@/composables/useUser'
-import { getCookie } from '@/utils/cookies'
+import { onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useUser } from "@/composables/useUser";
+import { getCookie } from "@/utils/cookies";
 
-const router = useRouter()
-const { username, loading, fetchUserProfile, logout } = useUser()
+const router = useRouter();
+const { username, loading, fetchUserProfile, logout } = useUser();
 
 // Проверка авторизации
 const isAuthenticated = computed(() => {
-  return !!getCookie('jwt')
-})
+  return !!getCookie("jwt");
+});
 
 const goToLogin = () => {
-  router.push('/login')
-}
+  router.push("/login");
+};
+
+const goToProfile = () => {
+  router.push("/profile");
+};
 
 onMounted(async () => {
   // Загружаем профиль только если есть токен
   if (isAuthenticated.value) {
-    await fetchUserProfile()
+    await fetchUserProfile();
   }
-})
+});
 </script>
 
 <style scoped>
@@ -101,7 +102,8 @@ onMounted(async () => {
 }
 
 .login-button,
-.logout-button {
+.logout-button,
+.profile-button {
   background: none;
   border: 1px solid #e8d9c7;
   border-radius: 6px;
@@ -121,13 +123,24 @@ onMounted(async () => {
   transform: translateY(-1px);
 }
 
+.profile-button {
+  background-color: #e8f4f8;
+  border-color: #c8dde8;
+}
+
+.profile-button:hover {
+  background-color: #d8e8f0;
+  transform: translateY(-1px);
+}
+
 .logout-button:hover:not(:disabled) {
   background-color: #e8d9c7;
   transform: translateY(-1px);
 }
 
 .logout-button:active:not(:disabled),
-.login-button:active {
+.login-button:active,
+.profile-button:active {
   transform: translateY(0);
 }
 
@@ -135,7 +148,4 @@ onMounted(async () => {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
-
-
 </style>

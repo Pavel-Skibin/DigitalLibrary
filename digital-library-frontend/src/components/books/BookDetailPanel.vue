@@ -3,10 +3,10 @@
     <!-- Обложка -->
     <div class="detail-cover">
       <img
-          v-if="coverUrl"
-          :src="coverUrl"
-          :alt="book.title"
-          class="cover-image"
+        v-if="coverUrl"
+        :src="coverUrl"
+        :alt="book.title"
+        class="cover-image"
       />
       <div v-else class="placeholder-cover">
         {{ book.title.slice(0, 4) }}
@@ -15,16 +15,19 @@
 
     <!-- Информация о книге -->
     <h2 class="book-title">{{ book.title }}</h2>
-    <p class="book-author">{{ book.authors.join(', ') }}</p>
+    <p class="book-author">{{ book.authors.join(", ") }}</p>
 
     <!-- Рейтинг -->
     <div class="rating-stars large">
       <span
-          v-for="starIndex in 5"
-          :key="starIndex"
-          :class="getStarClass(starIndex).class"
-          :style="{ '--fill-percentage': getStarClass(starIndex).fillPercentage + '%' }"
-      >★</span>
+        v-for="starIndex in 5"
+        :key="starIndex"
+        :class="getStarClass(starIndex).class"
+        :style="{
+          '--fill-percentage': getStarClass(starIndex).fillPercentage + '%',
+        }"
+        >★</span
+      >
       <span class="average-rating">
         {{ formatRating(book.averageRating) }}
       </span>
@@ -32,13 +35,19 @@
 
     <!-- Описание -->
     <p class="book-description">
-      {{ book.description || 'Описание отсутствует.' }}
+      {{ book.description || "Описание отсутствует." }}
     </p>
 
-    <!-- Кнопка "Читать" -->
-    <button type="button" class="read-button" @click="$emit('open-reader')">
-      📖 Читать
-    </button>
+    <!-- Действия с книгой -->
+    <div class="book-actions">
+      <!-- Кнопка "Читать" -->
+      <button type="button" class="read-button" @click="$emit('open-reader')">
+        📖 Читать
+      </button>
+
+      <!-- Кнопка "В избранное" -->
+      <FavoriteButton v-if="book.id" :book-id="book.id" />
+    </div>
 
     <!-- Секция рейтинга -->
     <div class="rating-section">
@@ -46,11 +55,15 @@
         <div class="rating-display">
           <div class="rating-stars-interactive">
             <span
-                v-for="starIndex in 5"
-                :key="starIndex"
-                :class="getStarClass(starIndex).class"
-                :style="{ '--fill-percentage': getStarClass(starIndex).fillPercentage + '%' }"
-            >★</span>
+              v-for="starIndex in 5"
+              :key="starIndex"
+              :class="getStarClass(starIndex).class"
+              :style="{
+                '--fill-percentage':
+                  getStarClass(starIndex).fillPercentage + '%',
+              }"
+              >★</span
+            >
           </div>
           <span class="rating-value">
             {{ formatRating(book.averageRating) }}
@@ -62,11 +75,11 @@
       </div>
 
       <button
-          v-if="isAuthenticated"
-          @click="$emit('open-rating')"
-          class="btn-rate"
+        v-if="isAuthenticated"
+        @click="$emit('open-rating')"
+        class="btn-rate"
       >
-        {{ userRating ? 'Изменить оценку' : 'Оценить книгу' }}
+        {{ userRating ? "Изменить оценку" : "Оценить книгу" }}
       </button>
 
       <div v-else class="auth-message-inline">
@@ -80,44 +93,45 @@
 </template>
 
 <script setup>
-import {formatRating} from '@/utils/formatters'
+import { formatRating } from "@/utils/formatters";
+import FavoriteButton from "./FavoriteButton.vue";
 
 const props = defineProps({
   book: {
     type: Object,
-    required: true
+    required: true,
   },
   coverUrl: {
     type: String,
-    default: null
+    default: null,
   },
   userRating: {
     type: Object,
-    default: null
+    default: null,
   },
   isAuthenticated: {
     type: Boolean,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-defineEmits(['open-reader', 'open-rating', 'go-to-login'])
+defineEmits(["open-reader", "open-rating", "go-to-login"]);
 
 function getStarClass(starIndex) {
-  const rating = props.book.averageRating || 0
+  const rating = props.book.averageRating || 0;
 
   if (starIndex <= rating) {
-    return {class: 'filled-star', fillPercentage: 100}
+    return { class: "filled-star", fillPercentage: 100 };
   }
 
   if (starIndex - 1 < rating && starIndex > rating) {
     return {
-      class: 'fractional-star',
-      fillPercentage: (rating - (starIndex - 1)) * 100
-    }
+      class: "fractional-star",
+      fillPercentage: (rating - (starIndex - 1)) * 100,
+    };
   }
 
-  return {class: 'empty-star', fillPercentage: 0}
+  return { class: "empty-star", fillPercentage: 0 };
 }
 </script>
 
@@ -185,7 +199,7 @@ function getStarClass(starIndex) {
 }
 
 .filled-star {
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .empty-star {
@@ -198,10 +212,10 @@ function getStarClass(starIndex) {
 }
 
 .fractional-star::before {
-  content: '★';
+  content: "★";
   position: absolute;
   left: 0;
-  color: #FFD700;
+  color: #ffd700;
   overflow: hidden;
   width: var(--fill-percentage);
 }
@@ -219,6 +233,13 @@ function getStarClass(starIndex) {
   color: #555;
   margin: 8px 0;
   white-space: pre-wrap;
+}
+
+.book-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0;
 }
 
 .read-button {
@@ -283,7 +304,7 @@ function getStarClass(starIndex) {
 
 .user-rating-badge {
   padding: 6px 12px;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   border-radius: 16px;
   font-size: 13px;
@@ -293,18 +314,20 @@ function getStarClass(starIndex) {
 .btn-rate {
   width: 100%;
   padding: 12px;
-  background-color: #FF9800;
+  background-color: #ff9800;
   color: white;
   border: none;
   border-radius: 6px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
 }
 
 .btn-rate:hover {
-  background-color: #F57C00;
+  background-color: #f57c00;
   transform: translateY(-2px);
 }
 
@@ -334,8 +357,6 @@ function getStarClass(starIndex) {
     align-items: flex-start;
   }
 }
-
-
 
 .inline-login-link {
   background: none;
