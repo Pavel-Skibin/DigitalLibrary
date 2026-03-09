@@ -365,7 +365,7 @@ function scrollRight() {
   padding: 10px 0;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e0 #f7fafc;
-  max-width: 480px;
+  max-width: min(100%, 680px);
   margin: 0 auto;
 }
 
@@ -532,7 +532,7 @@ function scrollRight() {
   }
 
   .books-carousel {
-    max-width: 540px;
+    max-width: min(100%, 1200px);
   }
 }
 
@@ -554,7 +554,7 @@ function scrollRight() {
   }
 
   .books-carousel {
-    max-width: 430px;
+    max-width: min(100%, 800px);
   }
 }
 
@@ -573,7 +573,7 @@ function scrollRight() {
   }
 
   .books-carousel {
-    max-width: 400px;
+    max-width: min(100%, 520px);
   }
 
   .carousel-arrow {

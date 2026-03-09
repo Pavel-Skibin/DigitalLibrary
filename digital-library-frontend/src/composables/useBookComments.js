@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+﻿import { ref } from 'vue'
 import { getCookie } from '@/utils/cookies'
 
 export function useBookComments() {
@@ -33,7 +33,6 @@ export function useBookComments() {
                 hasMore.value = !pageData.last
             }
         } catch (error) {
-            console.error('Ошибка загрузки комментариев:', error)
             comments.value = []
         } finally {
             loading.value = false
@@ -65,7 +64,6 @@ export function useBookComments() {
                 return false
             }
         } catch (error) {
-            console.error('Ошибка отправки комментария:', error)
             alert('Не удалось отправить комментарий')
             return false
         } finally {
@@ -95,7 +93,6 @@ export function useBookComments() {
                 return true
             }
         } catch (error) {
-            console.error('Ошибка обновления комментария:', error)
             alert('Не удалось обновить комментарий')
             return false
         } finally {
@@ -119,7 +116,6 @@ export function useBookComments() {
                 return true
             }
         } catch (error) {
-            console.error('Ошибка удаления:', error)
             alert('Не удалось удалить комментарий')
             return false
         }
@@ -142,7 +138,6 @@ export function useBookComments() {
                 return true
             }
         } catch (error) {
-            console.error('Ошибка удаления:', error)
             alert('Не удалось удалить комментарий')
             return false
         }
@@ -166,7 +161,6 @@ export function useBookComments() {
                 return true
             }
         } catch (error) {
-            console.error('Ошибка восстановления:', error)
             alert('Не удалось восстановить комментарий')
             return false
         }

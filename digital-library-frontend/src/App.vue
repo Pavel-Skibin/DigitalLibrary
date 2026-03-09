@@ -23,6 +23,7 @@ export default {
   color: #5c4033;
   background-color: #fdf6e9;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 </style>

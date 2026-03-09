@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+﻿import { ref } from 'vue'
 import { getCookie } from '@/utils/cookies'
 
 export function useAdminAuth() {
@@ -21,7 +21,6 @@ export function useAdminAuth() {
 
             if (response.ok) {
                 const userData = await response.json()
-                console.log('User role:', userData.roleName)
 
                 isAdmin.value = userData.roleName === 'ROLE_ADMIN' || userData.roleName === 'ADMIN'
                 isModerator.value = userData.roleName === 'ROLE_MODERATOR' || userData.roleName === 'MODERATOR'
@@ -31,7 +30,6 @@ export function useAdminAuth() {
 
             return false
         } catch (error) {
-            console.error('Auth check error:', error)
             return false
         } finally {
             isLoading.value = false

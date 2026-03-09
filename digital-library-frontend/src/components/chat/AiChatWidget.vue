@@ -906,4 +906,41 @@ async function sendMessage() {
   padding: 8px 16px;
   flex-shrink: 0;
 }
+
+/* ── Mobile Responsive ─────────────────────────────────────── */
+@media (max-width: 767px) {
+  .chat-fab {
+    bottom: 16px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .chat-panel {
+    right: 8px;
+    bottom: 80px;
+    width: calc(100vw - 16px);
+    max-width: none;
+    height: 70vh;
+    max-height: calc(100dvh - 100px);
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-panel {
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 80vh;
+    max-height: none;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+  }
+
+  .chat-fab {
+    bottom: 12px;
+    right: 12px;
+  }
+}
 </style>

@@ -52,6 +52,7 @@ jobs:
               comment-rating-service \
               storage-service \
               api-gateway \
+              ai-service \
               frontend
 
             echo "=== Restarting services ==="
@@ -65,6 +66,7 @@ jobs:
               comment-rating-service \
               storage-service \
               api-gateway \
+              ai-service \
               frontend
 
             echo "=== Waiting for services to start (30s) ==="

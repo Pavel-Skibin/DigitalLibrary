@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-layout">
     <Header />
     <div class="library-container">
@@ -54,6 +54,9 @@
       </main>
 
       <aside v-if="selectedBook" class="book-detail-panel">
+        <button class="panel-mobile-close" @click="selectedBook = null">
+          ← Назад к списку
+        </button>
         <BookDetailPanel
           :book="selectedBook"
           :cover-url="coverImageUrls[selectedBook.id]"
@@ -188,7 +191,6 @@ async function loadBooks(page = 0) {
       authorName.value = books.value[0].authors[0] || "Неизвестный автор";
     }
   } catch (error) {
-    console.error("Ошибка загрузки книг:", error);
     books.value = [];
     selectedBook.value = null;
   } finally {
@@ -236,7 +238,6 @@ async function loadSearchResults() {
 
     applyClientPagination(0);
   } catch (error) {
-    console.error("Ошибка поиска:", error);
     books.value = [];
     selectedBook.value = null;
     searchResultsCache.value = [];
@@ -288,9 +289,7 @@ async function loadBookDetails(bookId) {
     const data = await response.json();
     selectedBook.value = { ...selectedBook.value, ...data };
     fetchBookCover(bookId);
-  } catch (error) {
-    console.error("Ошибка загрузки деталей книги:", error);
-  }
+  } catch (error) {}
 }
 
 async function openBookInReader() {
@@ -340,16 +339,8 @@ async function handleSubmitRating() {
     if (userId.value) {
       try {
         await invalidateUserCache(userId.value);
-        console.log(
-          "✓ Кеш рекомендаций обновлен после оценки книги",
-          "userId=",
-          userId.value,
-        );
-      } catch (error) {
-        console.error("Ошибка инвалидации кеша:", error);
-      }
+      } catch (error) {}
     } else {
-      console.warn("⚠ userId не найден, кеш не обновлен");
     }
   }
 }
@@ -385,9 +376,7 @@ async function checkAuthentication() {
         const userData = await response.json();
         currentUserId.value = userData.id;
       }
-    } catch (error) {
-      console.error("Ошибка аутентификации:", error);
-    }
+    } catch (error) {}
   }
 }
 
@@ -423,11 +412,6 @@ onMounted(async () => {
 
   // ИСПРАВЛЕНИЕ: сначала проверяем права
   await checkAccess();
-  console.log("🔐 Auth status (AuthorBooks):", {
-    isAdmin: isAdmin.value,
-    isModerator: isModerator.value,
-    isModeratorOrAdmin: isModeratorOrAdmin.value,
-  });
 
   // Затем загружаем данные
   await loadBooks(0);

@@ -1,4 +1,4 @@
-import { ref } from "vue";
+﻿import { ref } from "vue";
 import { favoritesApi } from "@/api/favorites";
 
 /**
@@ -21,7 +21,6 @@ export function useFavorites() {
       const response = await favoritesApi.checkFavoriteStatus(bookId);
       isFavorite.value = response.isFavorite;
     } catch (error) {
-      console.error("Ошибка проверки статуса избранного:", error);
       isFavorite.value = false;
     } finally {
       loading.value = false;
@@ -45,7 +44,6 @@ export function useFavorites() {
       }
       return true;
     } catch (error) {
-      console.error("Ошибка изменения избранного:", error);
 
       // Проверяем, не конфликт ли это (книга уже добавлена/удалена)
       if (error.message?.includes("already")) {
@@ -69,7 +67,6 @@ export function useFavorites() {
       favorites.value = response.content || response;
       return response;
     } catch (error) {
-      console.error("Ошибка загрузки избранного:", error);
       favorites.value = [];
       return null;
     } finally {
@@ -87,7 +84,6 @@ export function useFavorites() {
       favoriteBookIds.value = ids || [];
       return ids;
     } catch (error) {
-      console.error("Ошибка загрузки ID избранных книг:", error);
       favoriteBookIds.value = [];
       return [];
     } finally {

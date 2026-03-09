@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-layout">
     <Header />
     <div class="library-container">
@@ -107,7 +107,6 @@ function handlePageChange(page) {
 onMounted(async () => {
 
   await checkAccess()
-  console.log('🔐 Auth status:', { isAdmin: isAdmin.value, isModerator: isModerator.value })
   await loadAuthors(0)
 })
 </script>

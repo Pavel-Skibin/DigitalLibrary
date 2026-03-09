@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="tab-panel">
     <div class="panel-header">
       <h2>Управление жанрами</h2>
@@ -65,7 +65,6 @@ async function loadGenres() {
       genres.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка загрузки жанров:', error)
     alert('Не удалось загрузить жанры')
   } finally {
     loading.value = false
@@ -109,7 +108,6 @@ async function handleSave(formData) {
       alert(`Ошибка: ${error}`)
     }
   } catch (error) {
-    console.error('Ошибка сохранения жанра:', error)
     alert('Не удалось сохранить жанр')
   } finally {
     saving.value = false
@@ -135,7 +133,6 @@ async function handleDelete(genreId) {
       alert(`Ошибка: ${error}`)
     }
   } catch (error) {
-    console.error('Ошибка удаления жанра:', error)
     alert('Не удалось удалить жанр')
   }
 }

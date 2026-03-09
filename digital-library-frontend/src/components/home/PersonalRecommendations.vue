@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="personal-recommendations">
     <div class="section-header">
       <h2 class="section-title">
@@ -129,19 +129,9 @@ const {
 
 // Load recommendations on mount
 onMounted(async () => {
-  console.log("[PersonalRecommendations] Component mounted");
-  console.log(
-    "[PersonalRecommendations] isAuthenticated:",
-    isAuthenticated.value,
-  );
-
   if (isAuthenticated.value) {
-    console.log(
-      "[PersonalRecommendations] Loading personal recommendations...",
-    );
     await loadPersonalRecommendations(null, 12);
   } else {
-    console.log("[PersonalRecommendations] User not authenticated, skipping");
   }
 });
 
@@ -205,10 +195,12 @@ function scrollRight() {
 
 <style scoped>
 .personal-recommendations {
-  padding: 30px 20px;
+  padding: 30px 32px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  margin: 0 0 20px 0;
+  margin: 0 auto 20px;
   border-radius: 16px;
+  max-width: 900px;
+  box-sizing: border-box;
 }
 
 .section-header {
@@ -363,14 +355,13 @@ function scrollRight() {
 /* Recommendations Carousel */
 .recommendations-carousel {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   overflow-x: auto;
   scroll-behavior: smooth;
   padding: 10px 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.1);
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .recommendations-carousel::-webkit-scrollbar {
@@ -545,18 +536,19 @@ function scrollRight() {
   }
 
   .personal-recommendations {
-    padding: 50px 35px;
-  }
-
-  .recommendations-carousel {
-    max-width: 540px;
+    padding: 50px 40px;
+    max-width: 1100px;
   }
 }
 
 /* Desktop (1400px - 1920px) */
-@media (max-width: 1920px) and (min-width: 1400px) {
+@media (max-width: 1919px) and (min-width: 1400px) {
   .book-card {
-    width: 135px;
+    width: 140px;
+  }
+
+  .personal-recommendations {
+    max-width: 1000px;
   }
 }
 
@@ -571,11 +563,8 @@ function scrollRight() {
   }
 
   .personal-recommendations {
-    padding: 35px 25px;
-  }
-
-  .recommendations-carousel {
-    max-width: 430px;
+    padding: 28px 28px;
+    max-width: 860px;
   }
 }
 
@@ -590,16 +579,13 @@ function scrollRight() {
   }
 
   .personal-recommendations {
-    padding: 25px 20px;
-    margin: 0 0 20px 0;
+    padding: 22px 20px;
+    margin: 0 auto 20px;
+    max-width: 100%;
   }
 
   .book-cover {
     height: 170px;
-  }
-
-  .recommendations-carousel {
-    max-width: 400px;
   }
 
   .carousel-arrow {

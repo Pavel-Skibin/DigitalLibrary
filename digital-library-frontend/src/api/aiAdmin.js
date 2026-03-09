@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API-хелперы для AI-функций панели администратора:
  * - автозаполнение метаданных книги через DeepSeek
  * - запуск и отслеживание задач векторизации
@@ -103,9 +103,6 @@ export async function deleteVectorization(bookId) {
   });
   // Если книга не была векторизована — не считаем ошибкой
   if (!res.ok && res.status !== 404) {
-    console.warn(
-      `Не удалось очистить Qdrant для книги ${bookId}: HTTP ${res.status}`,
-    );
   }
   return res.ok ? res.json() : null;
 }
