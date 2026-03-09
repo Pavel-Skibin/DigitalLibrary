@@ -35,5 +35,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 
 EXPOSE 8091
 
+ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8"
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
