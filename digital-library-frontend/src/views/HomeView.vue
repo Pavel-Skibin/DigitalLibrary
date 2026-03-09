@@ -9,9 +9,6 @@
         <div class="content-section">
           <!-- Personalized Recommendations (only for authenticated users) -->
           <PersonalRecommendations v-if="isAuthenticated" />
-
-          <!-- Popular Books (for all users) -->
-          <PopularBooks />
         </div>
 
         <div class="content-section">
@@ -28,7 +25,6 @@ import Header from "@/components/layout/Header.vue";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
 import LibraryStats from "@/components/home/LibraryStats.vue";
 import PersonalRecommendations from "@/components/home/PersonalRecommendations.vue";
-import PopularBooks from "@/components/home/PopularBooks.vue";
 import { useAdminAuth } from "@/composables/useAdminAuth";
 import { getCookie } from "@/utils/cookies";
 

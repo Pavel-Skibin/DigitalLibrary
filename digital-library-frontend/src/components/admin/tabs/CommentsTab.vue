@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="tab-panel">
     <div class="panel-header">
       <h2>Модерация комментариев</h2>
@@ -119,7 +119,6 @@ watch(bookSearchQuery, () => {
         foundBooks.value = data.content || []
       }
     } catch (error) {
-      console.error('Ошибка поиска книг:', error)
     }
   }, 300)
 })
@@ -153,7 +152,6 @@ async function loadComments(bookId) {
       alert('Не удалось загрузить комментарии')
     }
   } catch (error) {
-    console.error('Ошибка загрузки комментариев:', error)
     alert('Ошибка соединения с сервером')
   } finally {
     loadingComments.value = false
@@ -179,7 +177,6 @@ async function deleteComment(commentId) {
       alert(`Ошибка удаления: ${errorText}`)
     }
   } catch (error) {
-    console.error('Ошибка удаления комментария:', error)
     alert('Не удалось удалить комментарий')
   }
 }
@@ -203,7 +200,6 @@ async function restoreComment(commentId) {
       alert(`Ошибка восстановления: ${errorText}`)
     }
   } catch (error) {
-    console.error('Ошибка восстановления комментария:', error)
     alert('Не удалось восстановить комментарий')
   }
 }

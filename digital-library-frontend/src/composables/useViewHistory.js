@@ -1,4 +1,4 @@
-import { ref } from "vue";
+﻿import { ref } from "vue";
 import { viewHistoryApi } from "@/api/viewHistory";
 
 /**
@@ -22,7 +22,6 @@ export function useViewHistory() {
       totalElements.value = response.totalElements || history.value.length;
       return response;
     } catch (error) {
-      console.error("Ошибка загрузки истории просмотров:", error);
       history.value = [];
       return null;
     } finally {
@@ -38,7 +37,6 @@ export function useViewHistory() {
       const ids = await viewHistoryApi.getViewedBookIds();
       return ids || [];
     } catch (error) {
-      console.error("Ошибка загрузки ID просмотренных книг:", error);
       return [];
     }
   }

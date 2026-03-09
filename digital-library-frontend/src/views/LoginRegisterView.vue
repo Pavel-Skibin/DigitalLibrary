@@ -1,4 +1,4 @@
-<!-- src/components/LoginRegisterView.vue -->
+﻿<!-- src/components/LoginRegisterView.vue -->
 <template>
   <div class="wrapper">
     <div class="container" :class="{ active: isRegistering }">
@@ -7,11 +7,21 @@
         <form @submit.prevent="login">
           <h1>Login</h1>
           <div class="input-box">
-            <input type="text" v-model="loginForm.username" placeholder="Username" required />
+            <input
+              type="text"
+              v-model="loginForm.username"
+              placeholder="Username"
+              required
+            />
             <i class="bx bxs-user"></i>
           </div>
           <div class="input-box">
-            <input type="password" v-model="loginForm.password" placeholder="Password" required />
+            <input
+              type="password"
+              v-model="loginForm.password"
+              placeholder="Password"
+              required
+            />
             <i class="bx bxs-lock-alt"></i>
           </div>
           <div class="forgot-link">
@@ -26,15 +36,30 @@
         <form @submit.prevent="register">
           <h1>Registration</h1>
           <div class="input-box">
-            <input type="text" v-model="registerForm.username" placeholder="Username" required />
+            <input
+              type="text"
+              v-model="registerForm.username"
+              placeholder="Username"
+              required
+            />
             <i class="bx bxs-user"></i>
           </div>
           <div class="input-box">
-            <input type="email" v-model="registerForm.email" placeholder="Email" required />
+            <input
+              type="email"
+              v-model="registerForm.email"
+              placeholder="Email"
+              required
+            />
             <i class="bx bxs-envelope"></i>
           </div>
           <div class="input-box">
-            <input type="password" v-model="registerForm.password" placeholder="Password" required />
+            <input
+              type="password"
+              v-model="registerForm.password"
+              placeholder="Password"
+              required
+            />
             <i class="bx bxs-lock-alt"></i>
           </div>
           <button type="submit" class="btn">Register</button>
@@ -46,13 +71,17 @@
         <div class="toggle-panel toggle-left">
           <h1>Hello, Welcome!</h1>
           <p>Don't have an account?</p>
-          <button class="btn register-btn" @click="isRegistering = true">Register</button>
+          <button class="btn register-btn" @click="isRegistering = true">
+            Register
+          </button>
         </div>
 
         <div class="toggle-panel toggle-right">
           <h1>Welcome Back!</h1>
           <p>Already have an account?</p>
-          <button class="btn login-btn" @click="isRegistering = false">Login</button>
+          <button class="btn login-btn" @click="isRegistering = false">
+            Login
+          </button>
         </div>
       </div>
     </div>
@@ -61,12 +90,12 @@
 
 <script>
 export default {
-  name: 'LoginRegisterView',
+  name: "LoginRegisterView",
   data() {
     return {
       isRegistering: false,
-      loginForm: { username: '', password: '' },
-      registerForm: { username: '', email: '', password: '' }
+      loginForm: { username: "", password: "" },
+      registerForm: { username: "", email: "", password: "" },
     };
   },
   methods: {
@@ -74,16 +103,16 @@ export default {
 
     async login() {
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          credentials: 'include', // ← ВАЖНО для cookie
+          credentials: "include", // ← ВАЖНО для cookie
           body: JSON.stringify({
             username: this.loginForm.username,
-            password: this.loginForm.password
-          })
+            password: this.loginForm.password,
+          }),
         });
 
         if (response.ok) {
@@ -93,58 +122,52 @@ export default {
           // ИЛИ просто полагаемся на серверную cookie (если HttpOnly: true)
           document.cookie = `jwt=${data.token}; path=/; max-age=86400; SameSite=Lax`;
 
-          this.$router.push('/');
+          this.$router.push("/");
         } else {
-          alert('Неверный логин или пароль');
+          alert("Неверный логин или пароль");
         }
       } catch (error) {
-        console.error('Login error:', error);
-        alert('Ошибка подключения');
+        alert("Ошибка подключения");
       }
     },
 
     async register() {
       try {
-        console.log('=== Registration Process Started ===');
-
         const registrationData = {
           ...this.registerForm,
-          roleId: 3
+          roleId: 3,
         };
 
-        console.log('Registration data:', registrationData);
+        const response = await this.$http.post("/users", registrationData);
 
-        const response = await this.$http.post('/users', registrationData);
-
-        console.log('✓ Registration successful:', response);
-
-        alert('Регистрация успешна! Теперь войдите в систему.');
+        alert("Регистрация успешна! Теперь войдите в систему.");
         this.isRegistering = false;
         this.registerForm = {
-          username: '',
-          email: '',
-          password: ''
+          username: "",
+          email: "",
+          password: "",
         };
       } catch (error) {
-        console.error('✗ Registration failed:', error);
-        console.error('Error response:', error.response);
-
         if (error.response?.status === 400) {
-          alert('Ошибка валидации: ' + (error.response.data || 'Проверьте введенные данные'));
+          alert(
+            "Ошибка валидации: " +
+              (error.response.data || "Проверьте введенные данные"),
+          );
         } else if (error.response?.status === 409) {
-          alert('Пользователь с таким именем или email уже существует');
+          alert("Пользователь с таким именем или email уже существует");
         } else {
-          alert('Ошибка регистрации: ' + (error.response?.data || error.message));
+          alert(
+            "Ошибка регистрации: " + (error.response?.data || error.message),
+          );
         }
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
-
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
 * {
   margin: 0;
@@ -161,16 +184,16 @@ export default {
   align-items: center;
   min-height: 100vh;
   background: #fdf8ed;
+  padding: 20px;
 }
 
 .container {
   position: relative;
-  width: 850px;
+  width: min(850px, 100%);
   height: 550px;
   background: #fff;
-  margin: 20px;
   border-radius: 30px;
-  box-shadow: 0 0 30px rgba(0, 0, 0, .1);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
@@ -202,7 +225,9 @@ form {
   text-align: center;
   padding: 40px;
   z-index: 1;
-  transition: .6s ease-in-out 1.2s, visibility 0s 1s;
+  transition:
+    0.6s ease-in-out 1.2s,
+    visibility 0s 1s;
 }
 
 .container.active .form-box {
@@ -261,7 +286,7 @@ form {
   height: 48px;
   background: #e8d9c8;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, .05);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   border: none;
   cursor: pointer;
   font-size: 16px;
@@ -281,7 +306,7 @@ form {
 }
 
 .toggle-box::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -250%;
   width: 300%;
@@ -306,7 +331,7 @@ form {
   justify-content: center;
   align-items: center;
   z-index: 2;
-  transition: .6s ease-in-out;
+  transition: 0.6s ease-in-out;
 }
 
 .toggle-panel.toggle-left {
@@ -316,12 +341,12 @@ form {
 
 .container.active .toggle-panel.toggle-left {
   left: -50%;
-  transition-delay: .6s;
+  transition-delay: 0.6s;
 }
 
 .toggle-panel.toggle-right {
   right: -50%;
-  transition-delay: .6s;
+  transition-delay: 0.6s;
 }
 
 .container.active .toggle-panel.toggle-right {

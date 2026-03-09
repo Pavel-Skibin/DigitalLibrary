@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+﻿import { ref } from 'vue'
 import { makeFB2 } from '@/foliate-js/fb2.js'
 
 export function useBookCover() {
@@ -21,7 +21,6 @@ export function useBookCover() {
                 coverImageUrls.value[bookId] = null
             }
         } catch (error) {
-            console.error(`Ошибка загрузки обложки ${bookId}:`, error)
             coverImageUrls.value[bookId] = null
         }
     }

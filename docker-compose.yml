@@ -99,6 +99,7 @@ services:
       APP_BOOKS_STORAGE_PATH: /app/books
       COMMENT_RATING_SERVICE_URL: http://comment-rating-service:8082
       USER_SERVICE_URL: http://user-service:8081
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost}
     volumes:
       - ${BOOKS_PATH:-./books}:/app/books
     depends_on:
@@ -123,6 +124,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       USER_SERVICE_URL: http://user-service:8081
       BOOK_SERVICE_URL: http://book-catalog-service:8091
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost}
     depends_on:
       postgres:
         condition: service_healthy

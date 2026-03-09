@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="tab-panel statistics-panel">
     <h2>📊 Статистика библиотеки</h2>
 
@@ -253,7 +253,6 @@ async function loadSystemStatistics() {
       systemStats.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка загрузки системной статистики:', error)
   }
 }
 
@@ -270,7 +269,6 @@ async function loadTopRatedBooks() {
       topRatedBooks.value = data.content || []
     }
   } catch (error) {
-    console.error('Ошибка загрузки топ книг:', error)
   } finally {
     loadingTopRatedBooks.value = false
   }
@@ -289,7 +287,6 @@ async function loadTopGenres() {
       topGenres.value = data.content || []
     }
   } catch (error) {
-    console.error('Ошибка загрузки топ жанров:', error)
   } finally {
     loadingTopGenres.value = false
   }
@@ -308,7 +305,6 @@ async function loadTopAuthors() {
       topAuthors.value = data.content || []
     }
   } catch (error) {
-    console.error('Ошибка загрузки топ авторов:', error)
   } finally {
     loadingTopAuthors.value = false
   }
@@ -326,7 +322,6 @@ async function loadRatingDistribution() {
       ratingDistribution.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка загрузки распределения оценок:', error)
   } finally {
     loadingRatingDistribution.value = false
   }
@@ -346,7 +341,6 @@ async function loadUserRoleStats() {
       userRoleStats.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка загрузки статистики ролей:', error)
   } finally {
     loadingUserRoles.value = false
   }
@@ -365,7 +359,6 @@ async function loadActiveCommenters() {
       topCommenters.value = data.content || []
     }
   } catch (error) {
-    console.error('Ошибка загрузки активных комментаторов:', error)
   } finally {
     loadingActiveCommenters.value = false
   }
@@ -385,7 +378,6 @@ async function loadRecentComments() {
       await loadBookTitles()
     }
   } catch (error) {
-    console.error('Ошибка загрузки последних комментариев:', error)
   } finally {
     loadingRecentComments.value = false
   }
@@ -406,7 +398,6 @@ async function loadBookTitles() {
         bookTitles.value[bookId] = book.title
       }
     } catch (error) {
-      console.error(`Ошибка загрузки книги ${bookId}:`, error)
       bookTitles.value[bookId] = 'Неизвестная книга'
     }
   }
@@ -423,7 +414,6 @@ async function loadDeletedCommentsPercentage() {
       deletedCommentsPercentage.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка загрузки процента удалённых комментариев:', error)
   }
 }
 

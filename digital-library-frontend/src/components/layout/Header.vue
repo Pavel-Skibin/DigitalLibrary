@@ -1,6 +1,17 @@
 <template>
   <header class="app-header">
     <div class="header-content">
+      <!-- Hamburger: visible only on mobile, toggles sidebar -->
+      <button
+        class="hamburger-btn"
+        :class="{ open: isMobileOpen }"
+        @click="toggleMobile"
+        aria-label="Открыть меню"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
       <h2 class="header-title">📚 Библиотека</h2>
       <div class="user-info">
         <!-- Для гостей -->
@@ -29,7 +40,10 @@
 import { onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useUser } from "@/composables/useUser";
+import { useSidebar } from "@/composables/useSidebar";
 import { getCookie } from "@/utils/cookies";
+
+const { isMobileOpen, toggleMobile } = useSidebar();
 
 const router = useRouter();
 const { username, loading, fetchUserProfile, logout } = useUser();
@@ -61,7 +75,8 @@ onMounted(async () => {
   border-bottom: 1px solid #e8d9c7;
   padding: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  z-index: 100;
+  z-index: 1000;
+  position: relative;
 }
 
 .header-content {
@@ -71,6 +86,70 @@ onMounted(async () => {
   padding: 0 20px;
   height: 60px;
   max-width: 100%;
+}
+
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 12px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.hamburger-btn span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #5c4033;
+  border-radius: 2px;
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.hamburger-btn.open span:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger-btn.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-btn.open span:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
+@media (max-width: 767px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .username {
+    display: none;
+  }
+
+  .user-info {
+    gap: 8px;
+  }
+
+  .login-button,
+  .logout-button,
+  .profile-button {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
 }
 
 .header-title {

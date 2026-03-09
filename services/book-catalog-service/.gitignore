@@ -43,8 +43,6 @@ target/
 .idea/
 *.iml
 
-/src/main/resources/application.properties
-
 /src/main/resources/*.sql
 /src/test/java/org/nahap/digital_library_backend/controller/
 /src/test/java/org/nahap/digital_library_backend/dto/

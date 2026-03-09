@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="tab-panel">
     <div class="panel-header">
       <h2>Управление авторами</h2>
@@ -93,7 +93,6 @@ async function loadAuthors(page = 0) {
       totalPages.value = data.totalPages
     }
   } catch (error) {
-    console.error('Ошибка загрузки авторов:', error)
     alert('Не удалось загрузить авторов')
   } finally {
     loading.value = false
@@ -150,7 +149,6 @@ async function handleSave(formData) {
       alert(`Ошибка: ${error}`)
     }
   } catch (error) {
-    console.error('Ошибка сохранения автора:', error)
     alert('Не удалось сохранить автора')
   } finally {
     saving.value = false
@@ -176,7 +174,6 @@ async function handleDelete(authorId) {
       alert(`Ошибка: ${errorMessage}`)
     }
   } catch (error) {
-    console.error('Ошибка удаления автора:', error)
     alert('Не удалось подключиться к серверу')
   }
 }

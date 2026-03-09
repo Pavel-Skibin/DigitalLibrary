@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+﻿import { ref } from 'vue'
 import { getCookie } from '@/utils/cookies'
 
 export function useBookRating() {
@@ -21,7 +21,6 @@ export function useBookRating() {
                 userRating.value = ratings.find(r => r.bookId === bookId)
             }
         } catch (error) {
-            console.error('Ошибка загрузки рейтинга:', error)
         }
     }
 
@@ -43,7 +42,6 @@ export function useBookRating() {
                 return true
             }
         } catch (error) {
-            console.error('Ошибка сохранения оценки:', error)
             alert('Не удалось сохранить оценку')
             return false
         } finally {

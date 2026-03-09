@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-layout">
     <Header />
     <div class="library-container">
@@ -170,9 +170,7 @@ const tabs = [
 ];
 
 onMounted(async () => {
-  console.log("🚀 UserProfileView mounted");
   await fetchUserProfile();
-  console.log("👤 User profile loaded:", userUsername.value);
   await loadFavoritesData();
 });
 
@@ -190,52 +188,40 @@ async function switchTab(tabId) {
 
 // Загрузить избранные книги с полными данными
 async function loadFavoritesData() {
-  console.log("🔄 Загрузка избранного...");
   try {
     await loadFavorites();
-    console.log("✅ Favorites загружено:", favorites.value.length, "записей");
 
     // Загрузить полные данные книг
     if (favorites.value.length > 0) {
       const bookIds = favorites.value.map((f) => f.bookId);
-      console.log("📚 Загружаем данные книг:", bookIds);
       const booksData = await Promise.all(
         bookIds.map((id) =>
           api.get(`/books/${id}`).catch((err) => {
-            console.error(`Ошибка загрузки книги ${id}:`, err);
             return null;
           }),
         ),
       );
       favoriteBooks.value = booksData.filter((b) => b !== null);
-      console.log("✅ Загружено книг:", favoriteBooks.value.length);
     } else {
       favoriteBooks.value = [];
-      console.log("ℹ️ Нет избранных книг");
     }
   } catch (error) {
-    console.error("❌ Ошибка загрузки избранного:", error);
     favoriteBooks.value = [];
   }
 }
 
 // Загрузить историю просмотров с полными данными
 async function loadHistoryData() {
-  console.log("🔄 Загрузка истории просмотров...");
   try {
     await loadHistory();
-    console.log("✅ History загружено:", history.value.length, "записей");
-    console.log("📊 История с статистикой:", history.value);
 
     // Загрузить полные данные книг и объединить со статистикой
     if (history.value.length > 0) {
       const bookIds = [...new Set(history.value.map((h) => h.bookId))]; // Уникальные ID
-      console.log("📚 Загружаем данные книг:", bookIds);
 
       const booksData = await Promise.all(
         bookIds.map((id) =>
           api.get(`/books/${id}`).catch((err) => {
-            console.error(`Ошибка загрузки книги ${id}:`, err);
             return null;
           }),
         ),
@@ -270,17 +256,10 @@ async function loadHistoryData() {
           const dateB = b.stats.lastReadAt || b.stats.viewedAt;
           return new Date(dateB) - new Date(dateA);
         });
-
-      console.log(
-        "✅ Загружено книг со статистикой:",
-        viewedBooks.value.length,
-      );
     } else {
       viewedBooks.value = [];
-      console.log("ℹ️ Нет истории просмотров");
     }
   } catch (error) {
-    console.error("❌ Ошибка загрузки истории:", error);
     viewedBooks.value = [];
   }
 }
@@ -629,6 +608,78 @@ async function openReader() {
   .completed-badge {
     margin-left: 0;
     align-self: flex-start;
+  }
+}
+
+/* ── Mobile responsive ───────────────────────────────────────── */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .book-detail-panel {
+    width: 320px;
+  }
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: 14px 12px;
+  }
+
+  .profile-header h1 {
+    font-size: 22px;
+  }
+
+  .username {
+    font-size: 15px;
+  }
+
+  /* Tabs: horizontally scrollable */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 16px;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-button {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  /* Content wrapper: stack vertically */
+  .content-wrapper {
+    flex-direction: column;
+  }
+
+  /* Book detail panel: full-screen fixed overlay */
+  .book-detail-panel {
+    position: fixed !important;
+    top: 60px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-height: none !important;
+    z-index: 500;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+
+  /* Books grid: single column on small mobile */
+  .books-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .books-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

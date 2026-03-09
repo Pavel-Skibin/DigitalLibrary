@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+﻿import { ref } from 'vue'
 
 export function useExtendedSearch() {
     const authors = ref([])
@@ -21,7 +21,6 @@ export function useExtendedSearch() {
             const data = await response.json()
             authors.value = data.content || []
         } catch (error) {
-            console.error('Ошибка загрузки авторов:', error)
         }
     }
 
@@ -31,7 +30,6 @@ export function useExtendedSearch() {
             if (!response.ok) throw new Error('Ошибка загрузки жанров')
             genres.value = await response.json()
         } catch (error) {
-            console.error('Ошибка загрузки жанров:', error)
         }
     }
 
