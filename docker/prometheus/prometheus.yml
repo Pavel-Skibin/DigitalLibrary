@@ -1,0 +1,50 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: "digital-library"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "api-gateway"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["api-gateway:8080"]
+        labels:
+          service: "api-gateway"
+
+  - job_name: "user-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["user-service:8081"]
+        labels:
+          service: "user-service"
+
+  - job_name: "comment-rating-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["comment-rating-service:8082"]
+        labels:
+          service: "comment-rating-service"
+
+  - job_name: "storage-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["storage-service:8083"]
+        labels:
+          service: "storage-service"
+
+  - job_name: "book-catalog-service"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["book-catalog-service:8091"]
+        labels:
+          service: "book-catalog-service"
