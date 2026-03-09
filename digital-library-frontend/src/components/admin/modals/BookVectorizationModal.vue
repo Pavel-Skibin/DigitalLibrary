@@ -174,7 +174,12 @@ async function start() {
     });
   } catch (err) {
     taskStatus.value = "error";
-    errorMessage.value = err.message;
+    const msg = err.message || "";
+    // Заменяем сырой HTML 504-страницы на понятное сообщение
+    errorMessage.value =
+      msg.includes("<html") || msg.includes("504") || msg.includes("Gateway")
+        ? "Превышено время ожидания сервера (504). Векторизация может продолжаться в фоне — проверьте статус через несколько минут."
+        : msg;
   } finally {
     starting.value = false;
   }

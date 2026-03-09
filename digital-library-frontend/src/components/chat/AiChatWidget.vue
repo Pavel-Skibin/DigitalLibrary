@@ -942,5 +942,10 @@ async function sendMessage() {
     bottom: 12px;
     right: 12px;
   }
+
+  /* Скрываем FAB когда панель открыта — в шапке уже есть кнопка закрытия */
+  .chat-fab--open {
+    display: none;
+  }
 }
 </style>

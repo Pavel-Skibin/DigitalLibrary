@@ -110,6 +110,7 @@ export async function deleteVectorization(bookId) {
 /**
  * Polling задачи каждые 2 секунды до завершения.
  * Вызывает onProgress(task) при каждом обновлении.
+ * Устойчив к временным сбоям сети / 504 — сдаётся только после 5 последовательных ошибок.
  * @param {string} taskId
  * @param {function} onProgress
  * @param {number} intervalMs
@@ -117,17 +118,25 @@ export async function deleteVectorization(bookId) {
  */
 export function pollTaskUntilDone(taskId, onProgress, intervalMs = 2000) {
   return new Promise((resolve, reject) => {
+    let consecutiveErrors = 0;
+    const MAX_ERRORS = 5;
+
     const interval = setInterval(async () => {
       try {
         const task = await getTaskStatus(taskId);
+        consecutiveErrors = 0;
         onProgress(task);
         if (task.status === "done" || task.status === "error") {
           clearInterval(interval);
           resolve(task);
         }
       } catch (err) {
-        clearInterval(interval);
-        reject(err);
+        consecutiveErrors++;
+        if (consecutiveErrors >= MAX_ERRORS) {
+          clearInterval(interval);
+          reject(err);
+        }
+        // иначе — временный сбой, продолжаем polling
       }
     }, intervalMs);
   });

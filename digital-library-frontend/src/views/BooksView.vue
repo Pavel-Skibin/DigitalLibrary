@@ -384,7 +384,12 @@ function updateBookList(content, page, totalPagesCount) {
   totalPages.value = totalPagesCount;
 
   if (books.value.length > 0) {
-    selectBook(books.value[0]);
+    // На мобильном не выбираем книгу автоматически — пользователь должен выбрать сам
+    if (window.innerWidth >= 768) {
+      selectBook(books.value[0]);
+    } else {
+      selectedBook.value = null;
+    }
   } else {
     selectedBook.value = null;
   }
@@ -425,7 +430,10 @@ async function loadBookDetails(bookId) {
     const response = await fetch(`/api/books/${bookId}`);
     if (!response.ok) throw new Error("Ошибка загрузки деталей");
     const data = await response.json();
-    selectedBook.value = { ...selectedBook.value, ...data };
+    // Защита от гонки: обновляем только если пользователь не выбрал другую книгу
+    if (selectedBook.value?.id === bookId) {
+      selectedBook.value = { ...selectedBook.value, ...data };
+    }
   } catch (error) {}
 }
 
