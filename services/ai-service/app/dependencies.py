@@ -1,4 +1,6 @@
 from functools import lru_cache
+from fastapi import HTTPException, Request
+from loguru import logger
 from app.config import Settings, settings
 from app.services.shared.qdrant_service import QdrantService
 from app.services.shared.rest_client_service import RestClientService
@@ -179,3 +181,32 @@ def get_meta_enrichment_service() -> MetaEnrichmentService:
 def get_task_registry() -> TaskRegistry:
     """Get shared TaskRegistry singleton."""
     return task_registry
+
+
+async def get_current_user(request: Request) -> dict:
+    """Validate JWT by calling user-service /api/users/me. Returns user info dict."""
+    token = request.headers.get("Authorization", "")
+    if token.startswith("Bearer "):
+        token = token[7:]
+    else:
+        token = request.cookies.get("jwt", "")
+    if not token:
+        raise HTTPException(status_code=401, detail="Требуется авторизация")
+
+    rest_client = get_rest_client_service()
+    if rest_client.session is None or rest_client.session.closed:
+        raise HTTPException(status_code=503, detail="Сервис временно недоступен")
+
+    try:
+        async with rest_client.session.get(
+            f"{settings.USER_SERVICE_URL}/api/users/me",
+            headers={"Authorization": f"Bearer {token}"},
+        ) as resp:
+            if resp.status == 200:
+                return await resp.json()
+            raise HTTPException(status_code=401, detail="Токен недействителен или истёк")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Error validating token via user-service: {exc}")
+        raise HTTPException(status_code=401, detail="Ошибка проверки авторизации")
