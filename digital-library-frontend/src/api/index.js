@@ -22,7 +22,9 @@ async function request(endpoint, options = {}) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(errorText || `HTTP ${response.status}`);
+    const error = new Error(errorText || `HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
 
   // Если ответ пустой (например, при DELETE), возвращаем null

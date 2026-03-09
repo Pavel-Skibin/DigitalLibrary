@@ -176,6 +176,35 @@ class CacheService:
         except Exception as e:
             logger.error(f"Failed to cache popular books: {e}")
     
+    # ========== AI Chat Quota ==========
+
+    async def get_ai_quota_used(self, user_id: int) -> int:
+        """Get the number of AI chat requests used today by this user."""
+        from datetime import date
+        key = f"ai:quota:user:{user_id}:{date.today().strftime('%Y%m%d')}"
+        try:
+            count = await self.redis.get(key)
+            return int(count) if count else 0
+        except Exception as e:
+            logger.error(f"Failed to get AI quota for user_id={user_id}: {e}")
+            return 0
+
+    async def increment_ai_quota(self, user_id: int) -> int:
+        """Increment AI quota counter and set daily TTL. Returns the new count."""
+        from datetime import date, datetime, timedelta
+        today_str = date.today().strftime('%Y%m%d')
+        key = f"ai:quota:user:{user_id}:{today_str}"
+        try:
+            count = await self.redis.incr(key)
+            if count == 1:
+                now = datetime.now()
+                midnight = datetime(now.year, now.month, now.day) + timedelta(days=1)
+                await self.redis.expireat(key, int(midnight.timestamp()))
+            return count
+        except Exception as e:
+            logger.error(f"Failed to increment AI quota for user_id={user_id}: {e}")
+            return 1
+
     # ========== Utility Methods ==========
     
     def _hash_text(self, text: str) -> str:

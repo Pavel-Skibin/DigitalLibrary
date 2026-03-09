@@ -24,3 +24,11 @@ export function sendChatMessage({
     ...(sessionId ? { session_id: sessionId } : {}),
   });
 }
+
+/**
+ * Получить информацию о квоте запросов к AI-ассистенту для текущего пользователя.
+ * @returns {Promise<{role: string, unlimited: boolean, used: number, limit: number|null, remaining: number|null}>}
+ */
+export function getAiQuota() {
+  return api.get("/ai/chat/quota");
+}

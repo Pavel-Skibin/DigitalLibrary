@@ -26,6 +26,19 @@
             >Спросите о книгах или получите рекомендации</span
           >
         </div>
+        <span
+          v-if="quota && quota.unlimited"
+          class="chat-quota-badge chat-quota-badge--unlimited"
+          title="Безлимитный доступ"
+          >∞</span
+        >
+        <span
+          v-else-if="quota"
+          class="chat-quota-badge"
+          :class="{ 'chat-quota-badge--low': quota.remaining <= 2 }"
+          :title="`Использовано ${quota.used} из ${quota.limit} запросов сегодня`"
+          >{{ quota.remaining }}/{{ quota.limit }}</span
+        >
         <button
           class="chat-panel__close"
           @click="toggleChat"
@@ -37,9 +50,18 @@
 
       <!-- Messages -->
       <div class="chat-panel__messages" ref="messagesRef">
+        <!-- Auth gate -->
+        <div v-if="!isAuthenticated" class="chat-auth-gate">
+          <span class="chat-auth-gate__icon">🔒</span>
+          <p class="chat-auth-gate__text">
+            Войдите в аккаунт, чтобы использовать ассистента
+          </p>
+          <button class="chat-auth-gate__btn" @click="goToLogin">Войти</button>
+        </div>
+
         <!-- Welcome message -->
         <div
-          v-if="messages.length === 0"
+          v-if="isAuthenticated && messages.length === 0"
           class="chat-message chat-message--bot"
         >
           <span class="chat-message__avatar">🤖</span>
@@ -176,6 +198,14 @@
         </template>
       </div>
 
+      <!-- Quota exhausted bar -->
+      <div
+        v-if="isAuthenticated && isQuotaExhausted"
+        class="chat-quota-exhausted"
+      >
+        Дневной лимит исчерпан. Возвращайтесь завтра!
+      </div>
+
       <!-- Input area -->
       <form class="chat-panel__input-area" @submit.prevent="sendMessage">
         <textarea
@@ -184,14 +214,19 @@
           class="chat-panel__input"
           placeholder="Спросите меня о книгах..."
           rows="1"
-          :disabled="isLoading"
+          :disabled="isLoading || !isAuthenticated || isQuotaExhausted"
           @keydown.enter.exact.prevent="sendMessage"
           @input="autoResize"
         ></textarea>
         <button
           type="submit"
           class="chat-panel__send"
-          :disabled="isLoading || !inputText.trim()"
+          :disabled="
+            isLoading ||
+            !inputText.trim() ||
+            !isAuthenticated ||
+            isQuotaExhausted
+          "
           aria-label="Отправить"
         >
           <span>➤</span>
@@ -204,7 +239,7 @@
 <script setup>
 import { ref, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
-import { sendChatMessage } from "@/api/chat.js";
+import { sendChatMessage, getAiQuota } from "@/api/chat.js";
 import { getCookie } from "@/utils/cookies.js";
 
 const router = useRouter();
@@ -218,20 +253,23 @@ const messagesRef = ref(null);
 const inputRef = ref(null);
 const carouselRefs = ref({}); // { [msgId]: HTMLElement }
 const sessionId = ref(null); // Храним session_id из ответа сервера
+const quota = ref(null);
 
 let msgCounter = 0;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-function getUserId() {
+// Используем ref, а не computed — document.cookie не является реактивным,
+// computed кэшировал бы false навсегда. Обновляем вручную при открытии.
+const isAuthenticated = ref(!!getCookie("jwt"));
+const isQuotaExhausted = computed(
+  () => !!quota.value && !quota.value.unlimited && quota.value.remaining <= 0,
+);
+
+async function fetchQuota() {
   try {
-    const jwt = getCookie("jwt");
-    if (!jwt) return null;
-    const payload = JSON.parse(
-      atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-    );
-    return payload.userId || payload.sub_id || payload.id || null;
+    quota.value = await getAiQuota();
   } catch {
-    return null;
+    quota.value = null;
   }
 }
 
@@ -239,6 +277,8 @@ function getUserId() {
 function toggleChat() {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
+    isAuthenticated.value = !!getCookie("jwt"); // перечитываем при каждом открытии
+    if (isAuthenticated.value) fetchQuota();
     nextTick(() => inputRef.value?.focus());
   }
 }
@@ -271,6 +311,11 @@ function goToBook(bookId) {
   if (bookId) router.push("/books/" + bookId);
 }
 
+function goToLogin() {
+  router.push("/login");
+  toggleChat();
+}
+
 function onImgError(e) {
   e.target.style.display = "none";
   const ph = document.createElement("div");
@@ -299,7 +344,13 @@ function formatAnswer(text) {
 // ─── Send message ─────────────────────────────────────────────────────────────
 async function sendMessage() {
   const text = inputText.value.trim();
-  if (!text || isLoading.value) return;
+  if (
+    !text ||
+    isLoading.value ||
+    !isAuthenticated.value ||
+    isQuotaExhausted.value
+  )
+    return;
 
   // Add user message
   messages.value.push({ id: ++msgCounter, role: "user", text });
@@ -318,7 +369,6 @@ async function sendMessage() {
   try {
     const response = await sendChatMessage({
       message: text,
-      userId: getUserId(),
       topK: 6,
       sessionId: sessionId.value,
     });
@@ -329,6 +379,12 @@ async function sendMessage() {
     // Remove loading placeholder
     const idx = messages.value.findIndex((m) => m.id === loadingId);
     if (idx !== -1) messages.value.splice(idx, 1);
+
+    // Обновляем локальный счётчик квоты
+    if (quota.value && !quota.value.unlimited) {
+      quota.value.remaining = Math.max(0, quota.value.remaining - 1);
+      quota.value.used++;
+    }
 
     // Add bot response
     messages.value.push({
@@ -343,10 +399,17 @@ async function sendMessage() {
     const idx = messages.value.findIndex((m) => m.id === loadingId);
     if (idx !== -1) messages.value.splice(idx, 1);
 
+    let errorText = "Не удалось получить ответ. Попробуйте ещё раз.";
+    if (err.status === 401) {
+      errorText = "Сессия истекла. Пожалуйста, войдите заново.";
+    } else if (err.status === 429) {
+      errorText = "Дневной лимит запросов исчерпан. Возвращайтесь завтра!";
+      if (quota.value) quota.value.remaining = 0;
+    }
     messages.value.push({
       id: ++msgCounter,
       role: "error",
-      text: "Не удалось получить ответ. Попробуйте ещё раз.",
+      text: errorText,
     });
   } finally {
     isLoading.value = false;
@@ -779,5 +842,68 @@ async function sendMessage() {
 .chat-panel__send:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* ── Quota badge ─────────────────────────────────────────────────────────────────────── */
+.chat-quota-badge {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fdf6e9;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.chat-quota-badge--unlimited {
+  font-size: 16px;
+  letter-spacing: -0.5px;
+}
+.chat-quota-badge--low {
+  background: rgba(244, 67, 54, 0.35);
+}
+
+/* ── Auth gate ─────────────────────────────────────────────────────────────── */
+.chat-auth-gate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.chat-auth-gate__icon {
+  font-size: 44px;
+}
+.chat-auth-gate__text {
+  font-size: 14px;
+  color: #5c4033;
+  line-height: 1.55;
+}
+.chat-auth-gate__btn {
+  padding: 9px 28px;
+  background: #5c4033;
+  color: #fdf6e9;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.chat-auth-gate__btn:hover {
+  background: #7a5548;
+}
+
+/* ── Quota exhausted bar ─────────────────────────────────────────────── */
+.chat-quota-exhausted {
+  text-align: center;
+  font-size: 12.5px;
+  color: #c62828;
+  background: #fff0ee;
+  border-top: 1px solid #f4846a;
+  padding: 8px 16px;
+  flex-shrink: 0;
 }
 </style>

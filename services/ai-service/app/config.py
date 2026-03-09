@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     # Security
     INTERNAL_API_KEY: str = "change-this-secret-key-in-production"
     JWT_PASSTHROUGH: bool = True
+    AI_DAILY_QUOTA_USER: int = 10  # Лимит запросов к AI-ассистенту для роли USER в сутки
     
     # Message Queue (optional)
     ENABLE_MESSAGE_QUEUE: bool = False
