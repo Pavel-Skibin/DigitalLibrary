@@ -262,6 +262,15 @@ async function handleSubmitRating() {
   }
 }
 
+async function handleSubmitComment(commentText) {
+  if (!requireAuth("оставить комментарий")) return;
+  await submitComment(selectedBook.value.id, commentText);
+}
+
+async function handleUpdateComment({ id, text }) {
+  await updateComment(id, text);
+}
+
 async function handleDeleteComment(id) {
   if (!requireAuth("удалить комментарий")) return;
   await deleteComment(id);

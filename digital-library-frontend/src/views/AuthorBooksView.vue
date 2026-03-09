@@ -353,6 +353,14 @@ async function handleSubmitRating() {
   }
 }
 
+async function handleSubmitComment(commentText) {
+  await submitComment(selectedBook.value.id, commentText);
+}
+
+async function handleUpdateComment({ id, text }) {
+  await updateComment(id, text);
+}
+
 async function handleDeleteComment(id) {
   await deleteComment(id);
 }

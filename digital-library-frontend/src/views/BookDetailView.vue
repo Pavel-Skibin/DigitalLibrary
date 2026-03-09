@@ -253,16 +253,16 @@ const { userId } = useUser();
 
 const {
   comments,
-  loadingComments,
-  submittingComment,
-  hasMoreComments,
+  loading: loadingComments,
+  submitting: submittingComment,
+  hasMore: hasMoreComments,
   loadComments,
   submitComment,
   updateComment,
   deleteComment,
   moderateDeleteComment,
   restoreComment,
-  loadMoreComments,
+  loadMore: loadMoreComments,
 } = useBookComments();
 
 const { userRating, loadUserRating, submitRating } = useBookRating();
@@ -392,8 +392,7 @@ async function handleSubmitRating() {
     if (userId.value) {
       try {
         await invalidateUserCache(userId.value);
-      } catch (error) {
-      }
+      } catch (error) {}
     } else {
     }
   } catch (err) {
@@ -411,8 +410,8 @@ async function handleSubmitComment(commentText) {
   await submitComment(bookId.value, commentText);
 }
 
-async function handleUpdateComment(commentId, newText) {
-  await updateComment(commentId, newText);
+async function handleUpdateComment({ id, text }) {
+  await updateComment(id, text);
 }
 
 async function handleDeleteComment(commentId) {
