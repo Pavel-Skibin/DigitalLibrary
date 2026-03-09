@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+﻿import { ref } from 'vue'
 import * as authorsApi from '@/api/authors'
 
 export function useAuthors() {
@@ -24,7 +24,6 @@ export function useAuthors() {
             totalPages.value = data.totalPages
             totalElements.value = data.totalElements
         } catch (error) {
-            console.error('Error loading authors:', error)
             alert('Не удалось загрузить авторов')
             authors.value = []
         } finally {

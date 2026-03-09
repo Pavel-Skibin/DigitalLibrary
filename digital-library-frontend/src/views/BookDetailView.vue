@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-layout">
     <Header />
     <div class="library-container">
@@ -310,11 +310,9 @@ async function loadBookDetails() {
         similarBooks.value = [];
       }
     } catch (err) {
-      console.warn("Failed to load similar books:", err);
       similarBooks.value = [];
     }
   } catch (err) {
-    console.error("Failed to load book:", err);
     error.value = err.message || "Не удалось загрузить книгу";
   } finally {
     loading.value = false;
@@ -333,7 +331,6 @@ async function openBookInReader() {
       return;
     }
   } catch (e) {
-    console.warn("Не удалось проверить статус читалки:", e);
     alert("Не удалось проверить доступность чтения. Попробуйте позже.");
     return;
   }
@@ -353,7 +350,6 @@ function goToLogin() {
 
 async function goToBook(id) {
   if (!id) {
-    console.error("Invalid book ID:", id);
     return;
   }
 
@@ -396,19 +392,11 @@ async function handleSubmitRating() {
     if (userId.value) {
       try {
         await invalidateUserCache(userId.value);
-        console.log(
-          "✓ Кеш рекомендаций обновлен после оценки книги",
-          "userId=",
-          userId.value,
-        );
       } catch (error) {
-        console.error("Ошибка инвалидации кеша:", error);
       }
     } else {
-      console.warn("⚠ userId не найден, кеш не обновлен");
     }
   } catch (err) {
-    console.error("Failed to submit rating:", err);
   } finally {
     submittingRating.value = false;
   }

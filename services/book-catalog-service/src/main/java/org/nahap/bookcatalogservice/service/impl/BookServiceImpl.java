@@ -65,7 +65,13 @@ public class BookServiceImpl implements BookService {
         };
         for (java.nio.charset.Charset cs : charsets) {
             try {
-                return Files.readString(fullPath, cs);
+                String content = Files.readString(fullPath, cs);
+                // Убираем encoding из XML-декларации: контент уже в Unicode (Java String),
+                // Spring отдаёт его как UTF-8, поэтому объявление encoding="windows-1251"
+                // заставит браузер/foliate-js неверно декодировать байты → кракозябры.
+                content = content.replaceAll(
+                        "(<\\?xml[^?]*?)\\s+encoding\\s*=\\s*['\"][^'\"]*['\"]", "$1");
+                return content;
             } catch (java.nio.charset.MalformedInputException ignored) {
                 // попробуем следующую кодировку
             } catch (Exception e) {

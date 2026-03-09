@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <button
     @click="handleToggle"
     :disabled="loading"
@@ -81,18 +81,11 @@ async function handleToggle() {
     if (userId.value) {
       try {
         await invalidateUserCache(userId.value);
-        console.log(
-          "✓ Кеш рекомендаций обновлен после изменения избранного",
-          "userId=",
-          userId.value,
-        );
         // Уведомить другие компоненты об обновлении
         window.dispatchEvent(new CustomEvent('recommendations-invalidated'));
       } catch (error) {
-        console.error("Ошибка инвалидации кеша:", error);
       }
     } else {
-      console.warn("⚠ userId не найден, кеш не обновлен");
     }
   } else {
     alert("Не удалось обновить избранное. Попробуйте позже.");

@@ -23,6 +23,9 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @org.springframework.beans.factory.annotation.Value("${cors.allowed.origin:http://localhost}")
+    private String corsAllowedOrigin;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -51,7 +54,8 @@ public class SecurityConfig {
                 "http://localhost",
                 "http://localhost:*",
                 "http://127.0.0.1",
-                "http://127.0.0.1:*"
+                "http://127.0.0.1:*",
+                corsAllowedOrigin
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

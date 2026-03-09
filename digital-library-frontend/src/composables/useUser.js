@@ -1,4 +1,4 @@
-import { ref } from "vue";
+﻿import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { getCookie, deleteCookie } from "@/utils/cookies";
 
@@ -24,12 +24,10 @@ export function useUser() {
         userId.value = user.id;
         return user;
       } else {
-        console.warn("Не авторизован");
         router.push("/login");
         return null;
       }
     } catch (error) {
-      console.error("Ошибка загрузки профиля:", error);
       router.push("/login");
       return null;
     } finally {
@@ -44,7 +42,6 @@ export function useUser() {
         credentials: "include",
       });
     } catch (e) {
-      console.error("Logout error:", e);
     }
 
     // Очищаем cookie используя безопасную функцию

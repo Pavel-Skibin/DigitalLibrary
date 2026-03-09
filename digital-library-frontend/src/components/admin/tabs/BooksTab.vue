@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="tab-panel">
     <div class="panel-header">
       <h2>Управление книгами</h2>
@@ -117,7 +117,6 @@ async function loadBooks(page = 0) {
       totalPages.value = data.totalPages;
     }
   } catch (error) {
-    console.error("Ошибка загрузки книг:", error);
     alert("Не удалось загрузить книги");
   } finally {
     loading.value = false;
@@ -141,7 +140,6 @@ async function loadAuthors() {
       allAuthors.value = data.content || [];
     }
   } catch (error) {
-    console.error("Ошибка загрузки авторов:", error);
   }
 }
 
@@ -157,7 +155,6 @@ async function loadGenres() {
       allGenres.value = await response.json();
     }
   } catch (error) {
-    console.error("Ошибка загрузки жанров:", error);
   }
 }
 // Загрузка тегов
@@ -171,7 +168,6 @@ async function loadTags() {
       allTags.value = await response.json();
     }
   } catch (error) {
-    console.error("Ошибка загрузки тегов:", error);
   }
 }
 // Поиск с задержкой
@@ -250,7 +246,6 @@ async function handleSave(formData) {
       alert(`Ошибка: ${error}`);
     }
   } catch (error) {
-    console.error("Ошибка сохранения книги:", error);
     alert("Не удалось сохранить книгу");
   } finally {
     saving.value = false;
@@ -277,7 +272,6 @@ async function handleDelete(bookId) {
       alert(`Ошибка: ${error}`);
     }
   } catch (error) {
-    console.error("Ошибка удаления книги:", error);
     alert("Не удалось удалить книгу");
   }
 }

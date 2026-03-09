@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-layout">
     <Header />
     <div class="library-container">
@@ -69,6 +69,9 @@
 
       <!-- Правая панель с деталями -->
       <aside v-if="selectedBook" class="book-detail-panel">
+        <button class="panel-mobile-close" @click="selectedBook = null">
+          ← Назад к списку
+        </button>
         <BookDetailPanel
           :book="selectedBook"
           :cover-url="getCoverUrl(selectedBook)"
@@ -253,16 +256,8 @@ async function handleSubmitRating() {
     if (userId.value) {
       try {
         await invalidateUserCache(userId.value);
-        console.log(
-          "✓ Кеш рекомендаций обновлен после оценки книги",
-          "userId=",
-          userId.value,
-        );
-      } catch (error) {
-        console.error("Ошибка инвалидации кеша:", error);
-      }
+      } catch (error) {}
     } else {
-      console.warn("⚠ userId не найден, кеш не обновлен");
     }
   }
 }
@@ -281,7 +276,6 @@ async function loadBooks(page = 0) {
     const data = await response.json();
     updateBookList(data.content, data.number, data.totalPages);
   } catch (error) {
-    console.error("Ошибка:", error);
     alert("Не удалось загрузить книги");
   } finally {
     loading.value = false;
@@ -329,7 +323,6 @@ async function loadSimpleSearchResults(page = 0) {
     const data = await response.json();
     updateBookList(data.content, data.number, data.totalPages);
   } catch (error) {
-    console.error("Ошибка поиска:", error);
     alert("Поиск не удался");
     books.value = [];
     selectedBook.value = null;
@@ -378,7 +371,6 @@ async function loadExtendedSearchResults(page = 0) {
     const data = await response.json();
     updateBookList(data.content, data.number, data.totalPages);
   } catch (error) {
-    console.error("Ошибка расширенного поиска:", error);
     alert("Не удалось выполнить расширенный поиск");
   } finally {
     loading.value = false;
@@ -392,7 +384,12 @@ function updateBookList(content, page, totalPagesCount) {
   totalPages.value = totalPagesCount;
 
   if (books.value.length > 0) {
-    selectBook(books.value[0]);
+    // На мобильном не выбираем книгу автоматически — пользователь должен выбрать сам
+    if (window.innerWidth >= 768) {
+      selectBook(books.value[0]);
+    } else {
+      selectedBook.value = null;
+    }
   } else {
     selectedBook.value = null;
   }
@@ -433,10 +430,11 @@ async function loadBookDetails(bookId) {
     const response = await fetch(`/api/books/${bookId}`);
     if (!response.ok) throw new Error("Ошибка загрузки деталей");
     const data = await response.json();
-    selectedBook.value = { ...selectedBook.value, ...data };
-  } catch (error) {
-    console.error("Ошибка загрузки деталей книги:", error);
-  }
+    // Защита от гонки: обновляем только если пользователь не выбрал другую книгу
+    if (selectedBook.value?.id === bookId) {
+      selectedBook.value = { ...selectedBook.value, ...data };
+    }
+  } catch (error) {}
 }
 
 // Открытие читалки
@@ -506,9 +504,7 @@ async function checkAuthentication() {
         isModerator.value = isMod || isAdm;
         isModeratorOrAdmin.value = isMod || isAdm;
       }
-    } catch (error) {
-      console.error("Ошибка аутентификации:", error);
-    }
+    } catch (error) {}
   }
 }
 

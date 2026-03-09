@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="library-stats">
     <h2 class="stats-title">Наша библиотека в цифрах</h2>
     <div class="stats-grid">
@@ -66,7 +66,6 @@ async function loadStats() {
       stats.value = await response.json()
     }
   } catch (error) {
-    console.error('Ошибка загрузки статистики:', error)
   } finally {
     loading.value = false
   }

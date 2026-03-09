@@ -1,4 +1,4 @@
-import { ref } from "vue";
+﻿import { ref } from "vue";
 import { readingApi } from "@/api/reading";
 
 /**
@@ -23,7 +23,6 @@ export function useReadingSession() {
       startTime.value = Date.now();
       return session;
     } catch (error) {
-      console.error("Ошибка начала сессии чтения:", error);
       return null;
     } finally {
       loading.value = false;
@@ -35,7 +34,6 @@ export function useReadingSession() {
    */
   async function endSession(lastPosition = null) {
     if (!currentSession.value) {
-      console.warn("No active session to end");
       return false;
     }
 
@@ -59,7 +57,6 @@ export function useReadingSession() {
       startTime.value = null;
       return true;
     } catch (error) {
-      console.error("Ошибка завершения сессии чтения:", error);
       return false;
     } finally {
       loading.value = false;
@@ -76,7 +73,6 @@ export function useReadingSession() {
       activeSessions.value = sessions || [];
       return sessions;
     } catch (error) {
-      console.error("Ошибка загрузки активных сессий:", error);
       activeSessions.value = [];
       return [];
     } finally {
@@ -112,7 +108,6 @@ export function useReadingSession() {
       try {
         navigator.sendBeacon(url, blob);
       } catch (e) {
-        console.warn("sendBeacon failed, using sync XHR");
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", url, false); // false = синхронный
         xhr.setRequestHeader("Content-Type", "application/json");

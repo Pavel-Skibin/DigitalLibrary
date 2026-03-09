@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="modal-overlay" @click="$emit('close')">
     <div class="modal-content large" @click.stop>
       <h2 class="modal-title">
@@ -541,11 +541,6 @@ async function processFile(file) {
     try {
       text = new TextDecoder(encoding).decode(arrayBuffer);
     } catch (e) {
-      console.warn(
-        "Не удалось декодировать с кодировкой",
-        encoding,
-        "- пробуем UTF-8",
-      );
       text = new TextDecoder("utf-8").decode(arrayBuffer);
     }
 
@@ -571,7 +566,6 @@ async function processFile(file) {
     if (metadata.authors.length > 0) matchAuthors(metadata.authors);
     if (metadata.genres.length > 0) matchGenres(metadata.genres);
   } catch (error) {
-    console.error("Ошибка парсинга FB2:", error);
     alert("Не удалось обработать файл: " + error.message);
   } finally {
     parsing.value = false;
@@ -653,7 +647,6 @@ async function handleEnrich() {
     };
     showAiPanel.value = true;
   } catch (err) {
-    console.error("Ошибка AI-заполнения:", err);
     alert("Ошибка запроса к DeepSeek: " + err.message);
   } finally {
     enriching.value = false;
@@ -863,11 +856,9 @@ async function matchOrCreateTags(aiTagNames) {
           }
         } else {
           const errText = await res.text().catch(() => String(res.status));
-          console.warn(`Тег "${name}": HTTP ${res.status} — ${errText}`);
           failedNames.push(name);
         }
       } catch (e) {
-        console.warn("Сетевая ошибка при создании тега:", name, e);
         failedNames.push(name);
       }
     }
@@ -879,7 +870,6 @@ async function matchOrCreateTags(aiTagNames) {
   }
   matchedTags.value = matched;
   if (failedNames.length) {
-    console.warn("Не удалось создать/найти теги:", failedNames);
     alert(`Не удалось создать теги: ${failedNames.join(", ")}`);
   }
 }
@@ -953,7 +943,6 @@ async function handleSave() {
       const uploadResult = await response.json();
       currentFilePath = uploadResult.filePath; // обновляем путь после загрузки
     } catch (error) {
-      console.error("Ошибка загрузки файла:", error);
       alert("Не удалось загрузить файл: " + error.message);
       parsing.value = false;
       return;
@@ -1037,7 +1026,6 @@ watch(
           };
         }
       } catch (error) {
-        console.error("Ошибка загрузки деталей книги:", error);
       }
     } else {
       form.value = {

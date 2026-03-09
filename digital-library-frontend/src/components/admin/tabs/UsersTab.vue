@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="tab-panel">
     <div class="panel-header">
       <h2>Управление пользователями</h2>
@@ -114,7 +114,6 @@ async function loadUsers(page = 0) {
       alert('Не удалось загрузить список пользователей')
     }
   } catch (error) {
-    console.error('Ошибка загрузки пользователей:', error)
     alert('Ошибка соединения с сервером')
   } finally {
     loading.value = false
@@ -152,7 +151,6 @@ async function banUser(userId) {
       alert(`Ошибка: ${errorText}`)
     }
   } catch (error) {
-    console.error('Ошибка блокировки пользователя:', error)
     alert('Не удалось заблокировать пользователя')
   }
 }
@@ -176,7 +174,6 @@ async function unbanUser(userId) {
       alert(`Ошибка: ${errorText}`)
     }
   } catch (error) {
-    console.error('Ошибка разблокировки пользователя:', error)
     alert('Не удалось разблокировать пользователя')
   }
 }
@@ -215,7 +212,6 @@ async function handleRoleChange(roleId) {
       alert(`Ошибка: ${errorText}`)
     }
   } catch (error) {
-    console.error('Ошибка смены роли:', error)
     alert('Не удалось изменить роль')
   } finally {
     saving.value = false

@@ -2,10 +2,10 @@
   <div class="book-card" @click="$emit('select', book)">
     <div class="book-cover">
       <img
-          v-if="coverUrl"
-          :src="coverUrl"
-          :alt="book.title"
-          class="cover-image"
+        v-if="coverUrl"
+        :src="coverUrl"
+        :alt="book.title"
+        class="cover-image"
       />
       <div v-else class="placeholder-cover">
         {{ book.title.slice(0, 4) }}
@@ -13,50 +13,53 @@
     </div>
     <div class="book-info">
       <h3>{{ book.title }}</h3>
-      <p>{{ book.authors.join(', ') }}</p>
+      <p>{{ book.authors.join(", ") }}</p>
       <div class="rating-stars">
         <span
-            v-for="starIndex in 5"
-            :key="starIndex"
-            :class="getStarClass(starIndex).class"
-            :style="{ '--fill-percentage': getStarClass(starIndex).fillPercentage + '%' }"
-        >★</span>
+          v-for="starIndex in 5"
+          :key="starIndex"
+          :class="getStarClass(starIndex).class"
+          :style="{
+            '--fill-percentage': getStarClass(starIndex).fillPercentage + '%',
+          }"
+          >★</span
+        >
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
   book: {
     type: Object,
-    required: true
+    required: true,
   },
   coverUrl: {
     type: String,
-    default: null
-  }
-})
+    default: null,
+  },
+});
 
-defineEmits(['select'])
+defineEmits(["select"]);
 
 function getStarClass(starIndex) {
-  const rating = props.book.averageRating || 0
+  const rating = props.book.averageRating || 0;
 
   if (starIndex <= rating) {
-    return { class: 'filled-star', fillPercentage: 100 }
+    return { class: "filled-star", fillPercentage: 100 };
   }
 
   if (starIndex - 1 < rating && starIndex > rating) {
     return {
-      class: 'fractional-star',
-      fillPercentage: (rating - (starIndex - 1)) * 100
-    }
+      class: "fractional-star",
+      fillPercentage: (rating - (starIndex - 1)) * 100,
+    };
   }
 
-  return { class: 'empty-star', fillPercentage: 0 }
+  return { class: "empty-star", fillPercentage: 0 };
 }
 </script>
 
@@ -107,9 +110,11 @@ function getStarClass(starIndex) {
 
 .book-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
 }
 
 .book-info h3 {
@@ -118,12 +123,17 @@ function getStarClass(starIndex) {
   font-weight: 600;
   color: #333;
   line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .book-info p {
   margin: 0;
   font-size: 14px;
   color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rating-stars {
@@ -133,7 +143,7 @@ function getStarClass(starIndex) {
 }
 
 .filled-star {
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .empty-star {
@@ -146,10 +156,10 @@ function getStarClass(starIndex) {
 }
 
 .fractional-star::before {
-  content: '★';
+  content: "★";
   position: absolute;
   left: 0;
-  color: #FFD700;
+  color: #ffd700;
   overflow: hidden;
   width: var(--fill-percentage);
 }
