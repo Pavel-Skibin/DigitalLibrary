@@ -73,6 +73,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-digital_library_user}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost}
       COOKIE_SECURE: "false"
     depends_on:
       postgres:
@@ -156,6 +157,7 @@ services:
       COMMENT_RATING_SERVICE_URL: http://comment-rating-service:8082
       STORAGE_SERVICE_URL: http://storage-service:8083
       AI_SERVICE_URL: http://ai-service:8085
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost}
     depends_on:
       user-service:
         condition: service_healthy
