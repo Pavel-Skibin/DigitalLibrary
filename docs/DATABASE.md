@@ -11,7 +11,7 @@
 erDiagram
     user_roles {
         int id PK
-        varchar name "ROLE_USER | ROLE_MODERATOR | ROLE_ADMIN"
+        varchar name "USER | MODERATOR | ADMIN"
     }
     users {
         int id PK
@@ -76,28 +76,48 @@ erDiagram
         decimal average_rating "3,2 — денормализовано"
         int ratings_count "NOT NULL default=0 — денормализовано"
     }
+    authors {
+        int id PK
+        varchar first_name "NOT NULL"
+        varchar last_name "NOT NULL"
+    }
+    genres {
+        int id PK
+        varchar name "UNIQUE NOT NULL"
+    }
+    tags {
+        int id PK
+        varchar name "UNIQUE NOT NULL"
+        varchar category "NULL"
+        boolean is_predefined "default=false"
+        int usage_count "default=0"
+        timestamp created_at "NOT NULL"
+    }
     book_authors {
         int id PK
         int book_id FK
-        varchar author_name "NOT NULL"
+        int author_id FK
     }
     book_genres {
         int id PK
         int book_id FK
-        varchar genre_name "NOT NULL"
+        int genre_id FK
     }
     book_tags {
         int id PK
         int book_id FK
-        varchar tag_name "NOT NULL"
+        int tag_id FK
     }
 
     books ||--o{ book_authors : "book_id (cascade delete)"
+    authors ||--o{ book_authors : "author_id (cascade delete)"
     books ||--o{ book_genres : "book_id (cascade delete)"
+    genres ||--o{ book_genres : "genre_id (cascade delete)"
     books ||--o{ book_tags : "book_id (cascade delete)"
+    tags ||--o{ book_tags : "tag_id (cascade delete)"
 ```
 
-### 💬 `comments_db`
+### 💬 `comments_ratings_db`
 
 ```mermaid
 erDiagram
@@ -105,7 +125,7 @@ erDiagram
         int id PK
         int user_id "NOT NULL (external)"
         int book_id "NOT NULL (external)"
-        text text "NOT NULL"
+        varchar text "NOT NULL len=255"
         timestamp created_at "NOT NULL"
         timestamp deleted_at "NULL — soft delete"
     }
@@ -113,7 +133,7 @@ erDiagram
         int id PK
         int user_id "NOT NULL (external)"
         int book_id "NOT NULL (external)"
-        int value "NOT NULL 1..5"
+        int rating_value "NOT NULL 1..5"
     }
     bookmarks {
         int id PK
@@ -135,7 +155,6 @@ erDiagram
 ```mermaid
 classDiagram
     class RAGChunk {
-        <<Qdrant point>>
         +uint64 id
         +int book_id
         +int chunk_index
@@ -144,7 +163,6 @@ classDiagram
         +SparseVector text_sparse
     }
     class BookEmbedding {
-        <<Qdrant point>>
         +uint64 id
         +int book_id
         +string title
@@ -152,19 +170,17 @@ classDiagram
         +string genres
         +string series_name
         +string language
-        +float[768] embedding
+        +float[1024] embedding
         +string bm25_text
         +float avg_rating
         +int ratings_count
     }
     class RAGCollection {
-        <<Qdrant collection>>
         +string name
         +string dense_model = USER-bge-m3
         +string sparse_model = BM25
     }
     class RecommendationsCollection {
-        <<Qdrant collection>>
         +string name
         +string model = ru-en-RoSBERTa
     }
@@ -178,12 +194,19 @@ classDiagram
 ```mermaid
 graph LR
     subgraph chat["Chat (ai-service)"]
-        H["chat:history:{session_id}<br/>TYPE: List<br/>TTL: configurable"]
-        C["chat:context:{session_id}<br/>TYPE: String<br/>TTL: configurable"]
+        H["chat:history:{session_id}<br/>TYPE: String (JSON)<br/>TTL: CONVERSATION_HISTORY_TTL"]
+        C["chat:context:{session_id}<br/>TYPE: String (JSON)<br/>TTL: CONVERSATION_HISTORY_TTL"]
     end
     subgraph recs["Recommendations (ai-service)"]
-        R["recommendations:user:{user_id}<br/>TYPE: String (JSON)<br/>TTL: 1 hour"]
-        S["recommendations:similar:{book_id}<br/>TYPE: String (JSON)<br/>TTL: configurable"]
+        R["rec:user:{user_id}<br/>TYPE: Binary (pickle)<br/>TTL: CACHE_TTL_RECOMMENDATIONS"]
+        S["similar:book:{book_id}<br/>TYPE: Binary (pickle)<br/>TTL: CACHE_TTL_SIMILAR_BOOKS"]
+        P["popular:books:{genre|all}<br/>TYPE: Binary (pickle)<br/>TTL: CACHE_TTL_SIMILAR_BOOKS"]
+    end
+    subgraph emb["Embeddings Cache"]
+        E["emb:hash:{md5(text)}<br/>TYPE: Binary (pickle)<br/>TTL: CACHE_TTL_EMBEDDINGS"]
+    end
+    subgraph quota["AI Chat Quota"]
+        Q["ai:quota:user:{user_id}:{yyyymmdd}<br/>TYPE: Integer<br/>TTL: до полуночи"]
     end
 ```
 
@@ -193,10 +216,10 @@ graph LR
 
 ### `user_roles`
 
-| Колонка | Тип     | Ограничения                                                    |
-| ------- | ------- | -------------------------------------------------------------- |
-| id      | integer | PK                                                             |
-| name    | varchar | NOT NULL, UNIQUE (`ROLE_USER`, `ROLE_MODERATOR`, `ROLE_ADMIN`) |
+| Колонка | Тип     | Ограничения                                      |
+| ------- | ------- | ------------------------------------------------ |
+| id      | integer | PK                                               |
+| name    | varchar | NOT NULL, UNIQUE (`USER`, `MODERATOR`, `ADMIN`)  |
 
 ### `users`
 
@@ -286,33 +309,43 @@ graph LR
 > [!TIP]
 > `average_rating` и `ratings_count` обновляются через Feign из comment-rating-service при каждом новом рейтинге.
 
-### `book_authors`
+### `authors`
 
-| Колонка     | Тип     | Ограничения                    |
-| ----------- | ------- | ------------------------------ |
-| id          | integer | PK                             |
-| book_id     | integer | FK → books(id), cascade delete |
-| author_name | varchar | NOT NULL                       |
+| Колонка    | Тип          | Ограничения |
+| ---------- | ------------ | ----------- |
+| id         | integer      | PK          |
+| first_name | varchar(255) | NOT NULL    |
+| last_name  | varchar(255) | NOT NULL    |
 
-### `book_genres`
+### `genres`
 
-| Колонка    | Тип     | Ограничения                    |
-| ---------- | ------- | ------------------------------ |
-| id         | integer | PK                             |
-| book_id    | integer | FK → books(id), cascade delete |
-| genre_name | varchar | NOT NULL                       |
+| Колонка | Тип          | Ограничения        |
+| ------- | ------------ | ------------------ |
+| id      | integer      | PK                 |
+| name    | varchar(255) | NOT NULL, UNIQUE   |
 
-### `book_tags`
+### `tags`
 
-| Колонка  | Тип     | Ограничения                    |
-| -------- | ------- | ------------------------------ |
-| id       | integer | PK                             |
-| book_id  | integer | FK → books(id), cascade delete |
-| tag_name | varchar | NOT NULL                       |
+| Колонка      | Тип          | Ограничения                           |
+| ------------ | ------------ | ------------------------------------- |
+| id           | integer      | PK                                    |
+| name         | varchar(50)  | NOT NULL, UNIQUE                      |
+| category     | varchar(50)  | NULL                                  |
+| is_predefined| boolean      | DEFAULT false                         |
+| usage_count  | integer      | DEFAULT 0                             |
+| created_at   | timestamp    | NOT NULL, DEFAULT CURRENT_TIMESTAMP   |
+
+### Связующие таблицы
+
+| Таблица      | Поля                          | Ограничения                                             |
+| ------------ | ----------------------------- | ------------------------------------------------------- |
+| book_authors | id, book_id, author_id        | FK → books(id), authors(id), ON DELETE CASCADE          |
+| book_genres  | id, book_id, genre_id         | FK → books(id), genres(id), ON DELETE CASCADE           |
+| book_tags    | id, book_id, tag_id           | FK → books(id), tags(id), ON DELETE CASCADE, UNIQUE(book_id, tag_id) |
 
 ---
 
-## 💬 `comments_db` — comment-rating-service
+## 💬 `comments_ratings_db` — comment-rating-service
 
 ### `comments`
 
@@ -329,12 +362,12 @@ graph LR
 
 ### `ratings`
 
-| Колонка | Тип     | Ограничения   |
-| ------- | ------- | ------------- |
-| id      | integer | PK            |
-| user_id | integer | NOT NULL      |
-| book_id | integer | NOT NULL      |
-| value   | integer | NOT NULL, 1–5 |
+| Колонка      | Тип     | Ограничения                 |
+| ------------ | ------- | --------------------------- |
+| id           | integer | PK                          |
+| rating_value | integer | NOT NULL, 1–5               |
+| user_id      | integer | NOT NULL                    |
+| book_id      | integer | NOT NULL                    |
 
 **Constraints:** `uk_rating_user_book (user_id, book_id)` — один рейтинг на пользователя
 

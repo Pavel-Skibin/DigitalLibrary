@@ -32,6 +32,41 @@ SmartAssistantService (оркестратор чата)
 └── ConversationHistoryService — история диалога в Redis
 ```
 
+## 🎥 Демонстрация AI-ассистента
+
+В этом репозитории для демонстрации используются **2 гифки**.
+
+- **Гиф 1 — RAG/Q&A по книге + контекст + (пока неидеальные) цитаты**  
+  Файл: `docs/demo/ai-assistant-rag-master-margarita.gif`  
+  
+  ![Demo 1 — RAG/Q&A (Мастер и Маргарита)](../demo/ai-assistant-rag-master-margarita.gif)
+  
+  Что происходит в сервисе:
+  - `IntentClassifierService` определяет интент (`book_question` / `quote_search`) и извлекает из запроса **название/автора** (если они указаны).
+  - `BookResolverService` подбирает `book_id`, затем `RetrievalService` делает **гибридный поиск** по чанкам в Qdrant (`books_rag_chunks`), после чего `RAGService` формирует ответ со ссылками на найденные фрагменты.
+  - Вопросы “в продолжение” используют `ConversationHistoryService` и Redis (`chat:history:{session_id}`, `chat:context:{session_id}`), поэтому контекст сохраняется.
+  - Режим “точных цитат” (`quote_search`) сейчас может работать **не идеально** — качество зависит от того, какие фрагменты попали в retrieval.
+  Примеры вопросов из гифки:
+  - _«Кто такой Воланд и как он представлен в романе?»_
+  - _«Что произошло на сеансе в Варьете?»_
+  - _«Как связаны Мастер и Понтий Пилат в структуре книги?»_
+  - _«Найди цитаты Мастера про творчество!»_
+
+- **Гиф 2 — рекомендации “что почитать” + уточнение предпочтений**  
+  Файл: `docs/demo/ai-assistant-recommendations.gif`  
+  
+  ![Demo 2 — Recommendations](../demo/ai-assistant-recommendations.gif)
+  
+  Что происходит в сервисе:
+  - `RecommendationEngine` строит персональные рекомендации на основе данных из user-service (**избранное / прочитано / оценено**) + эмбеддингов Qdrant (`books_recommendations`) + скоринга `calculate_hybrid_score`.
+  - `NLRecommendationService` обрабатывает уточняющие запросы (жанр/настроение/ограничения) и вызывает `RecommendationEngine`.
+  Примеры запросов из гифки:
+  - _«Что почитать?»_ → подбор под твои предпочтения.
+  - _«Что почитать из фантастики перед сном?»_ → фантастика + “лёгкое” + не очень длинные книги.
+  - _«Произведения Ремарка про любовь»_ → рекомендации по автору/тематике (через метаданные).
+
+---
+
 ## Компоненты RAG
 
 ### IntentClassifierService
@@ -113,12 +148,9 @@ $$\text{MMR} = \lambda \cdot \text{Sim}(item, query) - (1 - \lambda) \cdot \max[
 | `DEEPSEEK_BASE_URL`         | Base URL DeepSeek         | `https://api.deepseek.com` |
 | `REDIS_URL`                 | URL Redis                 | `redis://localhost:6379`   |
 | `QDRANT_URL`                | URL Qdrant                | `http://localhost:6333`    |
-| `BOOK_CATALOG_URL`          | URL book-catalog-service  | `http://localhost:8084`    |
+| `BOOK_CATALOG_URL`          | URL book-catalog-service  | `http://localhost:8091`    |
 | `USER_SERVICE_URL`          | URL user-service          | `http://localhost:8081`    |
 | `CONVERSATION_HISTORY_TTL`  | TTL истории диалога (сек) | `3600`                     |
 | `CONVERSATION_MAX_MESSAGES` | Макс. сообщений в истории | `20`                       |
 | `MMR_DIVERSITY_LAMBDA`      | Параметр λ для MMR        | `0.5`                      |
 | `SERVICE_PORT`              | Порт сервиса              | `8085`                     |
-
-</content>
-</invoke>

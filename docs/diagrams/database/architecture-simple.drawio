@@ -1,0 +1,93 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1">
+  <diagram name="Architecture" id="architecture">
+    <mxGraphModel dx="1425" dy="790" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1" value="Архитектура" vertex="1">
+          <mxGeometry height="40" width="300" x="400" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=14;fontStyle=1" value="Vue 3 Nginx&#xa;:80" vertex="1">
+          <mxGeometry height="60" width="200" x="450" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=3;fontSize=14;fontStyle=1" value="API Gateway&#xa;:8080" vertex="1">
+          <mxGeometry height="60" width="200" x="450" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="user-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1" value="user-service&#xa;:8081" vertex="1">
+          <mxGeometry height="60" width="140" x="80" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="book-catalog" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1" value="book-catalog-service&lt;br&gt;:8091" vertex="1">
+          <mxGeometry height="60" width="160" x="250" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="comment-rating" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1" value="comment-rating-service&#xa;:8082" vertex="1">
+          <mxGeometry height="60" width="180" x="440" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1" value="storage-service&#xa;:8083" vertex="1">
+          <mxGeometry height="60" width="140" x="650" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1" value="ai-service&#xa;:8085" vertex="1">
+          <mxGeometry height="60" width="140" x="820" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="postgres" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;fontStyle=1" value="PostgreSQL&#xa;:5432" vertex="1">
+          <mxGeometry height="80" width="120" x="200" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;fontStyle=1" value="Redis&#xa;:6379" vertex="1">
+          <mxGeometry height="80" width="120" x="610" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="qdrant" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;fontStyle=1" value="Qdrant&#xa;:6333" vertex="1">
+          <mxGeometry height="80" width="120" x="760" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ui-to-gw" edge="1" parent="1" source="ui" style="endArrow=classic;html=1;strokeWidth=3;strokeColor=#82b366;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="gateway" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gw-to-us" edge="1" parent="1" source="gateway" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;exitX=0.2;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="user-service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gw-to-bc" edge="1" parent="1" source="gateway" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;exitX=0.35;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="book-catalog" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gw-to-cr" edge="1" parent="1" source="gateway" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.604;entryY=0.052;entryDx=0;entryDy=0;entryPerimeter=0;" target="comment-rating" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gw-to-ss" edge="1" parent="1" source="gateway" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;exitX=0.65;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="storage-service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gw-to-ai" edge="1" parent="1" source="gateway" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#666666;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="ai-service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="us-to-db" edge="1" parent="1" source="user-service" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#9673a6;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.145;entryY=0;entryDx=0;entryDy=4.35;entryPerimeter=0;dashed=1;dashPattern=5 5;edgeStyle=orthogonalEdgeStyle;" target="postgres" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="bc-to-db" edge="1" parent="1" source="book-catalog" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#9673a6;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;dashPattern=5 5;edgeStyle=orthogonalEdgeStyle;" target="postgres" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cr-to-db" edge="1" parent="1" source="comment-rating" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#9673a6;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.855;entryY=0;entryDx=0;entryDy=4.35;entryPerimeter=0;dashed=1;dashPattern=5 5;edgeStyle=orthogonalEdgeStyle;" target="postgres" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-to-redis" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#d79b00;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;dashPattern=5 5;edgeStyle=orthogonalEdgeStyle;" target="redis" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="855" y="470" />
+              <mxPoint x="670" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-qdrant" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#b85450;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;dashPattern=5 5;edgeStyle=orthogonalEdgeStyle;" target="qdrant" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-to-db" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=1.5;strokeColor=#9673a6;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;dashPattern=5 5;edgeStyle=orthogonalEdgeStyle;" target="postgres" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="820" y="450" />
+              <mxPoint x="410" y="450" />
+              <mxPoint x="410" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=2;fontColor=#666666;" value="Независимые микросервисы, взаимодействующие через REST" vertex="1">
+          <mxGeometry height="20" width="500" x="300" y="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

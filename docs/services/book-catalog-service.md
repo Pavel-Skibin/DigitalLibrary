@@ -2,11 +2,11 @@
 
 Управляет каталогом книг: метаданные, авторы, жанры, теги, поиск, обложки, рейтинговый кэш.
 
-**Порт:** 8084
+**Порт:** 8091
 
 ## Технологии
 
-- Spring Boot 3.4, Java 20
+- Spring Boot 3.4, Java 21
 - Spring Data JPA, PostgreSQL
 - Spring Cloud OpenFeign (клиенты к comment-rating-service)
 - SpringDoc OpenAPI (Swagger UI: `/swagger-ui.html`)
@@ -95,6 +95,3 @@ name  VARCHAR UNIQUE NOT NULL
 | `SPRING_DATASOURCE_URL`  | JDBC URL PostgreSQL                 |
 | `JWT_SECRET`             | Секрет для верификации входящих JWT |
 | `APP_BOOKS_STORAGE_PATH` | Путь к папке с FB2-файлами          |
-
-</content>
-</invoke>

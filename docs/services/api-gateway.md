@@ -6,7 +6,7 @@
 
 ## Технологии
 
-- Spring Boot 3.4, Java 20
+- Spring Boot 3.4, Java 21
 - Spring Cloud Gateway 2024.0.0 (Reactive)
 - Resilience4j Circuit Breaker (reactor)
 - Spring Boot Actuator
@@ -18,7 +18,7 @@
 | Префикс пути                                                                               | Upstream сервис             |
 | ------------------------------------------------------------------------------------------ | --------------------------- |
 | `/api/users/**`, `/api/auth/**`, `/api/readings/**`, `/api/favorites/**`                   | user-service:8081           |
-| `/api/books/**`, `/api/authors/**`, `/api/genres/**`, `/api/tags/**`, `/api/statistics/**` | book-catalog-service:8084   |
+| `/api/books/**`, `/api/authors/**`, `/api/genres/**`, `/api/tags/**`, `/api/statistics/**` | book-catalog-service:8091   |
 | `/api/comments/**`, `/api/ratings/**`, `/api/bookmarks/**`                                 | comment-rating-service:8082 |
 | `/api/storage/**`                                                                          | storage-service:8083        |
 | `/api/recommendations/**`, `/api/embeddings/**`, `/api/ai/**`                              | ai-service:8085             |
@@ -53,6 +53,3 @@ resilience4j.circuitbreaker.instances.default.automaticTransitionFromOpenToHalfO
 | `SERVICES_COMMENT_RATING_SERVICE_URL` | URL comment-rating-service                              |
 | `SERVICES_STORAGE_SERVICE_URL`        | URL storage-service                                     |
 | `SERVICES_AI_SERVICE_URL`             | URL ai-service                                          |
-
-</content>
-</invoke>

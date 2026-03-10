@@ -6,7 +6,7 @@
 
 ## Технологии
 
-- Spring Boot 3.4, Java 20
+- Spring Boot 3.4, Java 21
 - Spring Data JPA, PostgreSQL
 - Spring Cloud OpenFeign + OkHttp (клиенты к user-service и book-catalog-service)
 - Lombok, MapStruct
@@ -87,6 +87,3 @@ CommentServiceImpl.createComment():
 | `JWT_SECRET`               | Секрет для верификации входящих JWT        |
 | `USER_SERVICE_URL`         | URL user-service для Feign-клиента         |
 | `BOOK_CATALOG_SERVICE_URL` | URL book-catalog-service для Feign-клиента |
-
-</content>
-</invoke>

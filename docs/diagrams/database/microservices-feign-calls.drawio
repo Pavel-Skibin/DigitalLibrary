@@ -1,0 +1,130 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1">
+  <diagram name="Feign Calls" id="feign-calls">
+    <mxGraphModel dx="1343" dy="738" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="comment-rating" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;strokeWidth=2;fontSize=14;fontStyle=1" value="comment-rating-service" vertex="1">
+          <mxGeometry height="60" width="200" x="80" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="book-catalog" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#2e7d32;strokeWidth=2;fontSize=14;fontStyle=1" value="book-catalog-service" vertex="1">
+          <mxGeometry height="60" width="200" x="480" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="user-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1565c0;strokeWidth=2;fontSize=14;fontStyle=1" value="user-service" vertex="1">
+          <mxGeometry height="60" width="200" x="480" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ai-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f57f17;strokeWidth=2;fontSize=14;fontStyle=1" value="ai-service" vertex="1">
+          <mxGeometry height="60" width="200" x="450" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-service" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#6a1b9a;strokeWidth=2;fontSize=14;fontStyle=1" value="storage-service" vertex="1">
+          <mxGeometry height="60" width="200" x="100" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="cr-to-us" edge="1" parent="1" source="comment-rating" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#1565c0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="user-service" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cr-to-us-label" connectable="0" parent="cr-to-us" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/users/{id}&#xa;(validateUser)" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="5" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cr-to-bc1" edge="1" parent="1" source="comment-rating" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#2e7d32;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="book-catalog" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cr-to-bc1-label" connectable="0" parent="cr-to-bc1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/books/{id}&#xa;(validateBook)" vertex="1">
+          <mxGeometry relative="1" x="-0.2" y="2" as="geometry">
+            <mxPoint x="93" y="-83" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cr-to-bc2" edge="1" parent="1" source="comment-rating" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#2e7d32;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="book-catalog" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cr-to-bc2-label" connectable="0" parent="cr-to-bc2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="PUT /api/internal/books/{id}/rating-cache&#xa;(update avgRating + count)" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="-61" y="-74" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-us1" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#1565c0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="510" />
+              <mxPoint x="800" y="110" />
+              <mxPoint x="680" y="110" />
+            </Array>
+            <mxPoint x="680" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-us1-label" connectable="0" parent="ai-to-us1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/users/{id}/history&#xa;(anchor books)" vertex="1">
+          <mxGeometry relative="1" x="-0.3" y="2" as="geometry">
+            <mxPoint x="-30" y="-149" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-us2" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#1565c0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1.015;entryY=0.612;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;entryPerimeter=0;" target="user-service" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="510" />
+              <mxPoint x="770" y="110" />
+              <mxPoint x="683" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-us2-label" connectable="0" parent="ai-to-us2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/users/{id}/favorites" vertex="1">
+          <mxGeometry relative="1" x="-0.2" y="1" as="geometry">
+            <mxPoint x="21" y="-78" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-us3" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#1565c0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" target="user-service" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="510" />
+              <mxPoint x="730" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-us3-label" connectable="0" parent="ai-to-us3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/users/{id}/viewed-books" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="2" as="geometry">
+            <mxPoint x="72" y="-30" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-bc1" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#2e7d32;entryX=0;entryY=1;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;exitX=0.199;exitY=0.016;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="480" as="sourcePoint" />
+            <mxPoint x="491.6" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-bc1-label" connectable="0" parent="ai-to-bc1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/books/{id}&#xa;(metadata)" vertex="1">
+          <mxGeometry relative="1" x="-0.2" y="1" as="geometry">
+            <mxPoint x="-1" y="-26" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-bc2" edge="1" parent="1" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#2e7d32;exitX=0.5;exitY=0;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="601" y="342" />
+              <mxPoint x="600" y="342" />
+            </Array>
+            <mxPoint x="601" y="482" as="sourcePoint" />
+            <mxPoint x="600" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-bc2-label" connectable="0" parent="ai-to-bc2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/internal/books/all-ids" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="2" as="geometry">
+            <mxPoint x="21" y="-4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-ss" edge="1" parent="1" source="ai-service" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#6a1b9a;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="storage-service" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="340" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ai-to-ss-label" connectable="0" parent="ai-to-ss" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;backgroundColor=#ffffff;" value="GET /api/storage/books/{filename}&#xa;(download FB2)" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="1" as="geometry">
+            <mxPoint x="-43" y="-31" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" value="Межсервисные Feign-вызовы" vertex="1">
+          <mxGeometry height="30" width="280" x="240" y="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

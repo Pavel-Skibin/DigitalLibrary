@@ -6,7 +6,7 @@
 
 ## Технологии
 
-- Spring Boot 3.4, Java 20
+- Spring Boot 3.4, Java 21
 - Spring Security + JJWT (верификация входящих JWT)
 - Spring Boot Validation
 - `java.nio.file` — работа с файловой системой
@@ -43,6 +43,3 @@
 | `STORAGE_BOOKS_PATH`  | Абсолютный путь к папке с книгами   |
 | `STORAGE_COVERS_PATH` | Абсолютный путь к папке с обложками |
 | `JWT_SECRET`          | Секрет для верификации входящих JWT |
-
-</content>
-</invoke>
