@@ -46,7 +46,7 @@ sequenceDiagram
     participant FE as Frontend /admin
     participant GW as api-gateway
     participant SS as storage-service:8083
-    participant BC as book-catalog-service:8084
+    participant BC as book-catalog-service:8091
     participant AI as ai-service:8085
 
     A->>FE: Форма: FB2-файл + обложка + метаданные

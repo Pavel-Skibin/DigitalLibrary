@@ -9,68 +9,10 @@ Digital Library — микросервисное приложение с еди�
 
 ### 🗺️ Системный обзор
 
-```mermaid
-graph TD
-    U(["Пользователь<br/>Браузер"])
-    FE["Frontend<br/>Vue 3 + Vite / Nginx<br/>:80"]
-    GW["api-gateway<br/>Spring Cloud Gateway<br/>:8080"]
-
-    US["user-service<br/>Spring Boot 3.4<br/>:8081"]
-    CR["comment-rating-service<br/>Spring Boot 3.4<br/>:8082"]
-    SS["storage-service<br/>Spring Boot 3.4<br/>:8083"]
-    BC["book-catalog-service<br/>Spring Boot 3.4<br/>:8084"]
-    AI["ai-service<br/>FastAPI 0.109 / Python 3.11<br/>:8085"]
-
-    PG_U[("users_db<br/>PostgreSQL")]
-    PG_B[("books_db<br/>PostgreSQL")]
-    PG_C[("comments_db<br/>PostgreSQL")]
-    FS[("Filesystem<br/>FB2 / Covers")]
-    RD[("Redis<br/>:6379")]
-    QD[("Qdrant<br/>:6333")]
-    DS(["DeepSeek API<br/>External LLM"])
-
-    U -->|HTTP| FE
-    FE -->|REST /api/| GW
-
-    GW -->|"/api/auth/** /api/users/**<br/>/api/readings/** /api/favorites/**"| US
-    GW -->|"/api/books/** /api/authors/**<br/>/api/genres/** /api/tags/**"| BC
-    GW -->|"/api/comments/**<br/>/api/ratings/** /api/bookmarks/**"| CR
-    GW -->|"/api/storage/**"| SS
-    GW -->|"/api/ai/** /api/recommendations/**<br/>/api/embeddings/** /api/rag/**"| AI
-
-    US --- PG_U
-    BC --- PG_B
-    CR --- PG_C
-    SS --- FS
-    AI --- RD
-    AI --- QD
-    AI -->|HTTPS| DS
-
-    CR -. "Feign: validateUser" .-> US
-    CR -. "Feign: validateBook<br/>updateRatingCache" .-> BC
-    AI -. "HTTP: reading history<br/>favorites, viewed books" .-> US
-    AI -. "HTTP: book metadata<br/>all book IDs" .-> BC
-```
-
+![Архитектура системы](/docs/diagrams/database/system-overview.png)
 ### 🔗 Межсервисные Feign-вызовы
 
-```mermaid
-graph LR
-    CR["comment-rating-service"]
-    BC["book-catalog-service"]
-    US["user-service"]
-    AI["ai-service"]
-
-    CR -->|"GET /api/internal/users/{id}<br/>validateUser"| US
-    CR -->|"GET /api/internal/books/{id}<br/>validateBook"| BC
-    CR -->|"PUT /api/internal/books/{id}/rating-cache<br/>обновить avgRating + ratingsCount"| BC
-    AI -->|"GET /api/internal/users/{id}/history<br/>якорные книги для рекомендаций"| US
-    AI -->|"GET /api/internal/users/{id}/favorites"| US
-    AI -->|"GET /api/internal/users/{id}/viewed-books"| US
-    AI -->|"GET /api/internal/books/{id}<br/>метаданные книги"| BC
-    AI -->|"GET /api/internal/books/all-ids"| BC
-    AI -->|"GET /api/storage/books/{filename}<br/>скачать FB2 для индексации"| SS
-```
+![Архитектура системы](/docs/diagrams/database/microservices-feign-calls.png)
 
 ### 🐳 Деплоймент (Docker Compose)
 
@@ -78,11 +20,11 @@ graph LR
 graph TD
     subgraph docker["Docker Compose Network"]
         FE["frontend<br/>nginx:alpine<br/>port 80"]
-        GW["api-gateway<br/>openjdk:20<br/>port 8080"]
-        US["user-service<br/>openjdk:20<br/>port 8081"]
-        CR["comment-rating-service<br/>openjdk:20<br/>port 8082"]
-        SS["storage-service<br/>openjdk:20<br/>port 8083"]
-        BC["book-catalog-service<br/>openjdk:20<br/>port 8084"]
+        GW["api-gateway<br/>openjdk:21<br/>port 8080"]
+        US["user-service<br/>openjdk:21<br/>port 8081"]
+        CR["comment-rating-service<br/>openjdk:21<br/>port 8082"]
+        SS["storage-service<br/>openjdk:21<br/>port 8083"]
+        BC["book-catalog-service<br/>openjdk:21<br/>port 8091"]
         AI["ai-service<br/>python:3.11<br/>port 8085"]
         PG["postgres:17<br/>port 5432"]
         RD["redis:7<br/>port 6379"]
@@ -129,19 +71,19 @@ graph TD
 | storage-service        | `/api/storage/**`                                                                          |
 | ai-service             | `/api/recommendations/**`, `/api/embeddings/**`, `/api/ai/**`                              |
 
-### 👤 user-service (Spring Boot 3.4, Java 20)
+### 👤 user-service (Spring Boot 3.4, Java 21)
 
 Авторизация, профили, история чтения. Собственная база PostgreSQL `users_db`.
 
-### 📚 book-catalog-service (Spring Boot 3.4, Java 20)
+### 📚 book-catalog-service (Spring Boot 3.4, Java 21)
 
 Каталог книг, авторов, жанров, тегов. Хранит денормализованный рейтинг (обновляется через Feign из comment-rating-service). База `books_db`.
 
-### 💬 comment-rating-service (Spring Boot 3.4, Java 20)
+### 💬 comment-rating-service (Spring Boot 3.4, Java 21)
 
 Отзывы, оценки (1–5), закладки. Перед сохранением валидирует user и book через OpenFeign. База `comments_db`.
 
-### 🗂️ storage-service (Spring Boot 3.4, Java 20)
+### 🗂️ storage-service (Spring Boot 3.4, Java 21)
 
 Хранение файлов (FB2, обложки) на диске. Нет собственной БД.
 
@@ -190,11 +132,8 @@ JWT не хранится в localStorage, а устанавливается к�
 
 Причина: сохранение контекста в ветках обсуждений.
 
-## 📐 Диаграмма архитектуры
 
-> draw.io-диаграмма находится в [`docs/architecture.drawio`](../docs/architecture.drawio) (откроется в draw.io или VS Code с плагином).
-
-## 📊 Мониторинг
+## 📊 Мониторинг (временно упал   )
 
 Prometheus scrape + Grafana дашборды (конфигурация в `old_docker/prometheus/` и `old_docker/grafana/`).
 

@@ -6,7 +6,7 @@
 
 ## Технологии
 
-- Spring Boot 3.4, Java 20
+- Spring Boot 3.4, Java 21
 - Spring Security + JJWT (JWT HS256)
 - Spring Data JPA, PostgreSQL
 - Spring Cloud OpenFeign
@@ -95,6 +95,3 @@ JWT-токен содержит `userId` как claim, используется 
 | `SPRING_DATASOURCE_USERNAME` | Имя пользователя БД                      |
 | `SPRING_DATASOURCE_PASSWORD` | Пароль БД                                |
 | `JWT_SECRET`                 | Секрет для подписи JWT (минимум 256 бит) |
-
-</content>
-</invoke>

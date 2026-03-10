@@ -10,7 +10,7 @@ graph TD
     US[user-service :8081]
     CR[comment-rating-service :8082]
     SS[storage-service :8083]
-    BC[book-catalog-service :8084]
+    BC[book-catalog-service :8091]
     AI[ai-service :8085]
     PG[(PostgreSQL :5432)]
     RD[(Redis :6379)]
@@ -44,7 +44,7 @@ graph TD
 | 👤 user-service           | 8081 | Аутентификация, JWT, профили, история, избранное | [services/user-service.md](services/user-service.md)                     |
 | 💬 comment-rating-service | 8082 | Комментарии, рейтинги, закладки                  | [services/comment-rating-service.md](services/comment-rating-service.md) |
 | 🗂️ storage-service        | 8083 | Хранение и раздача FB2-файлов и обложек          | [services/storage-service.md](services/storage-service.md)               |
-| 📚 book-catalog-service   | 8084 | Каталог книг, авторы, жанры, поиск               | [services/book-catalog-service.md](services/book-catalog-service.md)     |
+| 📚 book-catalog-service   | 8091 | Каталог книг, авторы, жанры, поиск               | [services/book-catalog-service.md](services/book-catalog-service.md)     |
 | 🤖 ai-service             | 8085 | RAG-чат, рекомендации, векторизация              | [services/ai-service.md](services/ai-service.md)                         |
 
 ## 🧩 Общие компоненты
@@ -70,7 +70,7 @@ graph LR
     GW["api-gateway :8080<br/>JwtAuthenticationFilter<br/>CircuitBreaker"]
 
     US["user-service :8081"]
-    BC["book-catalog-service :8084"]
+    BC["book-catalog-service :8091"]
     CR["comment-rating-service :8082"]
     SS["storage-service :8083"]
     AI["ai-service :8085"]
@@ -174,5 +174,3 @@ graph LR
 - [comment-rating-service API](api/comment-rating-api.md)
 - [storage-service API](api/storage-api.md)
 - [ai-service API](api/ai-service-api.md)
-  </content>
-  </invoke>
